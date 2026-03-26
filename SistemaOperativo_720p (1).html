@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=1280"/>
+<title>Sistema Operativo AR - 720p HD</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#000; display:flex; justify-content:center; align-items:center; min-height:100vh; }
+  #app { position:relative; width:1280px; height:720px; overflow:hidden; }
+  canvas { position:absolute; top:0; left:0; width:1280px; height:720px; }
+  #overlay {
+    position:absolute; top:0; left:0; width:1280px; height:720px;
+    pointer-events:none; z-index:10;
+  }
+  .tooltip {
+    position:absolute; display:none;
+    background:rgba(6,9,15,0.96);
+    border:1px solid #1DE9B6;
+    border-radius:10px;
+    padding:18px 22px;
+    max-width:340px;
+    pointer-events:none;
+    z-index:20;
+  }
+  .tooltip.amber { border-color:#EF9F27; }
+  .tooltip h3 {
+    font-family:monospace; font-size:13px; font-weight:bold;
+    color:#1DE9B6; margin-bottom:10px; letter-spacing:1px;
+  }
+  .tooltip.amber h3 { color:#EF9F27; }
+  .tooltip p {
+    font-family:monospace; font-size:11px; color:#9FD8CC;
+    line-height:1.6; margin-bottom:8px;
+  }
+  .tooltip.amber p { color:#F5C67A; }
+  .terminal {
+    background:#000; border:1px solid #1DE9B6;
+    border-radius:6px; padding:10px;
+    font-family:monospace; font-size:11px;
+    color:#1DE9B6; margin-top:8px;
+    min-height:80px;
+  }
+  .terminal .prompt { color:#64FFDA; }
+  .terminal .cmd    { color:#FFFFFF; }
+  .terminal .out    { color:#1DE9B6; opacity:0.75; }
+  .close-btn {
+    position:absolute; top:8px; right:10px;
+    font-family:monospace; font-size:12px; color:#1DE9B6;
+    cursor:pointer; pointer-events:all;
+    background:none; border:none; opacity:0.7;
+  }
+  .close-btn:hover { opacity:1; }
+  #tooltip-user   { top:60px;  left:180px; }
+  #tooltip-laptop { top:60px;  right:20px; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="c"></canvas>
+  <div id="overlay">
+
+    <!-- USER TOOLTIP -->
+    <div class="tooltip" id="tooltip-user">
+      <button class="close-btn" onclick="closeTooltip('tooltip-user')">[ X ]</button>
+      <h3>&#x25B6; USUARIO &middot; SHELL &middot; HARDWARE</h3>
+      <p>El usuario, a traves del <strong style="color:#1DE9B6">Shell</strong>, interactua<br>
+         con el Hardware enviando comandos al kernel.</p>
+      <div class="terminal" id="term-anim">
+        <div><span class="prompt">user@os:~$ </span><span class="cmd" id="tcmd"></span><span id="tcursor" style="animation:blink 0.8s step-end infinite">_</span></div>
+        <div class="out" id="tout"></div>
+      </div>
+    </div>
+
+    <!-- LAPTOP / KERNEL TOOLTIP -->
+    <div class="tooltip amber" id="tooltip-laptop">
+      <button class="close-btn" onclick="closeTooltip('tooltip-laptop')" style="color:#EF9F27">[ X ]</button>
+      <h3>&#x25B6; KERNEL &middot; NUCLEO DEL SISTEMA</h3>
+      <p>El <strong style="color:#EF9F27">Kernel</strong> es el nucleo del sistema operativo.<br>
+         Brinda las caracteristicas esenciales al S.O. y se<br>
+         comunica directamente con el Hardware en binario.</p>
+      <div style="margin-top:8px; font-family:monospace; font-size:10px; color:#EF9F27; opacity:0.85; line-height:1.8;">
+        <div id="bin-stream" style="letter-spacing:2px; overflow:hidden; height:20px;"></div>
+        <div style="margin-top:6px; color:#F5C67A; font-size:10px;">
+          Scheduler &nbsp;&#x25CF;&nbsp; Memory &nbsp;&#x25CF;&nbsp; Drivers &nbsp;&#x25CF;&nbsp; FS/IO
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const W=1280, H=720;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width=W; canvas.height=H;
+
+const BG='#06090F', CYAN='#1DE9B6', AMBER='#EF9F27',
+      PURPLE='#9C6FE4', DARK3='#0D1B2E', DIM='#0A1428';
+
+// ── Scale 1280/680 ──────────────────────────────
+const S = 1280/680;
+function sx(v){ return v*S; }
+function sy(v){ return v*S; }
+
+// ── Global state ────────────────────────────────
+let t=0, scanY=0, gridPhase=0;
+let userFloat=0, lapFloat=0;
+let blink=true; setInterval(()=>blink=!blink,750);
+
+// view: 'outer' | 'zooming_in' | 'inner' | 'zooming_out'
+let view='outer';
+let zoomProg=0;   // 0=outer, 1=inner
+
+let outerParticles=[];
+let innerParticles=[];
+
+function initOuterParticles(){
+  outerParticles=[];
+  for(let i=0;i<8;i++){
+    outerParticles.push({t:i/8,    dir:'lr',trail:[]});
+    outerParticles.push({t:(i/8)+0.5, dir:'rl',trail:[]});
+  }
+}
+function initInnerParticles(){
+  innerParticles=[];
+  for(let i=0;i<14;i++){
+    innerParticles.push({t:i/14, dir:i%2===0?'lr':'rl', trail:[]});
+  }
+}
+initOuterParticles();
+initInnerParticles();
+
+// ── Helpers ─────────────────────────────────────
+function lerp(a,b,u){ return a+(b-a)*u; }
+function easeInOut(u){ return u<0.5?2*u*u:1-Math.pow(-2*u+2,2)/2; }
+function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
+
+function rr(x,y,w,h,r,fill,stroke){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+  if(fill) ctx.fill(); if(stroke) ctx.stroke();
+}
+
+// ── OUTER SCENE DRAWING ─────────────────────────
+
+function drawGrid(alpha){
+  const a=(0.18+0.10*Math.sin(gridPhase))*alpha;
+  ctx.save(); ctx.strokeStyle=CYAN;
+  const yStart=sy(370);
+  [[0,0.4,0.5],[20,0.3,0.3],[40,0.25,0.18],[60,0.2,0.12],[80,0.15,0.08]].forEach(([dy,lw,op])=>{
+    ctx.lineWidth=lw; ctx.globalAlpha=a*op;
+    ctx.beginPath(); ctx.moveTo(0,yStart+sy(dy)); ctx.lineTo(W,yStart+sy(dy)); ctx.stroke();
+  });
+  const cx2=sx(340);
+  [0,110,230,340,450,570,680].forEach(dx=>{
+    ctx.lineWidth=0.3; ctx.globalAlpha=a*0.2;
+    ctx.beginPath(); ctx.moveTo(cx2,yStart); ctx.lineTo(cx2+sx(dx-340)*1.5,H+sy(20)); ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function drawScan(alpha){
+  ctx.save(); ctx.globalAlpha=0.07*alpha;
+  ctx.fillStyle=CYAN; ctx.fillRect(0,scanY%H,W,sy(3));
+  ctx.restore();
+}
+
+function drawARLabel(alpha){
+  ctx.save(); ctx.globalAlpha=alpha;
+  ctx.strokeStyle=CYAN; ctx.lineWidth=1.2;
+  rr(sx(20),sy(14),sx(120),sy(24),sx(4),false,true);
+  ctx.fillStyle=CYAN; ctx.font=`bold ${sy(11)}px monospace`; ctx.textAlign='center';
+  ctx.fillText('AR · MODO ACTIVO',sx(80),sy(30));
+  ctx.restore();
+}
+
+function drawHUDCorners(alpha,col){
+  col=col||CYAN;
+  ctx.save(); ctx.globalAlpha=alpha*(blink?1:0.3);
+  ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.lineCap='round';
+  [[sx(40),sy(50),sx(40),sy(40),sx(50),sy(40)],
+   [sx(630),sy(50),sx(630),sy(40),sx(620),sy(40)],
+   [sx(40),sy(418),sx(40),sy(428),sx(50),sy(428)],
+   [sx(630),sy(418),sx(630),sy(428),sx(620),sy(428)]
+  ].forEach(p=>{ ctx.beginPath(); ctx.moveTo(p[0],p[1]); ctx.lineTo(p[2],p[3]); ctx.lineTo(p[4],p[5]); ctx.stroke(); });
+  ctx.restore();
+}
+
+function drawARRings(cx,cy,col,phase,alpha){
+  alpha=alpha||1;
+  ctx.save();
+  [phase*0.8, phase*0.8+1.2].forEach(ph=>{
+    const p=(Math.sin(ph)+1)/2;
+    const r=sx(30+p*40); const a=(1-p)*0.6*alpha;
+    ctx.globalAlpha=a; ctx.strokeStyle=col; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function drawSignalTracks(alpha){
+  ctx.save(); ctx.globalAlpha=0.22*alpha;
+  ctx.strokeStyle=CYAN; ctx.lineWidth=0.7; ctx.setLineDash([sx(6),sx(4)]);
+  ctx.beginPath(); ctx.moveTo(sx(155),sy(222)); ctx.lineTo(sx(525),sy(222)); ctx.stroke();
+  ctx.strokeStyle=AMBER;
+  ctx.beginPath(); ctx.moveTo(sx(155),sy(238)); ctx.lineTo(sx(525),sy(238)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+function drawOuterParticles(alpha){
+  const LX=sx(155),RX=sx(525),topY=sy(222),botY=sy(238);
+  outerParticles.forEach(p=>{
+    const x=p.dir==='lr'?lerp(LX,RX,p.t):lerp(RX,LX,p.t);
+    const y=p.dir==='lr'?topY:botY;
+    const col=p.dir==='lr'?CYAN:AMBER;
+    ctx.save(); ctx.globalAlpha=alpha;
+    ctx.shadowColor=col; ctx.shadowBlur=10;
+    ctx.fillStyle=col;
+    ctx.beginPath(); ctx.arc(x,y,sx(5.5),0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    p.trail.forEach((tp,i)=>{
+      ctx.globalAlpha=alpha*((p.trail.length-i)/p.trail.length)*0.4;
+      ctx.fillStyle=col;
+      ctx.beginPath(); ctx.arc(tp.x,tp.y,sx(3-i*0.3),0,Math.PI*2); ctx.fill();
+    });
+    ctx.restore();
+  });
+}
+
+function drawSilhouette(fy,alpha){
+  alpha=alpha||1;
+  ctx.save(); ctx.globalAlpha=0.18*alpha; ctx.fillStyle=CYAN;
+  const f=sy(fy);
+  ctx.beginPath(); ctx.ellipse(sx(100),sy(130)+f,sx(22),sy(24),0,0,Math.PI*2); ctx.fill();
+  ctx.fillRect(sx(91),sy(152)+f,sx(18),sy(14));
+  ctx.beginPath();
+  ctx.moveTo(sx(62),sy(168)+f); ctx.quadraticCurveTo(sx(72),sy(156)+f,sx(100),sy(156)+f);
+  ctx.quadraticCurveTo(sx(128),sy(156)+f,sx(138),sy(168)+f);
+  ctx.lineTo(sx(132),sy(280)+f); ctx.lineTo(sx(68),sy(280)+f); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(sx(68),sy(185)+f); ctx.quadraticCurveTo(sx(52),sy(210)+f,sx(44),sy(244)+f);
+  ctx.lineTo(sx(60),sy(248)+f); ctx.quadraticCurveTo(sx(68),sy(225)+f,sx(80),sy(205)+f); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(sx(132),sy(185)+f); ctx.quadraticCurveTo(sx(148),sy(210)+f,sx(156),sy(244)+f);
+  ctx.lineTo(sx(140),sy(248)+f); ctx.quadraticCurveTo(sx(132),sy(225)+f,sx(120),sy(205)+f); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(sx(50),sy(254)+f,sx(10),sy(7),0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(sx(150),sy(254)+f,sx(10),sy(7),0,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=0.15*alpha;
+  ctx.beginPath(); ctx.moveTo(sx(68),sy(280)+f); ctx.lineTo(sx(62),sy(340)+f); ctx.lineTo(sx(85),sy(340)+f);
+  ctx.lineTo(sx(100),sy(290)+f); ctx.lineTo(sx(115),sy(340)+f); ctx.lineTo(sx(138),sy(340)+f);
+  ctx.lineTo(sx(132),sy(280)+f); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawMonitor(fy,alpha){
+  alpha=alpha||1;
+  ctx.save(); ctx.globalAlpha=alpha;
+  const f=sy(fy);
+  ctx.fillStyle=DARK3; ctx.strokeStyle=CYAN; ctx.lineWidth=1.5;
+  rr(sx(60),sy(160)+f,sx(80),sy(68),sx(5),true,true);
+  ctx.fillStyle=DIM; rr(sx(64),sy(164)+f,sx(72),sy(58),sx(3),true,false);
+  ctx.fillStyle=CYAN; ctx.globalAlpha=0.6*alpha; ctx.fillRect(sx(68),sy(168)+f,sx(42),sy(4));
+  [[58,'#2A3D55',0.7],[50,'#2A3D55',0.55],[55,'#2A3D55',0.5],[40,CYAN,0.35],[55,'#2A3D55',0.4]].forEach(([w,c,o],i)=>{
+    ctx.fillStyle=c; ctx.globalAlpha=o*alpha; ctx.fillRect(sx(68),sy(176+i*6)+f,sx(w),sy(2.5));
+  });
+  ctx.fillStyle=CYAN; ctx.globalAlpha=(blink?0.9:0.05)*alpha;
+  ctx.fillRect(sx(68),sy(208)+f,sx(5),sy(9));
+  ctx.globalAlpha=alpha;
+  ctx.fillStyle='#1A2535'; rr(sx(93),sy(228)+f,sx(14),sy(10),sx(1),true,false);
+  rr(sx(76),sy(236)+f,sx(48),sy(6),sx(2),true,false);
+  ctx.strokeStyle='#2A3D55'; ctx.lineWidth=0.8;
+  rr(sx(60),sy(248)+f,sx(80),sy(12),sx(3),true,true);
+  ctx.fillStyle='#0D1728'; rr(sx(63),sy(251)+f,sx(74),sy(6),sx(1),true,false);
+  [[65,252],[72,252],[79,252],[86,252],[93,252],[100,252],[107,252],
+   [65,256],[74,256],[81,256],[88,256],[97,256],[104,256]].forEach(([x,y])=>{
+    ctx.fillStyle='#2A3D55'; ctx.fillRect(sx(x),sy(y)+f,sx(5),sy(2));
+  });
+  ctx.restore();
+}
+
+function drawBox3D(alpha, scaleBoost){
+  alpha=alpha||1;
+  scaleBoost=scaleBoost||1;
+  const pulse=0.15+0.08*Math.sin(t*2);
+  ctx.save();
+  if(scaleBoost!==1){
+    ctx.translate(sx(340),sy(210));
+    ctx.scale(scaleBoost,scaleBoost);
+    ctx.translate(-sx(340),-sy(210));
+  }
+
+  ctx.fillStyle=`rgba(11,61,79,${0.85+pulse*0.5})`; ctx.strokeStyle=CYAN; ctx.lineWidth=1.8; ctx.globalAlpha=alpha;
+  ctx.beginPath();
+  [[sx(265),sy(128)],[sx(340),sy(98)],[sx(415),sy(128)],[sx(340),sy(158)]].forEach((p,i)=>i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]));
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle=`rgba(6,42,56,${0.85+pulse*0.5})`;
+  ctx.beginPath();
+  [[sx(265),sy(128)],[sx(340),sy(158)],[sx(340),sy(322)],[sx(265),sy(292)]].forEach((p,i)=>i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]));
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle=`rgba(13,74,96,${0.85+pulse*0.5})`;
+  ctx.beginPath();
+  [[sx(340),sy(158)],[sx(415),sy(128)],[sx(415),sy(292)],[sx(340),sy(322)]].forEach((p,i)=>i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]));
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.strokeStyle=CYAN; ctx.lineWidth=0.8; ctx.globalAlpha=0.5*alpha;
+  ctx.beginPath(); ctx.ellipse(sx(340),sy(128),sx(28),sy(12),0,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle=CYAN; ctx.globalAlpha=0.7*alpha;
+  ctx.beginPath(); ctx.arc(sx(340),sy(128),sx(5),0,Math.PI*2); ctx.fill();
+
+  [[sx(288),sy(192),sx(322),sy(192)],[sx(288),sy(212),sx(336),sy(212)],[sx(288),sy(232),sx(318),sy(232)]].forEach(([x1,y1,x2,y2])=>{
+    ctx.strokeStyle=CYAN; ctx.lineWidth=0.8; ctx.globalAlpha=0.5*alpha;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.fillStyle=CYAN; ctx.globalAlpha=0.6*alpha;
+    ctx.beginPath(); ctx.arc(x1,y1,sx(2),0,Math.PI*2); ctx.fill();
+  });
+  ctx.strokeStyle=CYAN; ctx.lineWidth=0.8; ctx.globalAlpha=0.3*alpha;
+  ctx.beginPath(); ctx.moveTo(sx(288),sy(192)); ctx.lineTo(sx(288),sy(232)); ctx.stroke();
+
+  [[sx(358),sy(192),sx(392),sy(192)],[sx(354),sy(212),sx(392),sy(212)],[sx(360),sy(232),sx(392),sy(232)]].forEach(([x1,y1,x2,y2])=>{
+    ctx.strokeStyle=AMBER; ctx.lineWidth=0.8; ctx.globalAlpha=0.5*alpha;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.fillStyle=AMBER; ctx.globalAlpha=0.6*alpha;
+    ctx.beginPath(); ctx.arc(x2,y1,sx(2),0,Math.PI*2); ctx.fill();
+  });
+
+  [[sx(340),sy(98),3.5,CYAN,0.9],[sx(265),sy(128),3,CYAN,0.7],[sx(415),sy(128),3,CYAN,0.7],
+   [sx(340),sy(158),3,CYAN,0.7],[sx(265),sy(292),3,CYAN,0.5],[sx(415),sy(292),3,CYAN,0.5],
+   [sx(340),sy(322),3.5,CYAN,0.7]].forEach(([x,y,r,c,a2])=>{
+    ctx.fillStyle=c; ctx.globalAlpha=a2*alpha;
+    ctx.beginPath(); ctx.arc(x,y,sx(r),0,Math.PI*2); ctx.fill();
+  });
+
+  ctx.globalAlpha=alpha; ctx.fillStyle=CYAN; ctx.textAlign='center'; ctx.font=`bold ${sy(13)}px monospace`;
+  ctx.fillText('SISTEMA',sx(340),sy(230));
+  ctx.fillText('OPERATIVO',sx(340),sy(250));
+  ctx.font=`${sy(9)}px monospace`; ctx.globalAlpha=0.6*alpha;
+  ctx.fillText('kernel · scheduler',sx(340),sy(272));
+  ctx.fillText('drivers · memory',sx(340),sy(285));
+
+  ctx.globalAlpha=(blink?1:0.3)*alpha; ctx.strokeStyle=CYAN; ctx.lineWidth=1.5; ctx.lineCap='round';
+  [[sx(258),sy(88),sx(258),sy(78),sx(268),sy(78)],[sx(422),sy(88),sx(422),sy(78),sx(412),sy(78)],
+   [sx(258),sy(352),sx(258),sy(362),sx(268),sy(362)],[sx(422),sy(352),sx(422),sy(362),sx(412),sy(362)]
+  ].forEach(p=>{ ctx.beginPath(); ctx.moveTo(p[0],p[1]); ctx.lineTo(p[2],p[3]); ctx.lineTo(p[4],p[5]); ctx.stroke(); });
+
+  const pr=sx(8+12*((Math.sin(t*3)+1)/2));
+  const pa=0.8*(1-(pr-sx(8))/(sx(12)));
+  ctx.globalAlpha=Math.max(0,pa)*alpha; ctx.strokeStyle=CYAN; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.arc(sx(340),sy(128),pr,0,Math.PI*2); ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawLaptop(fy,alpha){
+  alpha=alpha||1;
+  ctx.save(); ctx.globalAlpha=alpha;
+  const f=sy(fy);
+  ctx.fillStyle=DARK3; ctx.strokeStyle=AMBER; ctx.lineWidth=1.8;
+  rr(sx(518),sy(148)+f,sx(124),sy(90),sx(5),true,true);
+  ctx.fillStyle=DIM; rr(sx(522),sy(152)+f,sx(116),sy(82),sx(3),true,false);
+  ctx.fillStyle='#1A2535'; ctx.fillRect(sx(526),sy(156)+f,sx(108),sy(14));
+  [['#FF5F57',531],['#FEBC2E',539],['#28C840',547]].forEach(([c,x])=>{
+    ctx.fillStyle=c; ctx.beginPath(); ctx.arc(sx(x),sy(163)+f,sx(3),0,Math.PI*2); ctx.fill();
+  });
+  ctx.fillStyle='#060D18'; ctx.fillRect(sx(526),sy(173)+f,sx(108),sy(58));
+  ctx.fillStyle=AMBER; ctx.globalAlpha=0.8*alpha; ctx.fillRect(sx(530),sy(177)+f,sx(32),sy(3));
+  [[70,'#2A3D55',0.7],[54,'#2A3D55',0.6],[62,CYAN,0.5],[44,'#2A3D55',0.5],[66,'#2A3D55',0.4],[42,AMBER,0.4]].forEach(([w,c,o],i)=>{
+    ctx.fillStyle=c; ctx.globalAlpha=o*alpha; ctx.fillRect(sx(530),sy(183+i*5)+f,sx(w),sy(2));
+  });
+  ctx.globalAlpha=(blink?1:0.3)*alpha; ctx.fillStyle='#28C840';
+  ctx.beginPath(); ctx.arc(sx(624),sy(177)+f,sx(4),0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=alpha;
+  ctx.fillStyle='#111C2E'; ctx.fillRect(sx(518),sy(234)+f,sx(124),sy(5));
+  ctx.fillStyle='#1A2535'; ctx.strokeStyle=AMBER; ctx.lineWidth=1.2;
+  rr(sx(516),sy(237)+f,sx(128),sy(12),sx(3),true,true);
+  ctx.fillStyle='#0D1728'; ctx.strokeStyle='#2A3D55'; ctx.lineWidth=0.7;
+  rr(sx(553),sy(240)+f,sx(54),sy(5),sx(1),true,true);
+  ctx.fillStyle='#0D1728'; ctx.fillRect(sx(518),sy(240)+f,sx(32),sy(4));
+  ctx.fillRect(sx(608),sy(240)+f,sx(34),sy(4));
+  ctx.fillStyle='#111C2E'; ctx.strokeStyle=AMBER; ctx.lineWidth=0.8;
+  rr(sx(516),sy(249)+f,sx(128),sy(6),sx(2),true,true);
+  ctx.globalAlpha=(blink?0.7:0.2)*alpha; ctx.strokeStyle=AMBER; ctx.lineWidth=1; ctx.lineCap='round';
+  [[sx(514),sy(108),sx(514),sy(98),sx(524),sy(98)],[sx(646),sy(108),sx(646),sy(98),sx(636),sy(98)],
+   [sx(514),sy(362),sx(514),sy(372),sx(524),sy(372)],[sx(646),sy(362),sx(646),sy(372),sx(636),sy(372)]
+  ].forEach(p=>{ ctx.beginPath(); ctx.moveTo(p[0],p[1]); ctx.lineTo(p[2],p[3]); ctx.lineTo(p[4],p[5]); ctx.stroke(); });
+  ctx.restore();
+}
+
+function drawLabels(alpha){
+  alpha=alpha||1;
+  ctx.save(); ctx.globalAlpha=alpha; ctx.textAlign='center'; ctx.font=`${sy(11)}px monospace`;
+  ctx.fillStyle=CYAN; ctx.fillText('USUARIO · PC',sx(100),sy(400));
+  ctx.fillStyle=CYAN; ctx.fillText('[ AR OBJECT · 3D ]',sx(340),sy(346));
+  ctx.globalAlpha=(0.7+0.3*Math.sin(t*2))*alpha;
+  ctx.fillStyle=CYAN; ctx.font=`${sy(10)}px monospace`;
+  ctx.fillText('▼ toca para explorar el interior ▼',sx(340),sy(375));
+  ctx.globalAlpha=alpha;
+  ctx.fillStyle=AMBER; ctx.font=`${sy(11)}px monospace`;
+  ctx.fillText('LAPTOP · ACTIVA',sx(580),sy(400));
+  ctx.restore();
+}
+
+function drawLegend(alpha){
+  alpha=alpha||1;
+  ctx.save(); ctx.globalAlpha=alpha;
+  ctx.fillStyle='rgba(6,9,15,0.85)'; ctx.strokeStyle=CYAN; ctx.lineWidth=0.7;
+  rr(sx(200),sy(414),sx(280),sy(38),sx(6),true,true);
+  ctx.fillStyle=CYAN; ctx.beginPath(); ctx.arc(sx(220),sy(427),sx(5),0,Math.PI*2); ctx.fill();
+  ctx.font=`${sy(10)}px monospace`; ctx.textAlign='left'; ctx.fillStyle=CYAN;
+  ctx.fillText('peticion usuario -> S.O. -> laptop',sx(233),sy(431));
+  ctx.fillStyle=AMBER; ctx.beginPath(); ctx.arc(sx(220),sy(443),sx(5),0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=AMBER;
+  ctx.fillText('respuesta laptop -> S.O. -> usuario',sx(233),sy(447));
+  ctx.restore();
+}
+
+// ── VORTEX ZOOM EFFECT ──────────────────────────
+function drawVortex(prog){
+  // prog 0=start 1=full
+  ctx.save();
+  const cx=sx(340), cy=sy(210);
+  for(let i=12;i>=0;i--){
+    const frac=i/12;
+    const r=lerp(sx(300),0,prog)*frac + prog*sx(20);
+    const a=(1-frac)*0.35*prog;
+    ctx.globalAlpha=a; ctx.strokeStyle=CYAN; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+  }
+  // flash
+  if(prog>0.5){
+    ctx.globalAlpha=(prog-0.5)*0.18;
+    ctx.fillStyle=CYAN; ctx.fillRect(0,0,W,H);
+  }
+  ctx.restore();
+}
+
+// ── INTERIOR SCENE ──────────────────────────────
+function drawInteriorBG(){
+  ctx.fillStyle='#020810'; ctx.fillRect(0,0,W,H);
+  // grid
+  ctx.save(); ctx.strokeStyle=CYAN; ctx.lineWidth=0.3;
+  ctx.globalAlpha=0.18+0.08*Math.sin(gridPhase);
+  for(let x=0;x<W;x+=sx(40)){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for(let y=0;y<H;y+=sy(40)){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  ctx.restore();
+  // border
+  ctx.save(); ctx.strokeStyle=CYAN; ctx.lineWidth=1.2; ctx.setLineDash([sx(6),sx(3)]);
+  ctx.globalAlpha=0.8; rr(sx(30),sy(30),sx(620),sy(400),sx(6),false,true);
+  ctx.setLineDash([]); ctx.restore();
+  // title
+  ctx.save(); ctx.globalAlpha=0.9; ctx.fillStyle=CYAN;
+  ctx.font=`bold ${sy(11)}px monospace`; ctx.textAlign='center';
+  ctx.fillText('[ INTERIOR · SISTEMA OPERATIVO ]',sx(340),sy(22));
+  ctx.restore();
+  // HUD corners interior
+  drawHUDCorners(0.85,CYAN);
+  // back hint
+  ctx.save(); ctx.globalAlpha=0.6+0.3*Math.sin(t*2);
+  ctx.fillStyle=CYAN; ctx.font=`${sy(10)}px monospace`; ctx.textAlign='center';
+  ctx.fillText('↩ toca la escena para volver al exterior',sx(340),sy(438));
+  ctx.restore();
+}
+
+function drawShellBox(alpha){
+  // Shell at x=60..340, y=60..340 in 680-space
+  const bx=sx(60), by=sy(60), bw=sx(220), bh=sy(280);
+  ctx.save(); ctx.globalAlpha=alpha;
+  // box
+  ctx.fillStyle='#071828'; ctx.strokeStyle=CYAN; ctx.lineWidth=2;
+  rr(bx,by,bw,bh,sx(8),true,true);
+  // title bar
+  ctx.fillStyle='#0D2840'; rr(bx,by,bw,sy(38),sx(8),true,false);
+  ctx.fillRect(bx,by+sy(20),bw,sy(18));
+  ctx.fillStyle=CYAN; ctx.font=`bold ${sy(15)}px monospace`; ctx.textAlign='center';
+  ctx.fillText('SHELL',bx+bw/2,by+sy(25));
+  ctx.font=`${sy(9)}px monospace`; ctx.globalAlpha=0.55*alpha;
+  ctx.fillText('interfaz de usuario',bx+bw/2,by+sy(43));
+  ctx.fillText('bash · zsh · cmd',bx+bw/2,by+sy(56));
+  // code lines
+  ctx.globalAlpha=alpha;
+  const lines=[
+    [sx(50),CYAN,0.6],[sx(90),'#2A3D55',0.65],[sx(75),'#2A3D55',0.55],
+    [sx(85),CYAN,0.35],[sx(60),'#2A3D55',0.5],[sx(80),'#2A3D55',0.4],
+    [sx(55),CYAN,0.4],[sx(70),'#2A3D55',0.45],[sx(45),CYAN,0.5]
+  ];
+  lines.forEach(([w,c,o],i)=>{
+    ctx.fillStyle=c; ctx.globalAlpha=o*alpha;
+    ctx.fillRect(bx+sx(20),by+sy(75)+i*sy(14),w,sy(3));
+  });
+  // prompt area
+  ctx.globalAlpha=alpha;
+  ctx.fillStyle='#0A1420'; rr(bx+sx(18),by+sy(210),bw-sx(36),sy(60),sx(4),true,false);
+  ctx.fillStyle='rgba(29,233,182,0.3)'; ctx.lineWidth=0.8;
+  rr(bx+sx(18),by+sy(210),bw-sx(36),sy(1),sx(0),true,false);
+  ctx.fillStyle='#64FFDA'; ctx.font=`${sy(11)}px monospace`; ctx.textAlign='left';
+  ctx.fillText('user@os:~$',bx+sx(24),by+sy(228));
+  ctx.fillStyle=CYAN; ctx.font=`${sy(11)}px monospace`;
+  ctx.fillText('ls -la /proc',bx+sx(24),by+sy(248));
+  ctx.fillStyle=CYAN; ctx.globalAlpha=(blink?0.9:0.05)*alpha;
+  ctx.fillRect(bx+sx(24),by+sy(253),sx(7),sy(12));
+  // connection line up to border
+  ctx.globalAlpha=0.85*alpha; ctx.strokeStyle=CYAN; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(bx+bw/2,by); ctx.lineTo(bx+bw/2,sy(44)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bx+bw/2,sy(44)); ctx.lineTo(sx(46),sy(44)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(sx(46),sy(44)); ctx.lineTo(sx(46),sy(425)); ctx.stroke();
+  ctx.font=`${sy(9)}px monospace`; ctx.fillStyle=CYAN; ctx.textAlign='left';
+  ctx.fillText('stdin/stdout',sx(50),sy(40));
+  ctx.restore();
+}
+
+function drawKernelBox(alpha){
+  const bx=sx(400), by=sy(60), bw=sx(220), bh=sy(280);
+  ctx.save(); ctx.globalAlpha=alpha;
+  ctx.fillStyle='#0A1E10'; ctx.strokeStyle=AMBER; ctx.lineWidth=2;
+  rr(bx,by,bw,bh,sx(8),true,true);
+  ctx.fillStyle='#142810'; rr(bx,by,bw,sy(38),sx(8),true,false);
+  ctx.fillRect(bx,by+sy(20),bw,sy(18));
+  ctx.fillStyle=AMBER; ctx.font=`bold ${sy(15)}px monospace`; ctx.textAlign='center';
+  ctx.fillText('KERNEL',bx+bw/2,by+sy(25));
+  ctx.font=`${sy(9)}px monospace`; ctx.globalAlpha=0.55*alpha;
+  ctx.fillText('nucleo del sistema',bx+bw/2,by+sy(43));
+  ctx.fillText('gestion de recursos',bx+bw/2,by+sy(56));
+  // modules
+  ctx.globalAlpha=alpha;
+  const mods=['Scheduler','Memory Mgr','FS / I-O','Drivers'];
+  mods.forEach((name,i)=>{
+    const my=by+sy(72)+i*sy(52);
+    ctx.fillStyle='#0D1E08'; ctx.strokeStyle=AMBER; ctx.lineWidth=0.8;
+    rr(bx+sx(14),my,bw-sx(28),sy(42),sx(4),true,true);
+    ctx.fillStyle=AMBER; ctx.font=`${sy(11)}px monospace`; ctx.textAlign='center';
+    ctx.fillText(name,bx+bw/2,my+sy(22));
+    ctx.font=`${sy(8)}px monospace`; ctx.globalAlpha=0.5*alpha;
+    const subs=['CPU time mgmt','virtual memory','filesystem I/O','hw abstraction'];
+    ctx.fillText(subs[i],bx+bw/2,my+sy(35));
+    ctx.globalAlpha=alpha;
+    // active indicator
+    const active=(Math.sin(t*4+i*1.2)>0.2);
+    ctx.fillStyle=active?'#28C840':'#1A2535';
+    ctx.beginPath(); ctx.arc(bx+bw-sx(18),my+sy(14),sx(5),0,Math.PI*2); ctx.fill();
+  });
+  // connection line
+  ctx.globalAlpha=0.85*alpha; ctx.strokeStyle=AMBER; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(bx+bw/2,by); ctx.lineTo(bx+bw/2,sy(44)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bx+bw/2,sy(44)); ctx.lineTo(sx(634),sy(44)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(sx(634),sy(44)); ctx.lineTo(sx(634),sy(425)); ctx.stroke();
+  ctx.font=`${sy(9)}px monospace`; ctx.fillStyle=AMBER; ctx.textAlign='right';
+  ctx.fillText('hardware I/O',sx(630),sy(40));
+  ctx.restore();
+}
+
+function drawInnerParticles(alpha){
+  // shell right edge to kernel left edge (in 680-space: ~280 to 400)
+  const LX=sx(280), RX=sx(400);
+  const trackY1=sy(210), trackY2=sy(245);
+  // track dashes
+  ctx.save(); ctx.globalAlpha=0.2*alpha; ctx.strokeStyle=PURPLE; ctx.lineWidth=0.6;
+  ctx.setLineDash([sx(5),sx(3)]);
+  ctx.beginPath(); ctx.moveTo(LX,trackY1); ctx.lineTo(RX,trackY1); ctx.stroke();
+  ctx.strokeStyle=AMBER;
+  ctx.beginPath(); ctx.moveTo(LX,trackY2); ctx.lineTo(RX,trackY2); ctx.stroke();
+  ctx.setLineDash([]);
+  // labels
+  ctx.globalAlpha=0.85*alpha; ctx.textAlign='center';
+  ctx.fillStyle=PURPLE; ctx.font=`bold ${sy(10)}px monospace`;
+  ctx.fillText('syscall',sx(340),trackY1-sy(6));
+  ctx.fillStyle=AMBER; ctx.font=`bold ${sy(10)}px monospace`;
+  ctx.fillText('response',sx(340),trackY2+sy(16));
+  // arrows
+  ctx.fillStyle=PURPLE; ctx.globalAlpha=0.8*alpha;
+  ctx.beginPath(); ctx.moveTo(sx(355),trackY1); ctx.lineTo(sx(368),trackY1-sy(6)); ctx.lineTo(sx(368),trackY1+sy(6)); ctx.closePath(); ctx.fill();
+  ctx.fillStyle=AMBER;
+  ctx.beginPath(); ctx.moveTo(sx(325),trackY2); ctx.lineTo(sx(312),trackY2-sy(6)); ctx.lineTo(sx(312),trackY2+sy(6)); ctx.closePath(); ctx.fill();
+  ctx.restore();
+
+  // particles
+  innerParticles.forEach(p=>{
+    const x=p.dir==='lr'?lerp(LX,RX,p.t):lerp(RX,LX,p.t);
+    const y=p.dir==='lr'?trackY1:trackY2;
+    const col=p.dir==='lr'?PURPLE:AMBER;
+    ctx.save(); ctx.globalAlpha=alpha;
+    ctx.shadowColor=col; ctx.shadowBlur=12;
+    ctx.fillStyle=col;
+    ctx.beginPath(); ctx.arc(x,y,sx(5.5),0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    p.trail.forEach((tp,i)=>{
+      ctx.globalAlpha=alpha*(0.5-(i*0.07));
+      ctx.fillStyle=col;
+      ctx.beginPath(); ctx.arc(tp.x,tp.y,sx(4-i*0.4),0,Math.PI*2); ctx.fill();
+    });
+    ctx.restore();
+  });
+}
+
+// ── CLICK ZONES ─────────────────────────────────
+const userZone  ={x:sx(44), y:sy(85),  w:sx(112),h:sy(290)};
+const lapZone   ={x:sx(510),y:sy(95),  w:sx(140),h:sy(280)};
+const boxZone   ={x:sx(255),y:sy(85),  w:sx(170),h:sy(270)};
+const innerZone ={x:0,      y:0,       w:W,       h:H};
+
+function hitTest(mx,my,z){ return mx>=z.x&&mx<=z.x+z.w&&my>=z.y&&my<=z.y+z.h; }
+
+canvas.addEventListener('mousemove',e=>{
+  if(view==='inner'){canvas.style.cursor='pointer';return;}
+  const r=canvas.getBoundingClientRect();
+  const mx=(e.clientX-r.left)*(W/r.width);
+  const my=(e.clientY-r.top)*(H/r.height);
+  canvas.style.cursor=(hitTest(mx,my,userZone)||hitTest(mx,my,lapZone)||hitTest(mx,my,boxZone))?'pointer':'default';
+});
+
+canvas.addEventListener('click',e=>{
+  const r=canvas.getBoundingClientRect();
+  const mx=(e.clientX-r.left)*(W/r.width);
+  const my=(e.clientY-r.top)*(H/r.height);
+  if(view==='inner'){zoomOut(); return;}
+  if(view==='outer'){
+    if(hitTest(mx,my,boxZone)){ zoomIn(); return; }
+    if(hitTest(mx,my,userZone)){ showUserTooltip(); return; }
+    if(hitTest(mx,my,lapZone)){ showLapTooltip(); return; }
+  }
+});
+
+canvas.addEventListener('touchend',e=>{
+  e.preventDefault();
+  const r=canvas.getBoundingClientRect();
+  const touch=e.changedTouches[0];
+  const mx=(touch.clientX-r.left)*(W/r.width);
+  const my=(touch.clientY-r.top)*(H/r.height);
+  if(view==='inner'){zoomOut(); return;}
+  if(view==='outer'){
+    if(hitTest(mx,my,boxZone)){ zoomIn(); return; }
+    if(hitTest(mx,my,userZone)){ showUserTooltip(); return; }
+    if(hitTest(mx,my,lapZone)){ showLapTooltip(); return; }
+  }
+},{passive:false});
+
+function zoomIn(){
+  if(view!=='outer') return;
+  view='zooming_in'; zoomProg=0;
+  closeTooltip('tooltip-user'); closeTooltip('tooltip-laptop');
+}
+function zoomOut(){
+  if(view!=='inner') return;
+  view='zooming_out'; zoomProg=1;
+}
+
+// ── TOOLTIPS ────────────────────────────────────
+function closeTooltip(id){ document.getElementById(id).style.display='none'; }
+
+const cmds=[
+  {cmd:'ls -la /proc',    out:'dr-xr-xr-x  cpuinfo meminfo net ...'},
+  {cmd:'cat /proc/cpuinfo',out:'processor : 0  vendor : GenuineIntel'},
+  {cmd:'dmesg | tail -3', out:'[ 1.234] ACPI: IRQ0 used by override.'},
+  {cmd:'lsmod | head -5', out:'Module  Size  Used\nnvme  57344  4'},
+];
+let cmdIdx=0,charIdx=0,tphase='typing',lineDelay=0,termCmdEl,termOutEl,termInterval=null;
+
+function termTick(){
+  if(!termCmdEl) return;
+  const c=cmds[cmdIdx];
+  if(tphase==='typing'){
+    charIdx++;
+    termCmdEl.textContent=c.cmd.substring(0,charIdx);
+    if(charIdx>=c.cmd.length){tphase='waiting';lineDelay=0;}
+  }else if(tphase==='waiting'){
+    if(++lineDelay>18){termOutEl.textContent=c.out;tphase='clearing';lineDelay=0;}
+  }else if(tphase==='clearing'){
+    if(++lineDelay>40){
+      termCmdEl.textContent='';termOutEl.textContent='';
+      cmdIdx=(cmdIdx+1)%cmds.length;charIdx=0;tphase='typing';
+    }
+  }
+}
+function showUserTooltip(){
+  document.getElementById('tooltip-user').style.display='block';
+  termCmdEl=document.getElementById('tcmd');
+  termOutEl=document.getElementById('tout');
+  termCmdEl.textContent='';termOutEl.textContent='';
+  cmdIdx=0;charIdx=0;tphase='typing';
+  if(termInterval)clearInterval(termInterval);
+  termInterval=setInterval(termTick,60);
+}
+
+let binInterval=null;
+function showLapTooltip(){
+  document.getElementById('tooltip-laptop').style.display='block';
+  const binEl=document.getElementById('bin-stream');
+  if(binInterval)clearInterval(binInterval);
+  binInterval=setInterval(()=>{
+    let s='';for(let i=0;i<28;i++)s+=Math.random()>0.5?'1':'0';
+    binEl.textContent=s;
+  },80);
+}
+
+// ── UPDATE ──────────────────────────────────────
+function update(){
+  t+=0.025; gridPhase+=0.02; scanY=(scanY+1.5)%H;
+  userFloat=Math.sin(t)*7; lapFloat=Math.sin(t+1.5)*7;
+
+  // zoom progress
+  if(view==='zooming_in'){
+    zoomProg=Math.min(1,zoomProg+0.04);
+    if(zoomProg>=1) view='inner';
+  }else if(view==='zooming_out'){
+    zoomProg=Math.max(0,zoomProg-0.04);
+    if(zoomProg<=0) view='outer';
+  }
+
+  // outer particles
+  outerParticles.forEach(p=>{
+    const lx=sx(155),rx=sx(525);
+    const x=p.dir==='lr'?lerp(lx,rx,p.t):lerp(rx,lx,p.t);
+    const y=p.dir==='lr'?sy(222):sy(238);
+    p.trail.unshift({x,y});
+    if(p.trail.length>7)p.trail.pop();
+    p.t+=0.005; if(p.t>1){p.t=0;p.trail=[];}
+  });
+
+  // inner particles (faster)
+  if(view==='inner'||view==='zooming_in'){
+    innerParticles.forEach(p=>{
+      const lx=sx(280),rx=sx(400);
+      const x=p.dir==='lr'?lerp(lx,rx,p.t):lerp(rx,lx,p.t);
+      const y=p.dir==='lr'?sy(210):sy(245);
+      p.trail.unshift({x,y});
+      if(p.trail.length>8)p.trail.pop();
+      p.t+=0.018; if(p.t>1){p.t=0;p.trail=[];}
+    });
+  }
+}
+
+// ── DRAW ────────────────────────────────────────
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  ctx.beginPath(); rr(0,0,W,H,sx(16),false,false); ctx.clip();
+
+  const ep=easeInOut(clamp(zoomProg,0,1));
+
+  if(view==='outer'||view==='zooming_in'||view==='zooming_out'){
+    const outerAlpha=view==='outer'?1:clamp(1-ep*2.2,0,1);
+    ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
+    drawGrid(outerAlpha);
+    drawScan(outerAlpha);
+    drawARLabel(outerAlpha);
+    drawHUDCorners(outerAlpha);
+    drawSilhouette(userFloat,outerAlpha);
+    drawMonitor(userFloat,outerAlpha);
+    drawARRings(sx(100),sy(230),CYAN,t,outerAlpha);
+    drawSignalTracks(outerAlpha);
+    drawOuterParticles(outerAlpha);
+    const boxHover=(view==='outer')&&isHoveringBox;
+    drawBox3D(outerAlpha, boxHover?1.04:1);
+    drawARRings(sx(580),sy(228),AMBER,t+1.5,outerAlpha);
+    drawLaptop(lapFloat,outerAlpha);
+    drawLabels(outerAlpha);
+    drawLegend(outerAlpha);
+    // vortex overlay
+    if(view==='zooming_in') drawVortex(ep);
+    if(view==='zooming_out') drawVortex(ep);
+  }
+
+  if(view==='inner'||(view==='zooming_in'&&ep>0.45)||(view==='zooming_out'&&ep>0.45)){
+    const innerAlpha=view==='inner'?1:clamp((ep-0.45)/0.55,0,1);
+    if(view==='zooming_in'||view==='zooming_out'){
+      // blend over black flash
+      ctx.fillStyle=`rgba(2,8,16,${innerAlpha})`; ctx.fillRect(0,0,W,H);
+    }
+    if(view==='inner') drawInteriorBG();
+    else{
+      ctx.globalAlpha=innerAlpha;
+      ctx.fillStyle='#020810'; ctx.fillRect(0,0,W,H);
+      ctx.globalAlpha=1;
+      const savedAlpha=innerAlpha;
+      // draw interior at partial alpha
+      ctx.save(); ctx.globalAlpha=savedAlpha;
+      const _drawFull=()=>{
+        drawInteriorBG();
+        drawShellBox(1); drawKernelBox(1); drawInnerParticles(1);
+      };
+      // trick: draw to offscreen then blit at alpha
+      ctx.restore();
+      ctx.save(); ctx.globalAlpha=innerAlpha;
+      drawInteriorBG();
+      drawShellBox(innerAlpha); drawKernelBox(innerAlpha); drawInnerParticles(innerAlpha);
+      ctx.restore();
+    }
+    if(view==='inner'){
+      drawShellBox(1); drawKernelBox(1); drawInnerParticles(1);
+    }
+  }
+
+  ctx.restore();
+}
+
+// ── HOVER TRACKING FOR BOX ──────────────────────
+let isHoveringBox=false;
+canvas.addEventListener('mousemove',e=>{
+  if(view!=='outer'){isHoveringBox=false;return;}
+  const r=canvas.getBoundingClientRect();
+  const mx=(e.clientX-r.left)*(W/r.width);
+  const my=(e.clientY-r.top)*(H/r.height);
+  isHoveringBox=hitTest(mx,my,boxZone);
+},{capture:true});
+
+// ── LOOP ────────────────────────────────────────
+function loop(){ update(); draw(); requestAnimationFrame(loop); }
+loop();
+</script>
+</body>
+</html>
