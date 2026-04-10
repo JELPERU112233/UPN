@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador VLAN — Catalyst 2960</title>
+<style>
+/* ── Reset y fondo negro ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: #000000;
+  min-height: 100vh;
+  padding: 20px;
+  font-family: monospace;
+}
+
+/* ── Variables de color (modo oscuro fijo) ── */
+:root {
+  --color-background-primary:   #0d1117;
+  --color-background-secondary: #161b22;
+  --color-background-tertiary:  #000000;
+  --color-text-primary:         #c9d1d9;
+  --color-text-secondary:       #8b949e;
+  --color-border-tertiary:      rgba(255,255,255,0.10);
+  --color-border-secondary:     rgba(255,255,255,0.20);
+  --font-sans: monospace;
+  --font-mono: monospace;
+  --border-radius-md: 6px;
+  --border-radius-lg: 10px;
+}
+
+@keyframes dash { to { stroke-dashoffset: -18; } }
+.cable { stroke-dasharray: 4 3; animation: dash 1s linear infinite; }
+.cable.idle { animation: none; stroke-dasharray: none; opacity: 0.3; }
+.pc-g { cursor: pointer; }
+.pc-g:hover .pc-body { opacity: 0.8; }
+.port-g { cursor: pointer; }
+.port-g:hover rect { opacity: 0.75; }
+
+select, button {
+  font-family: monospace;
+  font-size: 11px;
+  background: #161b22;
+  color: #c9d1d9;
+  border: 0.5px solid rgba(255,255,255,0.20);
+  border-radius: 4px;
+  padding: 5px 8px;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+button { width: auto; padding: 5px 14px; }
+label {
+  font-family: monospace;
+  font-size: 10px;
+  color: #8b949e;
+  display: block;
+  margin-bottom: 3px;
+}
+
+/* ── Wrapper principal ── */
+.wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: #000000;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+/* ── SVG container: reducido 20% via transform ── */
+.svg-container {
+  flex: 1;
+  min-width: 0;
+  transform-origin: top left;
+  transform: scale(0.80);
+  /* compensar el espacio que deja el scale */
+  width: 125%;          /* 1/0.8 = 1.25 para que el flex no colapsa */
+  margin-bottom: -20%;  /* recortar el espacio vacío inferior */
+}
+
+/* ── Panel derecho ── */
+.side-panel {
+  width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 8px;
+}
+.side-card {
+  background: #161b22;
+  border: 0.5px solid rgba(255,255,255,0.10);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.side-label {
+  font-family: monospace;
+  font-size: 9px;
+  color: #8b949e;
+  margin-bottom: 4px;
+}
+.step-item {
+  font-family: monospace;
+  font-size: 9px;
+  color: rgba(255,255,255,0.20);
+  transition: color 0.2s;
+}
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+<!-- ===== SVG izquierda (80% del tamaño original) ===== -->
+<div class="svg-container">
+<svg width="100%" viewBox="0 0 420 480">
+<defs>
+  <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+
+<!-- 6 PCs fila superior -->
+<g class="pc-g" onclick="selectSrc(1)" id="pc1">
+  <rect class="pc-body" x="4"   y="18" width="60" height="42" rx="4" fill="#0a1a14" stroke="#1D9E75" stroke-width="1.4"/>
+  <rect x="12"  y="24" width="44" height="26" rx="2" fill="#0F6E56" opacity="0.4"/>
+  <rect x="28"  y="50" width="12" height="3"  rx="1" fill="#1D9E75" opacity="0.5"/>
+  <text x="34"  y="70" text-anchor="middle" font-family="monospace" font-size="8"   fill="#1D9E75" font-weight="500">PC-1</text>
+  <text x="34"  y="80" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#9FE1CB">10.1 V10</text>
+</g>
+<g class="pc-g" onclick="selectSrc(2)" id="pc2">
+  <rect class="pc-body" x="74"  y="18" width="60" height="42" rx="4" fill="#0a1a14" stroke="#1D9E75" stroke-width="1.4"/>
+  <rect x="82"  y="24" width="44" height="26" rx="2" fill="#0F6E56" opacity="0.4"/>
+  <rect x="98"  y="50" width="12" height="3"  rx="1" fill="#1D9E75" opacity="0.5"/>
+  <text x="104" y="70" text-anchor="middle" font-family="monospace" font-size="8"   fill="#1D9E75" font-weight="500">PC-2</text>
+  <text x="104" y="80" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#9FE1CB">10.2 V10</text>
+</g>
+<g class="pc-g" onclick="selectSrc(3)" id="pc3">
+  <rect class="pc-body" x="144" y="18" width="60" height="42" rx="4" fill="#0a1220" stroke="#378ADD" stroke-width="1.4"/>
+  <rect x="152" y="24" width="44" height="26" rx="2" fill="#185FA5" opacity="0.4"/>
+  <rect x="168" y="50" width="12" height="3"  rx="1" fill="#378ADD" opacity="0.5"/>
+  <text x="174" y="70" text-anchor="middle" font-family="monospace" font-size="8"   fill="#378ADD" font-weight="500">PC-3</text>
+  <text x="174" y="80" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#85B7EB">20.3 V20</text>
+</g>
+<g class="pc-g" onclick="selectSrc(4)" id="pc4">
+  <rect class="pc-body" x="214" y="18" width="60" height="42" rx="4" fill="#0a1220" stroke="#378ADD" stroke-width="1.4"/>
+  <rect x="222" y="24" width="44" height="26" rx="2" fill="#185FA5" opacity="0.4"/>
+  <rect x="238" y="50" width="12" height="3"  rx="1" fill="#378ADD" opacity="0.5"/>
+  <text x="244" y="70" text-anchor="middle" font-family="monospace" font-size="8"   fill="#378ADD" font-weight="500">PC-4</text>
+  <text x="244" y="80" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#85B7EB">20.4 V20</text>
+</g>
+<g class="pc-g" onclick="selectSrc(5)" id="pc5">
+  <rect class="pc-body" x="284" y="18" width="60" height="42" rx="4" fill="#1e0f08" stroke="#D85A30" stroke-width="1.4"/>
+  <rect x="292" y="24" width="44" height="26" rx="2" fill="#993C1D" opacity="0.4"/>
+  <rect x="308" y="50" width="12" height="3"  rx="1" fill="#D85A30" opacity="0.5"/>
+  <text x="314" y="70" text-anchor="middle" font-family="monospace" font-size="8"   fill="#D85A30" font-weight="500">PC-5</text>
+  <text x="314" y="80" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#F0997B">30.5 V30</text>
+</g>
+<g class="pc-g" onclick="selectSrc(6)" id="pc6">
+  <rect class="pc-body" x="354" y="18" width="60" height="42" rx="4" fill="#1e0f08" stroke="#D85A30" stroke-width="1.4"/>
+  <rect x="362" y="24" width="44" height="26" rx="2" fill="#993C1D" opacity="0.4"/>
+  <rect x="378" y="50" width="12" height="3"  rx="1" fill="#D85A30" opacity="0.5"/>
+  <text x="384" y="70" text-anchor="middle" font-family="monospace" font-size="8"   fill="#D85A30" font-weight="500">PC-6</text>
+  <text x="384" y="80" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#F0997B">30.6 V30</text>
+</g>
+
+<!-- Cables PC → switch -->
+<line id="cable-1" x1="34"  y1="84" x2="52"  y2="166" stroke="#1D9E75" stroke-width="1.4" class="cable idle"/>
+<line id="cable-2" x1="104" y1="84" x2="102" y2="166" stroke="#1D9E75" stroke-width="1.4" class="cable idle"/>
+<line id="cable-3" x1="174" y1="84" x2="152" y2="166" stroke="#378ADD" stroke-width="1.4" class="cable idle"/>
+<line id="cable-4" x1="244" y1="84" x2="202" y2="166" stroke="#378ADD" stroke-width="1.4" class="cable idle"/>
+<line id="cable-5" x1="314" y1="84" x2="252" y2="166" stroke="#D85A30" stroke-width="1.4" class="cable idle"/>
+<line id="cable-6" x1="384" y1="84" x2="302" y2="166" stroke="#D85A30" stroke-width="1.4" class="cable idle"/>
+<line id="cable-T" x1="362" y1="196" x2="418" y2="196" stroke="#7F77DD" stroke-width="2" class="cable idle" stroke-dasharray="5 3"/>
+
+<!-- SWITCH BODY -->
+<rect x="4" y="164" width="408" height="72" rx="9" fill="#12151f" stroke="#2a3050" stroke-width="1.5"/>
+<text x="208" y="178" text-anchor="middle" font-family="monospace" font-size="8" fill="#3a4060">CISCO CATALYST 2960</text>
+<rect x="16" y="183" width="384" height="4" rx="2" fill="#0a0d14"/>
+<rect x="16" y="218" width="384" height="8" rx="3" fill="#0a0d14"/>
+<text x="208" y="225" text-anchor="middle" font-family="monospace" font-size="6" fill="#2a3050">SWITCH FABRIC / BACKPLANE</text>
+
+<!-- Puertos -->
+<g class="port-g" onclick="selectSrc(1)" id="sw-p1">
+  <rect x="16"  y="189" width="42" height="26" rx="3" fill="#1D9E75" stroke="#0F6E56" stroke-width="1"/>
+  <text x="37"  y="201" text-anchor="middle" font-family="monospace" font-size="7.5" fill="#E1F5EE" font-weight="500">Fa0/1</text>
+  <text x="37"  y="211" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#9FE1CB">V10</text>
+</g>
+<g class="port-g" onclick="selectSrc(2)" id="sw-p2">
+  <rect x="66"  y="189" width="42" height="26" rx="3" fill="#1D9E75" stroke="#0F6E56" stroke-width="1"/>
+  <text x="87"  y="201" text-anchor="middle" font-family="monospace" font-size="7.5" fill="#E1F5EE" font-weight="500">Fa0/2</text>
+  <text x="87"  y="211" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#9FE1CB">V10</text>
+</g>
+<g class="port-g" onclick="selectSrc(3)" id="sw-p3">
+  <rect x="118" y="189" width="42" height="26" rx="3" fill="#378ADD" stroke="#185FA5" stroke-width="1"/>
+  <text x="139" y="201" text-anchor="middle" font-family="monospace" font-size="7.5" fill="#E6F1FB" font-weight="500">Fa0/3</text>
+  <text x="139" y="211" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#B5D4F4">V20</text>
+</g>
+<g class="port-g" onclick="selectSrc(4)" id="sw-p4">
+  <rect x="168" y="189" width="42" height="26" rx="3" fill="#378ADD" stroke="#185FA5" stroke-width="1"/>
+  <text x="189" y="201" text-anchor="middle" font-family="monospace" font-size="7.5" fill="#E6F1FB" font-weight="500">Fa0/4</text>
+  <text x="189" y="211" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#B5D4F4">V20</text>
+</g>
+<g class="port-g" onclick="selectSrc(5)" id="sw-p5">
+  <rect x="218" y="189" width="42" height="26" rx="3" fill="#D85A30" stroke="#993C1D" stroke-width="1"/>
+  <text x="239" y="201" text-anchor="middle" font-family="monospace" font-size="7.5" fill="#FAECE7" font-weight="500">Fa0/5</text>
+  <text x="239" y="211" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#F5C4B3">V30</text>
+</g>
+<g class="port-g" onclick="selectSrc(6)" id="sw-p6">
+  <rect x="268" y="189" width="42" height="26" rx="3" fill="#D85A30" stroke="#993C1D" stroke-width="1"/>
+  <text x="289" y="201" text-anchor="middle" font-family="monospace" font-size="7.5" fill="#FAECE7" font-weight="500">Fa0/6</text>
+  <text x="289" y="211" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#F5C4B3">V30</text>
+</g>
+<g class="port-g" onclick="selectSrc('T')" id="sw-pT">
+  <rect x="330" y="187" width="50" height="30" rx="3" fill="#7F77DD" stroke="#534AB7" stroke-width="1.4"/>
+  <text x="355" y="200" text-anchor="middle" font-family="monospace" font-size="7.5" fill="#EEEDFE" font-weight="500">Gi0/1</text>
+  <text x="355" y="211" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#CECBF6">TRUNK</text>
+</g>
+
+<!-- Líneas port → backplane -->
+<line x1="37"  y1="215" x2="37"  y2="218" stroke="#1D9E75" stroke-width="1" opacity="0.5"/>
+<line x1="87"  y1="215" x2="87"  y2="218" stroke="#1D9E75" stroke-width="1" opacity="0.5"/>
+<line x1="139" y1="215" x2="139" y2="218" stroke="#378ADD" stroke-width="1" opacity="0.5"/>
+<line x1="189" y1="215" x2="189" y2="218" stroke="#378ADD" stroke-width="1" opacity="0.5"/>
+<line x1="239" y1="215" x2="239" y2="218" stroke="#D85A30" stroke-width="1" opacity="0.5"/>
+<line x1="289" y1="215" x2="289" y2="218" stroke="#D85A30" stroke-width="1" opacity="0.5"/>
+<line x1="355" y1="217" x2="355" y2="218" stroke="#7F77DD" stroke-width="1" opacity="0.5"/>
+
+<!-- Router -->
+<g class="pc-g" onclick="selectSrc('T')" id="pcT">
+  <rect class="pc-body" x="390" y="178" width="26" height="36" rx="4" fill="#1a1830" stroke="#7F77DD" stroke-width="1.4"/>
+  <ellipse cx="403" cy="190" rx="9" ry="6" fill="#534AB7" opacity="0.5"/>
+  <ellipse cx="403" cy="190" rx="5" ry="3" fill="#7F77DD" opacity="0.5"/>
+  <text x="403" y="206" text-anchor="middle" font-family="monospace" font-size="6"   fill="#AFA9EC">RTR</text>
+  <text x="403" y="214" text-anchor="middle" font-family="monospace" font-size="5.5" fill="#534AB7">TRUNK</text>
+</g>
+
+<!-- TABLA CAM -->
+<rect x="4" y="248" width="408" height="96" rx="7" fill="#0a0d14" stroke="#1a2040" stroke-width="0.5"/>
+<text x="18" y="263" font-family="monospace" font-size="8" fill="#3a4060" font-weight="500">TABLA CAM — MAC ADDRESS TABLE</text>
+<text x="18"  y="278" font-family="monospace" font-size="7" fill="#2a3050">VLAN</text>
+<text x="56"  y="278" font-family="monospace" font-size="7" fill="#2a3050">MAC ADDRESS</text>
+<text x="198" y="278" font-family="monospace" font-size="7" fill="#2a3050">TIPO</text>
+<text x="262" y="278" font-family="monospace" font-size="7" fill="#2a3050">PUERTO</text>
+<text x="322" y="278" font-family="monospace" font-size="7" fill="#2a3050">AGING</text>
+<line x1="12" y1="282" x2="404" y2="282" stroke="#1a2040" stroke-width="0.5"/>
+
+<text x="18"  y="293" font-family="monospace" font-size="7" fill="#1D9E75">10</text>
+<text x="56"  y="293" font-family="monospace" font-size="7" fill="#9FE1CB">AA:BB:CC:01:00:01</text>
+<text x="198" y="293" font-family="monospace" font-size="7" fill="#2a3050">DYNAMIC</text>
+<text x="262" y="293" font-family="monospace" font-size="7" fill="#1D9E75">Fa0/1</text>
+<text x="322" y="293" font-family="monospace" font-size="7" fill="#3a4060">298 s</text>
+
+<text x="18"  y="305" font-family="monospace" font-size="7" fill="#1D9E75">10</text>
+<text x="56"  y="305" font-family="monospace" font-size="7" fill="#9FE1CB">AA:BB:CC:02:00:02</text>
+<text x="198" y="305" font-family="monospace" font-size="7" fill="#2a3050">DYNAMIC</text>
+<text x="262" y="305" font-family="monospace" font-size="7" fill="#1D9E75">Fa0/2</text>
+<text x="322" y="305" font-family="monospace" font-size="7" fill="#3a4060">251 s</text>
+
+<text x="18"  y="317" font-family="monospace" font-size="7" fill="#378ADD">20</text>
+<text x="56"  y="317" font-family="monospace" font-size="7" fill="#85B7EB">CC:DD:EE:03:00:03</text>
+<text x="198" y="317" font-family="monospace" font-size="7" fill="#2a3050">DYNAMIC</text>
+<text x="262" y="317" font-family="monospace" font-size="7" fill="#378ADD">Fa0/3</text>
+<text x="322" y="317" font-family="monospace" font-size="7" fill="#3a4060">187 s</text>
+
+<text x="18"  y="329" font-family="monospace" font-size="7" fill="#378ADD">20</text>
+<text x="56"  y="329" font-family="monospace" font-size="7" fill="#85B7EB">CC:DD:EE:04:00:04</text>
+<text x="198" y="329" font-family="monospace" font-size="7" fill="#2a3050">DYNAMIC</text>
+<text x="262" y="329" font-family="monospace" font-size="7" fill="#378ADD">Fa0/4</text>
+<text x="322" y="329" font-family="monospace" font-size="7" fill="#3a4060">300 s</text>
+
+<text x="18"  y="341" font-family="monospace" font-size="7" fill="#D85A30">30</text>
+<text x="56"  y="341" font-family="monospace" font-size="7" fill="#F0997B">EE:FF:00:05:00:05</text>
+<text x="198" y="341" font-family="monospace" font-size="7" fill="#2a3050">DYNAMIC</text>
+<text x="262" y="341" font-family="monospace" font-size="7" fill="#D85A30">Fa0/5</text>
+<text x="322" y="341" font-family="monospace" font-size="7" fill="#3a4060">144 s</text>
+
+<line x1="12" y1="344" x2="404" y2="344" stroke="#1a2040" stroke-width="0.5"/>
+<text x="18"  y="355" font-family="monospace" font-size="7" fill="#D85A30">30</text>
+<text x="56"  y="355" font-family="monospace" font-size="7" fill="#F0997B">EE:FF:00:06:00:06</text>
+<text x="198" y="355" font-family="monospace" font-size="7" fill="#2a3050">DYNAMIC</text>
+<text x="262" y="355" font-family="monospace" font-size="7" fill="#D85A30">Fa0/6</text>
+<text x="322" y="355" font-family="monospace" font-size="7" fill="#3a4060">77 s</text>
+
+<!-- PANEL DECISIÓN -->
+<rect x="4" y="354" width="408" height="88" rx="7" fill="#0a0d14" stroke="#1a2040" stroke-width="0.5"/>
+<text id="info-title" x="208" y="371" text-anchor="middle" font-family="monospace" font-size="8" fill="#3a4060">Selecciona origen y destino, luego ▶ Enviar trama</text>
+
+<g id="info-body" opacity="0">
+  <rect x="12"  y="376" width="192" height="58" rx="4" fill="#0d1020" stroke="#1a2040" stroke-width="0.5"/>
+  <text x="20" y="389" font-family="monospace" font-size="7" fill="#3a4060">FRAME ETHERNET</text>
+  <text x="20" y="401" font-family="monospace" font-size="7" fill="#4a5070">SRC MAC:</text>
+  <text id="i-src-v" x="196" y="401" text-anchor="end" font-family="monospace" font-size="7" fill="#9FE1CB">—</text>
+  <text x="20" y="412" font-family="monospace" font-size="7" fill="#4a5070">DST MAC:</text>
+  <text id="i-dst-v" x="196" y="412" text-anchor="end" font-family="monospace" font-size="7" fill="#9FE1CB">—</text>
+  <text x="20" y="423" font-family="monospace" font-size="7" fill="#4a5070">802.1Q:</text>
+  <text id="i-tag-v" x="196" y="423" text-anchor="end" font-family="monospace" font-size="7" fill="#9FE1CB">—</text>
+  <text x="20" y="434" font-family="monospace" font-size="7" fill="#4a5070">IP:</text>
+  <text id="i-ip-v"  x="196" y="434" text-anchor="end" font-family="monospace" font-size="7" fill="#9FE1CB">—</text>
+
+  <rect x="212" y="376" width="196" height="58" rx="4" fill="#0d1020" stroke="#1a2040" stroke-width="0.5"/>
+  <text x="220" y="389" font-family="monospace" font-size="7" fill="#3a4060">DECISIÓN SWITCH</text>
+  <text x="220" y="401" font-family="monospace" font-size="7" fill="#4a5070">Entrada:</text>
+  <text id="j-1v" x="400" y="401" text-anchor="end" font-family="monospace" font-size="7" fill="#9FE1CB">—</text>
+  <text x="220" y="412" font-family="monospace" font-size="7" fill="#4a5070">VLAN:</text>
+  <text id="j-2v" x="400" y="412" text-anchor="end" font-family="monospace" font-size="7" fill="#9FE1CB">—</text>
+  <text x="220" y="423" font-family="monospace" font-size="7" fill="#4a5070">Acción:</text>
+  <text id="j-3v" x="400" y="423" text-anchor="end" font-family="monospace" font-size="7" fill="#9FE1CB">—</text>
+  <text x="220" y="434" font-family="monospace" font-size="7" fill="#4a5070">Salida:</text>
+  <text id="j-4v" x="400" y="434" text-anchor="end" font-family="monospace" font-size="7" fill="#9FE1CB">—</text>
+</g>
+
+<!-- Paquete animado -->
+<circle id="pkt"     cx="-99" cy="-99" r="6"  opacity="0" fill="#1D9E75"/>
+<text   id="pkt-lbl" x="-99"  y="-99"  font-family="monospace" font-size="6" fill="#fff" opacity="0" text-anchor="middle"/>
+
+<text id="msg-svg"  x="208" y="452" text-anchor="middle" font-family="monospace" font-size="8" fill="#3a4060"></text>
+<text id="msg-svg2" x="208" y="464" text-anchor="middle" font-family="monospace" font-size="8" fill="#3a4060"></text>
+
+</svg>
+</div>
+
+<!-- ===== PANEL DERECHO ===== -->
+<div class="side-panel">
+
+  <!-- Controles -->
+  <div class="side-card">
+    <div>
+      <label>Origen</label>
+      <select id="sel-src" onchange="updateDst()">
+        <option value="1">PC-1 — VLAN 10 / Fa0/1</option>
+        <option value="2">PC-2 — VLAN 10 / Fa0/2</option>
+        <option value="3">PC-3 — VLAN 20 / Fa0/3</option>
+        <option value="4">PC-4 — VLAN 20 / Fa0/4</option>
+        <option value="5">PC-5 — VLAN 30 / Fa0/5</option>
+        <option value="6">PC-6 — VLAN 30 / Fa0/6</option>
+      </select>
+    </div>
+    <div>
+      <label>Destino</label>
+      <select id="sel-dst">
+        <option value="2">PC-2 — VLAN 10 / Fa0/2</option>
+        <option value="3">PC-3 — VLAN 20 / Fa0/3</option>
+        <option value="4">PC-4 — VLAN 20 / Fa0/4</option>
+        <option value="5">PC-5 — VLAN 30 / Fa0/5</option>
+        <option value="6">PC-6 — VLAN 30 / Fa0/6</option>
+        <option value="T">ROUTER — Trunk / Gi0/1</option>
+      </select>
+    </div>
+    <button onclick="runFlow()" style="color:#c9d1d9;">▶ Enviar trama</button>
+    <button onclick="alert('Ver comandos IOS en la guía adjunta.')" style="color:#8b949e;">Ver comandos IOS ↗</button>
+  </div>
+
+  <!-- Resultado -->
+  <div class="side-card" style="min-height:70px;">
+    <div class="side-label">RESULTADO</div>
+    <div id="result-msg" style="font-family:monospace;font-size:10px;color:#8b949e;line-height:1.5;white-space:pre;">—</div>
+  </div>
+
+  <!-- Pasos -->
+  <div class="side-card">
+    <div class="side-label">PASOS</div>
+    <div id="step1" class="step-item">[1] PC → puerto switch</div>
+    <div id="step2" class="step-item">[2] Consulta tabla CAM</div>
+    <div id="step3" class="step-item">[3] Decisión forwarding</div>
+    <div id="step4" class="step-item">[4] Entrega al destino</div>
+  </div>
+
+</div>
+</div>
+
+<script>
+const PCS = {
+  1:{ label:'PC-1', vlan:10, port:'Fa0/1', ip:'172.16.10.1', mac:'AA:BB:CC:01:00:01', color:'#1D9E75', light:'#9FE1CB', pcx:34,  pcy:82,  swx:37,  swy:189 },
+  2:{ label:'PC-2', vlan:10, port:'Fa0/2', ip:'172.16.10.2', mac:'AA:BB:CC:02:00:02', color:'#1D9E75', light:'#9FE1CB', pcx:104, pcy:82,  swx:87,  swy:189 },
+  3:{ label:'PC-3', vlan:20, port:'Fa0/3', ip:'172.16.20.3', mac:'CC:DD:EE:03:00:03', color:'#378ADD', light:'#85B7EB', pcx:174, pcy:82,  swx:139, swy:189 },
+  4:{ label:'PC-4', vlan:20, port:'Fa0/4', ip:'172.16.20.4', mac:'CC:DD:EE:04:00:04', color:'#378ADD', light:'#85B7EB', pcx:244, pcy:82,  swx:189, swy:189 },
+  5:{ label:'PC-5', vlan:30, port:'Fa0/5', ip:'172.16.30.5', mac:'EE:FF:00:05:00:05', color:'#D85A30', light:'#F0997B', pcx:314, pcy:82,  swx:239, swy:189 },
+  6:{ label:'PC-6', vlan:30, port:'Fa0/6', ip:'172.16.30.6', mac:'EE:FF:00:06:00:06', color:'#D85A30', light:'#F0997B', pcx:384, pcy:82,  swx:289, swy:189 },
+  T:{ label:'ROUTER',vlan:null,port:'Gi0/1',ip:'—',mac:'FF:FF:TR:UN:K:00', color:'#7F77DD', light:'#AFA9EC', pcx:403, pcy:190, swx:355, swy:196 },
+};
+const BP_Y = 222;
+
+function setStep(n, color, txt) {
+  const el = document.getElementById('step'+n);
+  if (!el) return;
+  el.style.color = color;
+  if (txt) el.textContent = txt;
+}
+function resetSteps() {
+  const defaults = ['[1] PC → puerto switch','[2] Consulta tabla CAM','[3] Decisión forwarding','[4] Entrega al destino'];
+  for(let i=1;i<=4;i++) setStep(i,'rgba(255,255,255,0.18)', defaults[i-1]);
+}
+
+function selectSrc(id) {
+  if (id==='T') return;
+  document.getElementById('sel-src').value = String(id);
+  updateDst();
+}
+function updateDst() {
+  const s = document.getElementById('sel-src').value;
+  const d = document.getElementById('sel-dst');
+  Array.from(d.options).forEach(o => o.hidden = o.value === s);
+  if (d.value === s) d.selectedIndex = 0;
+}
+
+function setCable(id, color, on) {
+  const c = document.getElementById('cable-'+id);
+  if (!c) return;
+  if (on) { c.setAttribute('stroke',color); c.setAttribute('stroke-width','2.2'); c.classList.remove('idle'); }
+  else    { c.setAttribute('stroke-width','1.4'); c.classList.add('idle'); }
+}
+function resetCables() { [1,2,3,4,5,6,'T'].forEach(i => setCable(i,'#fff',false)); }
+
+function updatePanel(src, dst, blocked, isTrunk) {
+  document.getElementById('info-body').setAttribute('opacity','1');
+  document.getElementById('info-title').setAttribute('fill','#4a5070');
+  document.getElementById('info-title').textContent = `${src.label} (${src.port}) → ${dst.label} (${dst.port})`;
+  document.getElementById('i-src-v').textContent = src.mac;
+  document.getElementById('i-src-v').setAttribute('fill', src.light);
+  document.getElementById('i-dst-v').textContent = dst.mac;
+  document.getElementById('i-dst-v').setAttribute('fill', dst.light);
+  document.getElementById('i-tag-v').textContent = isTrunk ? 'VLAN ID 802.1Q' : 'sin etiqueta (access)';
+  document.getElementById('i-ip-v').textContent  = `${src.ip} → ${dst.ip}`;
+  document.getElementById('j-1v').textContent = src.port;
+  document.getElementById('j-2v').textContent = src.vlan ? `VLAN ${src.vlan}` : 'TRUNK';
+  const accion = isTrunk ? 'FORWARD tagged' : blocked ? 'DESCARTE' : 'FORWARD unicast';
+  const ac = blocked ? '#D85A30' : '#1D9E75';
+  document.getElementById('j-3v').textContent = accion;
+  document.getElementById('j-3v').setAttribute('fill', ac);
+  document.getElementById('j-4v').textContent = blocked ? '— (ninguno)' : dst.port;
+  document.getElementById('j-4v').setAttribute('fill', ac);
+}
+
+let busy = false;
+async function runFlow() {
+  if (busy) return;
+  const srcId = document.getElementById('sel-src').value;
+  const dstId = document.getElementById('sel-dst').value;
+  const src = PCS[srcId]; const dst = PCS[dstId];
+  const isTrunk = dstId === 'T';
+  const blocked = !isTrunk && src.vlan !== dst.vlan;
+
+  resetCables(); resetSteps();
+  updatePanel(src, dst, blocked, isTrunk);
+  busy = true;
+
+  const pkt = document.getElementById('pkt');
+  const lbl = document.getElementById('pkt-lbl');
+  const res = document.getElementById('result-msg');
+  res.style.color = src.color;
+  res.textContent = '...';
+
+  pkt.setAttribute('fill', src.color); pkt.setAttribute('opacity','0');
+
+  setStep(1, src.color, `[1] ${src.label} → ${src.port}`);
+  setCable(srcId, src.color, true);
+  await mov(pkt, lbl, src.pcx, src.pcy, src.swx, src.swy, src.color, `V${src.vlan||'T'}`, 500);
+
+  setStep(2, src.color, `[2] CAM lookup VLAN ${src.vlan||'T'}`);
+  await mov(pkt, lbl, src.swx, src.swy, src.swx, BP_Y, src.color, 'CAM?', 280);
+
+  if (blocked) {
+    setStep(3, '#D85A30', `[3] DESCARTE — VLAN mismatch`);
+    pkt.setAttribute('opacity','0'); lbl.setAttribute('opacity','0');
+    res.style.color = '#D85A30';
+    res.textContent = `[✘] DESCARTE\nVLAN ${src.vlan} ≠ VLAN ${dst.vlan}\nSwitch L2 no\nenruta entre VLANs`;
+    setCable(srcId, src.color, false);
+    busy = false; return;
+  }
+
+  const outColor = isTrunk ? '#7F77DD' : dst.color;
+  const tagLbl = isTrunk ? '802.1Q' : 'fwd';
+  setStep(3, outColor, `[3] → ${dst.port} ${isTrunk?'(tagged)':'same VLAN'}`);
+  await mov(pkt, lbl, src.swx, BP_Y, dst.swx, dst.swy, outColor, tagLbl, 340);
+
+  setStep(4, outColor, `[4] → ${dst.label} entregado`);
+  setCable(dstId, outColor, true);
+  await mov(pkt, lbl, dst.swx, dst.swy, dst.pcx, dst.pcy, outColor, dst.label, 500);
+
+  pkt.setAttribute('opacity','0'); lbl.setAttribute('opacity','0');
+  res.style.color = '#1D9E75';
+  res.textContent = `[✔] OK\n${src.label} → ${dst.label}\n${isTrunk?'802.1Q Gi0/1':'VLAN '+src.vlan}`;
+  setTimeout(() => { resetCables(); busy = false; }, 800);
+}
+
+function mov(pEl, lEl, x1, y1, x2, y2, color, label, dur) {
+  return new Promise(res => {
+    pEl.setAttribute('cx',x1); pEl.setAttribute('cy',y1);
+    pEl.setAttribute('fill',color); pEl.setAttribute('opacity','1');
+    lEl.setAttribute('x',x1); lEl.setAttribute('y',y1-9);
+    lEl.textContent=label; lEl.setAttribute('fill',color); lEl.setAttribute('opacity','1');
+    const t0 = performance.now();
+    function step(now) {
+      const p = Math.min((now-t0)/dur,1);
+      const e = p<0.5?2*p*p:-1+(4-2*p)*p;
+      const cx=x1+(x2-x1)*e, cy=y1+(y2-y1)*e;
+      pEl.setAttribute('cx',cx); pEl.setAttribute('cy',cy);
+      lEl.setAttribute('x',cx); lEl.setAttribute('y',cy-9);
+      if(p<1) requestAnimationFrame(step); else res();
+    }
+    requestAnimationFrame(step);
+  });
+}
+updateDst();
+</script>
+</body>
+</html>
