@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STP/RSTP Simulador v3</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;500;700;900&family=Orbitron:wght@400;700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060b14;--p:#0d1520;--p2:#111d2e;--bd:#1a2740;--ci:#049fd9;--cd:#036b94;--gn:#00e68a;--rd:#ff3b5c;--am:#ffb020;--pu:#a78bfa;--wh:#e8edf5;--gy:#4a6080;--g2:#2a3f5a}
+html,body{background:var(--bg);color:var(--wh);font-family:'Outfit',sans-serif;overflow-x:hidden}
+.hdr{text-align:center;padding:14px 12px 8px;background:linear-gradient(180deg,#0a1220,var(--bg));border-bottom:1px solid var(--bd)}
+.hdr h1{font-family:'Orbitron',sans-serif;font-size:clamp(.95rem,3.5vw,1.45rem);font-weight:900;background:linear-gradient(135deg,var(--ci),var(--gn));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px}
+.hdr .sub{font-size:.66em;color:var(--gy);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.mac-ed{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:8px 10px;background:var(--p2);border-bottom:1px solid var(--bd)}
+.mf{display:flex;align-items:center;gap:4px;font-family:'JetBrains Mono',monospace;font-size:.63em}
+.mf label{color:var(--gy);min-width:26px}
+.mf input{background:var(--bg);border:1px solid var(--bd);color:var(--ci);padding:3px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:1em;width:115px;text-align:center}
+.mf input:focus{outline:none;border-color:var(--ci);box-shadow:0 0 8px rgba(4,159,217,.3)}
+.mf .prio-input{width:55px;color:var(--am)}
+.mf .d{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.ctrl{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;padding:8px 10px;background:var(--p);border-bottom:1px solid var(--bd)}
+.b{font-family:'JetBrains Mono',monospace;font-size:.66em;padding:5px 11px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--wh);cursor:pointer;transition:all .2s;white-space:nowrap}
+.b:hover{border-color:var(--ci);box-shadow:0 0 12px rgba(4,159,217,.25)}
+.b.stp-a{background:var(--am);color:#000;border-color:var(--am);box-shadow:0 0 16px rgba(255,176,32,.35)}
+.b.rstp-a{background:var(--pu);color:#000;border-color:var(--pu);box-shadow:0 0 16px rgba(167,139,250,.35)}
+.b.dn{border-color:var(--rd);color:var(--rd)}.b.dn:hover{background:var(--rd);color:#fff}
+.b.ok{border-color:var(--gn);color:var(--gn)}.b.ok:hover{background:var(--gn);color:#000}
+.st{text-align:center;padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:.68em;color:var(--am);min-height:20px;background:var(--p)}
+.cw{position:relative;width:100%;max-width:920px;margin:0 auto;padding:8px}
+svg.tp{width:100%;height:auto;display:block}
+.mb{position:absolute;top:10px;right:12px;font-family:'Orbitron',sans-serif;font-size:.68em;padding:3px 10px;border-radius:4px;z-index:5;letter-spacing:1px;font-weight:700}
+.mb.stp{background:var(--am);color:#000;box-shadow:0 0 14px rgba(255,176,32,.35)}
+.mb.rstp{background:var(--pu);color:#000;box-shadow:0 0 14px rgba(167,139,250,.35)}
+.cb{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:78%;max-width:580px;height:5px;background:var(--bd);border-radius:3px;overflow:hidden;opacity:0;transition:opacity .3s}
+.cb.sh{opacity:1}
+.cf{height:100%;border-radius:3px;width:0%;transition:width .1s linear}
+.cf.stp{background:linear-gradient(90deg,var(--rd),var(--am),var(--gn))}
+.cf.rstp{background:linear-gradient(90deg,var(--pu),var(--gn))}
+.fd{position:absolute;border-radius:50%;pointer-events:none;z-index:20;width:10px;height:10px}
+.fd.bpdu{background:radial-gradient(circle,#ffe066,var(--am));box-shadow:0 0 10px var(--am)}
+.fd.arp{background:radial-gradient(circle,#6fffb0,var(--gn));box-shadow:0 0 10px var(--gn)}
+.fd.data{background:radial-gradient(circle,#80d4ff,var(--ci));box-shadow:0 0 10px var(--ci)}
+.ft{position:absolute;border-radius:50%;pointer-events:none;z-index:19;opacity:0;animation:tf .5s ease-out forwards}
+@keyframes tf{0%{opacity:.5;transform:scale(1)}100%{opacity:0;transform:scale(2.5)}}
+@keyframes sp{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-40}}
+@keyframes rp{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-24}}
+@keyframes bf{0%,100%{opacity:.22}50%{opacity:.48}}
+.ls{stroke-dasharray:12 6;animation:sp 2s linear infinite}
+.lr{stroke-dasharray:4 2;animation:rp .6s linear infinite}
+.lbs{stroke-dasharray:6 4;animation:bf 2s ease-in-out infinite}
+.lbr{stroke-dasharray:3 5;opacity:.32}
+.ld{stroke-dasharray:4 4;opacity:.12}
+@keyframes px{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.25)}}
+.bx{animation:px 1.4s ease-in-out infinite;transform-origin:center}
+.lg{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:7px 10px;font-size:.62em;font-family:'JetBrains Mono',monospace;color:var(--gy)}
+.li{display:flex;align-items:center;gap:4px}
+.ld2{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ip{max-width:920px;margin:0 auto 14px;padding:0 10px}
+.ib{background:var(--p);border:1px solid var(--bd);border-radius:7px;padding:11px 13px;font-size:.74em;line-height:1.6;color:var(--gy);min-height:60px;transition:border-color .3s}
+.ib.sb{border-color:var(--am)}.ib.rb{border-color:var(--pu)}
+.ib strong{color:var(--ci)}
+.tg{display:inline-block;padding:1px 7px;border-radius:4px;font-size:.83em;font-family:'JetBrains Mono',monospace;margin-bottom:3px;font-weight:600}
+.hg{color:var(--gn)!important}.hr{color:var(--rd)!important}.ha{color:var(--am)!important}.hp{color:var(--pu)!important}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>STP & RSTP — SIMULADOR INTERACTIVO</h1>
+  <div class="sub">Redes 2 · Semana 05 · UPN · Ing. José Espinoza Landa, MBA</div>
+</div>
+
+<div class="mac-ed">
+  <div class="mf"><div class="d" style="background:var(--ci)"></div><label>SW1:</label><input id="m1" value="0000.0A00.1111" maxlength="14" spellcheck="false"/><input class="prio-input" id="p1" value="24576" maxlength="5" spellcheck="false"/></div>
+  <div class="mf"><div class="d" style="background:var(--ci)"></div><label>SW2:</label><input id="m2" value="0000.0B00.2222" maxlength="14" spellcheck="false"/><input class="prio-input" id="p2" value="32768" maxlength="5" spellcheck="false"/></div>
+  <div class="mf"><div class="d" style="background:var(--ci)"></div><label>SW3:</label><input id="m3" value="0000.0C00.3333" maxlength="14" spellcheck="false"/><input class="prio-input" id="p3" value="36864" maxlength="5" spellcheck="false"/></div>
+  <button class="b ok" onclick="applyConfig()">✓ Aplicar</button>
+</div>
+
+<div class="ctrl">
+  <button class="b stp-a" onclick="setMode('stp')" id="bS">STP 802.1D</button>
+  <button class="b" onclick="setMode('rstp')" id="bR">RSTP 802.1w</button>
+  <span style="width:1px;background:var(--bd);margin:0 3px"></span>
+  <button class="b" onclick="doBPDU()">📡 BPDU</button>
+  <button class="b" onclick="doARP()">📢 ARP</button>
+  <button class="b" onclick="doData()">📦 Datos</button>
+  <span style="width:1px;background:var(--bd);margin:0 3px"></span>
+  <button class="b dn" onclick="doFail()">⚡ Fallo</button>
+  <button class="b" onclick="doReset()">↻ Reset</button>
+</div>
+
+<div class="st" id="stb"></div>
+
+<div class="cw" id="cw">
+  <div class="mb stp" id="badge">STP</div>
+  <div class="cb" id="cvb"><div class="cf stp" id="cvf"></div></div>
+
+  <svg class="tp" viewBox="0 0 840 560" id="svg">
+    <defs>
+      <linearGradient id="gR" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a3025"/><stop offset="100%" stop-color="#071018"/></linearGradient>
+      <linearGradient id="gS" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#152030"/><stop offset="100%" stop-color="#0a1018"/></linearGradient>
+      <linearGradient id="gP" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#18122e"/><stop offset="100%" stop-color="#0a0818"/></linearGradient>
+      <filter id="fG"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="fB"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+
+    <!-- Links -->
+    <line id="L12" x1="305" y1="135" x2="535" y2="135" stroke="var(--ci)" stroke-width="2.5" class="ls"/>
+    <line id="L13" x1="260" y1="165" x2="385" y2="340" stroke="var(--ci)" stroke-width="2.5" class="ls"/>
+    <line id="L23" x1="580" y1="165" x2="455" y2="340" stroke="var(--rd)" stroke-width="2" class="lbs"/>
+    <line id="LP1" x1="130" y1="285" x2="235" y2="165" stroke="var(--g2)" stroke-width="1.5"/>
+    <line id="LP2" x1="710" y1="285" x2="605" y2="165" stroke="var(--g2)" stroke-width="1.5"/>
+    <line id="LP3" x1="420" y1="490" x2="420" y2="380" stroke="var(--g2)" stroke-width="1.5"/>
+
+    <!-- Blocked X -->
+    <g id="blkX" class="bx">
+      <circle cx="518" cy="252" r="7" fill="none" stroke="var(--rd)" stroke-width="1.5" opacity=".5"/>
+      <line x1="514" y1="248" x2="522" y2="256" stroke="var(--rd)" stroke-width="2"/>
+      <line x1="522" y1="248" x2="514" y2="256" stroke="var(--rd)" stroke-width="2"/>
+    </g>
+
+    <!-- Cost labels -->
+    <g font-family="JetBrains Mono" font-size="7.5" fill="var(--gy)">
+      <text x="410" y="125" text-anchor="middle">100Mbps · C:19</text>
+      <text x="295" y="265" text-anchor="middle">100Mbps · C:19</text>
+      <text x="540" y="265" text-anchor="middle">100Mbps · C:19</text>
+    </g>
+
+    <!-- SW1 -->
+    <g id="G1" transform="translate(215,100)">
+      <rect id="R1" x="0" y="0" width="90" height="65" rx="7" fill="url(#gR)" stroke="var(--gn)" stroke-width="2" filter="url(#fG)"/>
+      <text id="N1" x="45" y="18" text-anchor="middle" font-family="Orbitron" font-weight="900" font-size="13" fill="var(--gn)">SW1</text>
+      <text id="T1" x="45" y="30" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="var(--gn)" font-weight="700">★ ROOT BRIDGE</text>
+      <text id="M1" x="45" y="42" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="var(--gy)">0000.0A00.1111</text>
+      <text id="B1" x="45" y="52" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="#0a7a50">BID: 24576</text>
+    </g>
+
+    <!-- SW2 -->
+    <g id="G2" transform="translate(535,100)">
+      <rect id="R2" x="0" y="0" width="90" height="65" rx="7" fill="url(#gS)" stroke="var(--ci)" stroke-width="1.5" filter="url(#fB)"/>
+      <text id="N2" x="45" y="18" text-anchor="middle" font-family="Orbitron" font-weight="700" font-size="13" fill="var(--ci)">SW2</text>
+      <text id="T2" x="45" y="30" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="var(--gy)">Non-Root</text>
+      <text id="M2" x="45" y="42" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="var(--gy)">0000.0B00.2222</text>
+      <text id="B2" x="45" y="52" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="var(--cd)">BID: 32768</text>
+    </g>
+
+    <!-- SW3 -->
+    <g id="G3" transform="translate(375,320)">
+      <rect id="R3" x="0" y="0" width="90" height="65" rx="7" fill="url(#gS)" stroke="var(--ci)" stroke-width="1.5" filter="url(#fB)"/>
+      <text id="N3" x="45" y="18" text-anchor="middle" font-family="Orbitron" font-weight="700" font-size="13" fill="var(--ci)">SW3</text>
+      <text id="T3" x="45" y="30" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="var(--gy)">Non-Root</text>
+      <text id="M3" x="45" y="42" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="var(--gy)">0000.0C00.3333</text>
+      <text id="B3" x="45" y="52" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="var(--cd)">BID: 36864</text>
+    </g>
+
+    <!-- PCs -->
+    <g transform="translate(85,270)"><rect x="0" y="0" width="65" height="42" rx="5" fill="url(#gP)" stroke="var(--g2)" stroke-width="1"/><text x="32" y="17" text-anchor="middle" font-family="Outfit" font-weight="500" font-size="11" fill="#94a3b8">PC-A</text><text x="32" y="30" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="var(--gy)">192.168.1.10</text></g>
+    <g transform="translate(690,270)"><rect x="0" y="0" width="65" height="42" rx="5" fill="url(#gP)" stroke="var(--g2)" stroke-width="1"/><text x="32" y="17" text-anchor="middle" font-family="Outfit" font-weight="500" font-size="11" fill="#94a3b8">PC-B</text><text x="32" y="30" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="var(--gy)">192.168.1.20</text></g>
+    <g transform="translate(388,482)"><rect x="0" y="0" width="65" height="42" rx="5" fill="url(#gP)" stroke="var(--g2)" stroke-width="1"/><text x="32" y="17" text-anchor="middle" font-family="Outfit" font-weight="500" font-size="11" fill="#94a3b8">PC-C</text><text x="32" y="30" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="var(--gy)">192.168.1.30</text></g>
+
+    <!-- Port role labels: dynamically updated -->
+    <!-- SW1 Fa0/1 (to SW2) -->
+    <text id="PL_1_12" x="290" y="119" font-family="JetBrains Mono" font-size="6" fill="var(--gy)">Fa0/1</text>
+    <text id="PR_1_12" x="290" y="128" font-family="JetBrains Mono" font-weight="700" font-size="8" fill="var(--gn)">D</text>
+    <!-- SW1 Fa0/2 (to SW3) -->
+    <text id="PL_1_13" x="232" y="178" font-family="JetBrains Mono" font-size="6" fill="var(--gy)">Fa0/2</text>
+    <text id="PR_1_13" x="248" y="172" font-family="JetBrains Mono" font-weight="700" font-size="8" fill="var(--gn)">D</text>
+    <!-- SW2 Fa0/1 (to SW1) -->
+    <text id="PL_2_12" x="540" y="119" font-family="JetBrains Mono" font-size="6" fill="var(--gy)">Fa0/1</text>
+    <text id="PR_2_12" x="540" y="128" font-family="JetBrains Mono" font-weight="700" font-size="8" fill="var(--gn)">RP</text>
+    <!-- SW2 Fa0/2 (to SW3) -->
+    <text id="PL_2_23" x="572" y="182" font-family="JetBrains Mono" font-size="6" fill="var(--gy)">Fa0/2</text>
+    <text id="PR_2_23" x="578" y="172" font-family="JetBrains Mono" font-weight="700" font-size="8" fill="var(--rd)">BLK</text>
+    <!-- SW3 Fa0/1 (to SW1) -->
+    <text id="PL_3_13" x="362" y="333" font-family="JetBrains Mono" font-size="6" fill="var(--gy)">Fa0/1</text>
+    <text id="PR_3_13" x="380" y="338" font-family="JetBrains Mono" font-weight="700" font-size="8" fill="var(--gn)">RP</text>
+    <!-- SW3 Fa0/2 (to SW2) -->
+    <text id="PL_3_23" x="452" y="333" font-family="JetBrains Mono" font-size="6" fill="var(--gy)">Fa0/2</text>
+    <text id="PR_3_23" x="452" y="338" font-family="JetBrains Mono" font-weight="700" font-size="8" fill="var(--ci)">D</text>
+
+    <!-- Fail overlay -->
+    <g id="failG" style="display:none">
+      <line x1="375" y1="118" x2="465" y2="152" stroke="var(--rd)" stroke-width="3" opacity=".8"/>
+      <line x1="465" y1="118" x2="375" y2="152" stroke="var(--rd)" stroke-width="3" opacity=".8"/>
+      <text x="420" y="108" text-anchor="middle" font-family="Orbitron" font-size="9" fill="var(--rd)" font-weight="700">LINK DOWN</text>
+    </g>
+  </svg>
+</div>
+
+<div class="lg">
+  <div class="li"><div class="ld2" style="background:var(--gn)"></div>Root Bridge / DP</div>
+  <div class="li"><div class="ld2" style="background:var(--ci)"></div>Designated</div>
+  <div class="li"><div class="ld2" style="background:var(--rd)"></div>Blocked (STP)</div>
+  <div class="li"><div class="ld2" style="background:var(--pu)"></div>Alternate (RSTP)</div>
+  <div class="li"><div class="ld2" style="background:var(--am)"></div>BPDU</div>
+</div>
+
+<div class="ip"><div class="ib sb" id="ib"></div></div>
+
+<script>
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+let mode='stp', failed=false, busy=false, convT=null;
+// STP topology state
+let topo = {
+  root: 'sw1',
+  // port roles: 'root','designated','blocked'
+  // keyed by "swX_link" where link is '12','13','23'
+  ports: {}
+};
+
+// Node positions for animation (SVG viewBox coords)
+const P={sw1:{x:260,y:132},sw2:{x:580,y:132},sw3:{x:420,y:352},pc1:{x:117,y:291},pc2:{x:722,y:291},pc3:{x:420,y:503}};
+// Link endpoint map: linkKey -> [startNode, endNode]
+const LK={
+  'sw1-sw2':[P.sw1,P.sw2],'sw2-sw1':[P.sw2,P.sw1],
+  'sw1-sw3':[P.sw1,P.sw3],'sw3-sw1':[P.sw3,P.sw1],
+  'sw2-sw3':[P.sw2,P.sw3],'sw3-sw2':[P.sw3,P.sw2],
+  'pc1-sw1':[P.pc1,P.sw1],'sw1-pc1':[P.sw1,P.pc1],
+  'pc2-sw2':[P.pc2,P.sw2],'sw2-pc2':[P.sw2,P.pc2],
+  'pc3-sw3':[P.pc3,P.sw3],'sw3-pc3':[P.sw3,P.pc3],
+};
+
+// Which inter-switch link is down?
+let deadLink = null; // '12' when sw1-sw2 is down
+
+function isLinkDead(lk) {
+  if (!deadLink) return false;
+  // lk examples: 'sw1-sw2', 'sw2-sw1' -> both refer to link '12'
+  const ids = lk.replace(/sw/g,'').replace('pc','').split('-');
+  // inter-switch links only
+  const sorted = [ids[0],ids[1]].sort().join('');
+  if (sorted === '12' && deadLink === '12') return true;
+  if (sorted === '13' && deadLink === '13') return true;
+  if (sorted === '23' && deadLink === '23') return true;
+  return false;
+}
+
+// ══════════════════════════════════════
+//  STP ELECTION ENGINE
+// ══════════════════════════════════════
+function getSwConfig() {
+  return [
+    {id:'sw1', mac:document.getElementById('m1').value.trim().replace(/\./g,'').toLowerCase(), prio:parseInt(document.getElementById('p1').value)||32768},
+    {id:'sw2', mac:document.getElementById('m2').value.trim().replace(/\./g,'').toLowerCase(), prio:parseInt(document.getElementById('p2').value)||32768},
+    {id:'sw3', mac:document.getElementById('m3').value.trim().replace(/\./g,'').toLowerCase(), prio:parseInt(document.getElementById('p3').value)||32768},
+  ];
+}
+
+function bidCompare(a, b) {
+  if (a.prio !== b.prio) return a.prio - b.prio;
+  return a.mac < b.mac ? -1 : (a.mac > b.mac ? 1 : 0);
+}
+
+function runElection() {
+  const sws = getSwConfig();
+  sws.sort(bidCompare);
+  const root = sws[0].id;
+  topo.root = root;
+
+  // Update MAC/BID displays
+  sws.forEach(s => {
+    const n = s.id.replace('sw','');
+    document.getElementById('M'+n).textContent = document.getElementById('m'+n).value.trim();
+    document.getElementById('B'+n).textContent = 'BID: ' + s.prio;
+  });
+
+  // Adjacency: sw1-sw2 (link 12), sw1-sw3 (link 13), sw2-sw3 (link 23)
+  // All links cost 19.
+  // For each non-root switch, find root port = port with lowest cost to root
+  // Then for each segment, determine designated port and blocked port
+
+  const adj = {
+    sw1: [{to:'sw2',link:'12',cost:19},{to:'sw3',link:'13',cost:19}],
+    sw2: [{to:'sw1',link:'12',cost:19},{to:'sw3',link:'23',cost:19}],
+    sw3: [{to:'sw1',link:'13',cost:19},{to:'sw2',link:'23',cost:19}],
+  };
+
+  // BFS/Dijkstra from root to find best cost to root for each switch
+  const costToRoot = {[root]:0};
+  const nextHopPort = {}; // for each non-root, which link is root port
+  const nonRoots = sws.filter(s => s.id !== root).map(s => s.id);
+
+  // Simple: with 3 switches and equal costs, direct link to root = cost 19, indirect = 38
+  nonRoots.forEach(sw => {
+    let bestCost = Infinity, bestLink = null;
+    adj[sw].forEach(e => {
+      let pathCost;
+      if (e.to === root) {
+        pathCost = e.cost; // direct
+      } else {
+        // indirect: sw -> e.to -> root?
+        const hop2 = adj[e.to].find(h => h.to === root);
+        pathCost = hop2 ? e.cost + hop2.cost : Infinity;
+      }
+      if (pathCost < bestCost) { bestCost = pathCost; bestLink = e.link; }
+      else if (pathCost === bestCost) {
+        // Tie-break: lowest sender BID, then lowest port ID
+        // Here just compare link number (lower = better)
+        if (e.link < bestLink) bestLink = e.link;
+      }
+    });
+    costToRoot[sw] = bestCost;
+    nextHopPort[sw] = bestLink;
+  });
+
+  // Assign port roles
+  topo.ports = {};
+  // Root bridge: all ports are Designated
+  adj[root].forEach(e => {
+    topo.ports[root + '_' + e.link] = 'designated';
+  });
+
+  // Non-root: root port on best-cost link
+  nonRoots.forEach(sw => {
+    adj[sw].forEach(e => {
+      if (e.link === nextHopPort[sw]) {
+        topo.ports[sw + '_' + e.link] = 'root';
+      }
+    });
+  });
+
+  // For each segment (link), determine designated port among the two ends
+  // The port NOT yet assigned on each link
+  const segments = ['12','13','23'];
+  const linkSwitches = {
+    '12':['sw1','sw2'], '13':['sw1','sw3'], '23':['sw2','sw3']
+  };
+
+  segments.forEach(seg => {
+    const [a, b] = linkSwitches[seg];
+    const ra = topo.ports[a+'_'+seg];
+    const rb = topo.ports[b+'_'+seg];
+
+    // If both assigned (one is root, other is designated from root), done
+    if (ra && rb) return;
+
+    // If one is root port, other should be designated (the one closer to root or with lower BID)
+    if (ra === 'root' && !rb) {
+      topo.ports[b+'_'+seg] = 'designated';
+    } else if (rb === 'root' && !ra) {
+      topo.ports[a+'_'+seg] = 'designated';
+    } else if (!ra && !rb) {
+      // Neither has root port here (both connect to each other, neither leads to root directly via this link)
+      // Designated = switch with lower cost to root, tie-break lower BID
+      const ca = costToRoot[a], cb = costToRoot[b];
+      const sa = sws.find(s=>s.id===a), sb = sws.find(s=>s.id===b);
+      let desig, blocked;
+      if (ca < cb) { desig = a; blocked = b; }
+      else if (cb < ca) { desig = b; blocked = a; }
+      else { desig = bidCompare(sa,sb) <= 0 ? a : b; blocked = desig === a ? b : a; }
+      topo.ports[desig+'_'+seg] = 'designated';
+      topo.ports[blocked+'_'+seg] = 'blocked';
+    }
+  });
+
+  // Any port still unassigned = blocked
+  segments.forEach(seg => {
+    linkSwitches[seg].forEach(sw => {
+      if (!topo.ports[sw+'_'+seg]) topo.ports[sw+'_'+seg] = 'blocked';
+    });
+  });
+
+  renderTopology();
+}
+
+// ══════════════════════════════════════
+//  RENDER TOPOLOGY
+// ══════════════════════════════════════
+function renderTopology() {
+  const root = topo.root;
+  const n = root.replace('sw','');
+
+  // Update switch visuals
+  ['1','2','3'].forEach(i => {
+    const isRoot = ('sw'+i) === root;
+    document.getElementById('R'+i).setAttribute('fill', isRoot ? 'url(#gR)' : 'url(#gS)');
+    document.getElementById('R'+i).setAttribute('stroke', isRoot ? 'var(--gn)' : 'var(--ci)');
+    document.getElementById('R'+i).setAttribute('stroke-width', isRoot ? '2' : '1.5');
+    document.getElementById('R'+i).setAttribute('filter', isRoot ? 'url(#fG)' : 'url(#fB)');
+    document.getElementById('N'+i).setAttribute('fill', isRoot ? 'var(--gn)' : 'var(--ci)');
+    document.getElementById('T'+i).textContent = isRoot ? '★ ROOT BRIDGE' : 'Non-Root';
+    document.getElementById('T'+i).setAttribute('fill', isRoot ? 'var(--gn)' : 'var(--gy)');
+    document.getElementById('B'+i).setAttribute('fill', isRoot ? '#0a7a50' : 'var(--cd)');
+  });
+
+  // Update port role labels and link styles
+  const roleColors = {
+    root: 'var(--gn)', designated: mode==='stp'?'var(--ci)':'var(--ci)',
+    blocked: mode==='stp'?'var(--rd)':'var(--pu)'
+  };
+  const roleTexts = {
+    root: 'RP', designated: 'D',
+    blocked: mode==='stp'?'BLK':'ALT'
+  };
+
+  // Port label mapping: PR_{switchNum}_{linkId}
+  const portMap = {
+    'sw1_12':'PR_1_12','sw2_12':'PR_2_12',
+    'sw1_13':'PR_1_13','sw3_13':'PR_3_13',
+    'sw2_23':'PR_2_23','sw3_23':'PR_3_23',
+  };
+
+  Object.entries(topo.ports).forEach(([key, role]) => {
+    const elId = portMap[key];
+    if (!elId) return;
+    const el = document.getElementById(elId);
+    if (!el) return;
+    // For root bridge ports, designated is shown with green
+    const sw = key.split('_')[0];
+    let color = roleColors[role];
+    if (sw === root && role === 'designated') color = 'var(--gn)';
+    el.textContent = roleTexts[role];
+    el.setAttribute('fill', color);
+  });
+
+  // Link line styles
+  const linkEls = {'12':'L12','13':'L13','23':'L23'};
+  const linkSwitches = {'12':['sw1','sw2'],'13':['sw1','sw3'],'23':['sw2','sw3']};
+
+  Object.entries(linkEls).forEach(([seg, elId]) => {
+    const el = document.getElementById(elId);
+    const [a, b] = linkSwitches[seg];
+    const ra = topo.ports[a+'_'+seg];
+    const rb = topo.ports[b+'_'+seg];
+    const hasBlocked = ra === 'blocked' || rb === 'blocked';
+
+    if (hasBlocked) {
+      if (mode === 'stp') {
+        el.className.baseVal = 'lbs';
+        el.setAttribute('stroke', 'var(--rd)');
+      } else {
+        el.className.baseVal = 'lbr';
+        el.setAttribute('stroke', 'var(--pu)');
+      }
+      el.setAttribute('stroke-width', '2');
+    } else {
+      el.className.baseVal = mode === 'stp' ? 'ls' : 'lr';
+      el.setAttribute('stroke', 'var(--ci)');
+      el.setAttribute('stroke-width', '2.5');
+    }
+    el.setAttribute('opacity','1');
+    el.removeAttribute('stroke-dasharray'); // let class handle it
+  });
+
+  // Position blocked X indicator on the blocked segment
+  const blkX = document.getElementById('blkX');
+  let foundBlocked = false;
+  Object.entries(topo.ports).forEach(([key, role]) => {
+    if (role === 'blocked' && !foundBlocked) {
+      foundBlocked = true;
+      const seg = key.split('_')[1];
+      const el = document.getElementById(linkEls[seg]);
+      const x1 = parseFloat(el.getAttribute('x1')), y1 = parseFloat(el.getAttribute('y1'));
+      const x2 = parseFloat(el.getAttribute('x2')), y2 = parseFloat(el.getAttribute('y2'));
+      // Position X near the blocked switch's end
+      const sw = key.split('_')[0];
+      const [a] = linkSwitches[seg];
+      const t = sw === a ? 0.3 : 0.7;
+      const cx = x1 + (x2-x1)*t, cy = y1 + (y2-y1)*t;
+      blkX.querySelector('circle').setAttribute('cx', cx);
+      blkX.querySelector('circle').setAttribute('cy', cy);
+      const lines = blkX.querySelectorAll('line');
+      lines[0].setAttribute('x1',cx-4);lines[0].setAttribute('y1',cy-4);lines[0].setAttribute('x2',cx+4);lines[0].setAttribute('y2',cy+4);
+      lines[1].setAttribute('x1',cx+4);lines[1].setAttribute('y1',cy-4);lines[1].setAttribute('x2',cx-4);lines[1].setAttribute('y2',cy+4);
+      blkX.style.display = '';
+    }
+  });
+  if (!foundBlocked) blkX.style.display = 'none';
+
+  updateInfo();
+}
+
+// ══════════════════════════════════════
+//  FRAME ANIMATION (link-down aware)
+// ══════════════════════════════════════
+function s2p(sx, sy) {
+  const svg = document.getElementById('svg');
+  const r = svg.getBoundingClientRect();
+  const vb = svg.viewBox.baseVal;
+  const wr = document.getElementById('cw').getBoundingClientRect();
+  return { x:(sx/vb.width)*r.width + r.left - wr.left, y:(sy/vb.height)*r.height + r.top - wr.top };
+}
+
+function anim(linkKey, type, dur, delay=0) {
+  // Block animation on dead links
+  if (isLinkDead(linkKey)) return;
+  const pts = LK[linkKey];
+  if (!pts) return;
+  setTimeout(() => {
+    const w = document.getElementById('cw');
+    const dot = document.createElement('div');
+    dot.className = 'fd ' + type;
+    w.appendChild(dot);
+    const s = s2p(pts[0].x, pts[0].y);
+    const e = s2p(pts[1].x, pts[1].y);
+    const t0 = performance.now();
+    let lt = 0;
+    const colors = {bpdu:'var(--am)',arp:'var(--gn)',data:'var(--ci)'};
+    function step(now) {
+      const t = Math.min((now-t0)/dur, 1);
+      const ease = t<.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+      const cx = s.x+(e.x-s.x)*ease-5, cy = s.y+(e.y-s.y)*ease-5;
+      dot.style.left = cx+'px'; dot.style.top = cy+'px';
+      if (now-lt>55) {
+        lt=now;
+        const tr = document.createElement('div');
+        tr.className='ft'; tr.style.left=(cx+3)+'px'; tr.style.top=(cy+3)+'px';
+        tr.style.width='4px'; tr.style.height='4px'; tr.style.background=colors[type];
+        w.appendChild(tr); setTimeout(()=>tr.remove(),500);
+      }
+      if (t<1) requestAnimationFrame(step);
+      else { dot.style.transition='opacity .25s,transform .25s'; dot.style.opacity='0'; dot.style.transform='scale(2.5)'; setTimeout(()=>dot.remove(),300); }
+    }
+    requestAnimationFrame(step);
+  }, delay);
+}
+
+// ══════════════════════════════════════
+//  FIND PATH (link-down aware)
+// ══════════════════════════════════════
+// Find forwarding path between two switches avoiding dead and blocked links
+function findPath(from, to) {
+  // BFS on forwarding links
+  const adj = {
+    sw1:[{to:'sw2',seg:'12'},{to:'sw3',seg:'13'}],
+    sw2:[{to:'sw1',seg:'12'},{to:'sw3',seg:'23'}],
+    sw3:[{to:'sw1',seg:'13'},{to:'sw2',seg:'23'}],
+  };
+  const visited = new Set();
+  const queue = [[from]];
+  visited.add(from);
+  while (queue.length) {
+    const path = queue.shift();
+    const cur = path[path.length-1];
+    if (cur === to) return path;
+    for (const e of adj[cur]) {
+      if (visited.has(e.to)) continue;
+      // Check if link is dead
+      if (deadLink === e.seg) continue;
+      // Check if the port on cur's side is blocked
+      const role = topo.ports[cur+'_'+e.seg];
+      if (role === 'blocked') continue;
+      // Check other side too
+      const role2 = topo.ports[e.to+'_'+e.seg];
+      if (role2 === 'blocked') continue;
+      visited.add(e.to);
+      queue.push([...path, e.to]);
+    }
+  }
+  return null; // no path
+}
+
+// ══════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════
+function setMode(m) {
+  if (failed) doReset();
+  mode = m;
+  document.getElementById('bS').className = m==='stp'?'b stp-a':'b';
+  document.getElementById('bR').className = m==='rstp'?'b rstp-a':'b';
+  const bd = document.getElementById('badge');
+  bd.className='mb '+m; bd.textContent=m.toUpperCase();
+  renderTopology();
+}
+
+function applyConfig() {
+  if (failed) doReset();
+  runElection();
+  setStatus('✓ Topología recalculada: Root Bridge = ' + topo.root.toUpperCase());
+}
+
+function doBPDU() {
+  if (busy) return; busy=true; setTimeout(()=>busy=false,3000);
+  const spd = mode==='stp'?1400:700;
+  setStatus(mode==='stp'?'📡 BPDU cada 2s (Hello Timer STP)':'📡 BPDU con Proposal/Agreement (RSTP)');
+  const root = topo.root;
+  const others = ['sw1','sw2','sw3'].filter(s=>s!==root);
+  // Root sends out designated ports
+  others.forEach((sw,i) => { anim(root+'-'+sw, 'bpdu', spd, i*200); });
+  // In RSTP, agreement comes back
+  if (mode==='rstp') {
+    others.forEach((sw,i) => { anim(sw+'-'+root, 'bpdu', spd, spd+i*200); });
+  }
+  // Non-root relay on designated ports
+  others.forEach((sw,i) => {
+    const otherNR = others.filter(s=>s!==sw);
+    otherNR.forEach(s => {
+      const seg = [sw.replace('sw',''),s.replace('sw','')].sort().join('');
+      const role = topo.ports[sw+'_'+seg];
+      if (role === 'designated') anim(sw+'-'+s, 'bpdu', spd, spd+400+i*200);
+    });
+  });
+  showBPDUInfo();
+}
+
+function doARP() {
+  if (busy) return; busy=true; setTimeout(()=>busy=false,3500);
+  const spd = mode==='stp'?1200:800;
+  setStatus('📢 ARP Broadcast: PC-A → FF:FF:FF:FF:FF:FF');
+  // PC-A -> SW1
+  anim('pc1-sw1','arp',spd,0);
+  // SW1 floods on all forwarding ports
+  const root = topo.root;
+  // Find which switch PC-A connects to (always sw1 in this topology)
+  const entrySw = 'sw1';
+  const allSw = ['sw1','sw2','sw3'];
+  const otherSw = allSw.filter(s=>s!==entrySw);
+  otherSw.forEach((sw,i) => {
+    const seg = [entrySw.replace('sw',''),sw.replace('sw','')].sort().join('');
+    // Only forward if the port is not blocked and link is not dead
+    const roleEntry = topo.ports[entrySw+'_'+seg];
+    const roleOther = topo.ports[sw+'_'+seg];
+    if (roleEntry !== 'blocked' && roleOther !== 'blocked' && !isLinkDead(entrySw+'-'+sw)) {
+      anim(entrySw+'-'+sw,'arp',spd,spd*0.7+i*50);
+      // That switch forwards to its PC
+      const pcMap = {sw1:'pc1',sw2:'pc2',sw3:'pc3'};
+      anim(sw+'-'+pcMap[sw],'arp',spd,spd*1.4+i*50);
+    }
+  });
+  // Also SW1 to its own segment neighbors that are not blocked
+  // Forward from root's designated ports outward
+  // The non-entry switches should also try to flood to the third switch (if not blocked)
+  // But blocked ports don't forward — this is the key demo
+  showARPInfo();
+}
+
+function doData() {
+  if (busy) return; busy=true; setTimeout(()=>busy=false,3500);
+  const spd = mode==='stp'?1100:700;
+  setStatus('📦 Unicast: PC-A → PC-B');
+  // Find forwarding path sw1 -> sw2
+  const path = findPath('sw1','sw2');
+  if (!path) {
+    setStatus('❌ No hay ruta disponible PC-A → PC-B (enlaces caídos o bloqueados)');
+    document.getElementById('ib').innerHTML = `<span class="tg" style="background:var(--rd);color:#fff">SIN RUTA</span><br>
+      No existe un camino forwarding entre <strong>SW1</strong> y <strong>SW2</strong>. Esto puede ocurrir durante la reconvergencia de STP cuando todos los paths alternativos están aún en Blocking/Listening.`;
+    return;
+  }
+  // Animate: PC-A -> first sw
+  anim('pc1-sw1','data',spd,0);
+  let delay = spd * 0.6;
+  for (let i=0;i<path.length-1;i++) {
+    anim(path[i]+'-'+path[i+1],'data',spd,delay);
+    delay += spd * 0.6;
+  }
+  anim('sw2-pc2','data',spd,delay);
+  showDataInfo(path);
+}
+
+function doFail() {
+  if (failed||busy) return;
+  failed = true;
+  // Determine which link to kill: the link between root and the switch with the root port on that link
+  // Default: kill link 12 (SW1-SW2)
+  deadLink = '12';
+  const el = document.getElementById('L12');
+  el.className.baseVal = 'ld';
+  el.setAttribute('stroke','var(--rd)');
+  document.getElementById('failG').style.display='';
+  document.getElementById('blkX').style.display='none';
+
+  const cvb = document.getElementById('cvb');
+  const cvf = document.getElementById('cvf');
+  cvb.classList.add('sh');
+  cvf.style.width='0%';
+
+  if (mode==='stp') {
+    cvf.className='cf stp';
+    setStatus('⚡ FALLO SW1↔SW2 — STP reconvergiendo (~50s)...');
+    let step=0; const total=500;
+    if(convT)clearInterval(convT);
+
+    // Find the blocked port and transition it
+    const blockedKey = Object.entries(topo.ports).find(([k,v])=>v==='blocked');
+    const blockedSeg = blockedKey ? blockedKey[0].split('_')[1] : '23';
+    const blockedSw = blockedKey ? blockedKey[0].split('_')[0] : 'sw2';
+    const blockedLinkEl = document.getElementById('L'+blockedSeg);
+    const blockedPR = document.getElementById('PR_'+blockedSw.replace('sw','')+'_'+blockedSeg);
+
+    convT=setInterval(()=>{
+      step++;
+      const pct=(step/total)*100;
+      cvf.style.width=pct+'%';
+      const sec=(step/10).toFixed(1);
+      if(step<=200){
+        blockedLinkEl.setAttribute('stroke','var(--am)'); blockedLinkEl.className.baseVal='lbs';
+        if(blockedPR){blockedPR.textContent='BLK';blockedPR.setAttribute('fill','var(--am)');}
+        setStatus(`⏱ Max Age: ${sec}s/20s — Esperando expiración BPDU...`);
+        showFailInfoSTP(1,sec);
+      }else if(step<=350){
+        blockedLinkEl.setAttribute('stroke','var(--am)'); blockedLinkEl.setAttribute('opacity','.7');
+        blockedLinkEl.className.baseVal=''; blockedLinkEl.setAttribute('stroke-dasharray','8 4');
+        if(blockedPR){blockedPR.textContent='LIS';blockedPR.setAttribute('fill','var(--am)');}
+        setStatus(`⏱ Listening: ${(step/10-20).toFixed(1)}s/15s`);
+        showFailInfoSTP(2,(step/10-20).toFixed(1));
+      }else if(step<=500){
+        blockedLinkEl.setAttribute('stroke','var(--ci)'); blockedLinkEl.setAttribute('opacity','.85');
+        blockedLinkEl.setAttribute('stroke-dasharray','4 2');
+        if(blockedPR){blockedPR.textContent='LRN';blockedPR.setAttribute('fill','var(--ci)');}
+        setStatus(`⏱ Learning: ${(step/10-35).toFixed(1)}s/15s`);
+        showFailInfoSTP(3,(step/10-35).toFixed(1));
+      }
+      if(step>=total){
+        clearInterval(convT);
+        blockedLinkEl.setAttribute('stroke','var(--gn)'); blockedLinkEl.setAttribute('opacity','1');
+        blockedLinkEl.removeAttribute('stroke-dasharray'); blockedLinkEl.className.baseVal='ls';
+        if(blockedPR){blockedPR.textContent='FWD';blockedPR.setAttribute('fill','var(--gn)');}
+        // Update topology: blocked port becomes root port
+        if(blockedKey) topo.ports[blockedKey[0]] = 'root';
+        setStatus('✅ Forwarding — Convergencia STP completada (~50s)');
+        cvf.style.width='100%';
+        showFailInfoSTP(4,'50');
+        // Send test traffic through new path
+        const path = findPath('sw1','sw2');
+        if(path){
+          const spd=1200;let d=500;
+          anim('pc1-sw1','data',spd,d); d+=800;
+          for(let i=0;i<path.length-1;i++){anim(path[i]+'-'+path[i+1],'data',spd,d);d+=800;}
+          anim('sw2-pc2','data',spd,d);
+        }
+      }
+    },100);
+  } else {
+    // RSTP fast
+    cvf.className='cf rstp';
+    setStatus('⚡ FALLO SW1↔SW2 — RSTP: Alternate→Forwarding (<1s)');
+
+    const blockedKey = Object.entries(topo.ports).find(([k,v])=>v==='blocked');
+    const blockedSeg = blockedKey ? blockedKey[0].split('_')[1] : '23';
+    const blockedSw = blockedKey ? blockedKey[0].split('_')[0] : 'sw2';
+    const blockedLinkEl = document.getElementById('L'+blockedSeg);
+    const blockedPR = document.getElementById('PR_'+blockedSw.replace('sw','')+'_'+blockedSeg);
+
+    let step=0;
+    if(convT)clearInterval(convT);
+    convT=setInterval(()=>{
+      step++;
+      cvf.style.width=Math.min(step*10,100)+'%';
+      if(step===3){
+        blockedLinkEl.setAttribute('stroke','var(--pu)'); blockedLinkEl.setAttribute('opacity','.8');
+        blockedLinkEl.className.baseVal='lr';
+        if(blockedPR){blockedPR.textContent='P/A';blockedPR.setAttribute('fill','var(--pu)');}
+        // Proposal/Agreement exchange
+        const [a,b] = blockedSeg==='23'?['sw2','sw3']:blockedSeg==='13'?['sw1','sw3']:['sw1','sw2'];
+        anim(b+'-'+a,'bpdu',500,0);
+        anim(a+'-'+b,'bpdu',500,300);
+      }
+      if(step>=10){
+        clearInterval(convT);
+        blockedLinkEl.setAttribute('stroke','var(--gn)'); blockedLinkEl.setAttribute('opacity','1');
+        blockedLinkEl.className.baseVal='lr';
+        if(blockedPR){blockedPR.textContent='RP';blockedPR.setAttribute('fill','var(--gn)');}
+        if(blockedKey) topo.ports[blockedKey[0]] = 'root';
+        setStatus('✅ Alternate→Forwarding en ~300ms (Proposal/Agreement)');
+        cvf.style.width='100%';
+        showFailInfoRSTP();
+        // Test traffic
+        setTimeout(()=>{
+          const path=findPath('sw1','sw2');
+          if(path){
+            const spd=700;let d=300;
+            anim('pc1-sw1','data',spd,d);d+=500;
+            for(let i=0;i<path.length-1;i++){anim(path[i]+'-'+path[i+1],'data',spd,d);d+=500;}
+            anim('sw2-pc2','data',spd,d);
+          }
+        },400);
+      }
+    },100);
+  }
+}
+
+function doReset() {
+  failed=false; deadLink=null;
+  if(convT){clearInterval(convT);convT=null;}
+  document.getElementById('failG').style.display='none';
+  document.getElementById('cvb').classList.remove('sh');
+  document.getElementById('cvf').style.width='0%';
+  setStatus('');
+  runElection();
+}
+
+// ══════════════════════════════════════
+//  INFO PANELS
+// ══════════════════════════════════════
+function setStatus(m){document.getElementById('stb').textContent=m}
+
+function updateInfo(){
+  const ib=document.getElementById('ib');
+  ib.className='ib '+(mode==='stp'?'sb':'rb');
+  const root=topo.root.toUpperCase();
+  // Find roles for description
+  const roles=[];
+  Object.entries(topo.ports).forEach(([k,v])=>{
+    const [sw,seg]=k.split('_');
+    const portNum = getPortLabel(sw,seg);
+    roles.push({sw:sw.toUpperCase(),port:portNum,role:v});
+  });
+  const roleStr = roles.map(r=>{
+    const c = r.role==='root'?'hg':r.role==='blocked'?(mode==='stp'?'hr':'hp'):'';
+    const lbl = r.role==='root'?'RP':r.role==='designated'?'D':mode==='stp'?'BLK':'ALT';
+    return `<strong>${r.sw}</strong> ${r.port}=<strong class="${c}">${lbl}</strong>`;
+  }).join(' · ');
+
+  if(mode==='stp'){
+    ib.innerHTML=`<span class="tg" style="background:var(--am);color:#000">STP 802.1D</span><br>
+      <strong class="hg">${root}</strong> = Root Bridge (BID más bajo). ${roleStr}
+      <br><br>Cables activos: <strong class="ha">pulso lento</strong> (dash largo, ~2s). Enlace bloqueado: <strong class="hr">parpadeo intermitente</strong>.
+      <br>Convergencia ante fallo: <strong class="hr">30-50 segundos</strong> (Max Age + Listening + Learning).
+      <br>Edita MAC y Prioridad arriba para recalcular toda la topología STP.`;
+  }else{
+    ib.innerHTML=`<span class="tg" style="background:var(--pu);color:#000">RSTP 802.1w</span><br>
+      <strong class="hg">${root}</strong> = Root Bridge. ${roleStr}
+      <br><br>Cables activos: <strong class="hp">pulso rápido</strong> (dash corto, ~0.6s). Puerto Alternate: <strong class="hp">opacidad reducida</strong>.
+      <br>Convergencia ante fallo: <strong class="hg">&lt; 1 segundo</strong> (Proposal/Agreement).
+      <br>El Alternate Port es un respaldo precalculado del Root Port.`;
+  }
+}
+
+function getPortLabel(sw,seg){
+  const map={'sw1_12':'Fa0/1','sw1_13':'Fa0/2','sw2_12':'Fa0/1','sw2_23':'Fa0/2','sw3_13':'Fa0/1','sw3_23':'Fa0/2'};
+  return map[sw+'_'+seg]||'Fa0/x';
+}
+
+function showBPDUInfo(){
+  const ib=document.getElementById('ib');
+  ib.className='ib '+(mode==='stp'?'sb':'rb');
+  if(mode==='stp'){
+    ib.innerHTML=`<span class="tg" style="background:var(--am);color:#000">BPDU — STP</span><br>
+      <strong class="hg">${topo.root.toUpperCase()}</strong> genera BPDUs cada <strong class="ha">2 segundos</strong> (Hello Timer) por puertos Designated.
+      Los non-root reciben, procesan y reenvían. El puerto <strong class="hr">Blocked NO reenvía datos</strong> pero escucha BPDUs.
+      <br>Campos: Root BID, Sender BID, Root Path Cost, Port ID, Max Age (20s), Forward Delay (15s).`;
+  }else{
+    ib.innerHTML=`<span class="tg" style="background:var(--pu);color:#000">BPDU — RSTP</span><br>
+      En RSTP <strong>cada switch genera BPDUs</strong> (no solo el Root). Observa las tramas de ida <strong class="ha">Y vuelta</strong> (Proposal/Agreement).
+      Timer de expiración: <strong class="hp">3× Hello = 6s</strong> vs 20s en STP. El Alternate Port es respaldo instantáneo.`;
+  }
+}
+
+function showARPInfo(){
+  const ib=document.getElementById('ib');
+  ib.className='ib '+(mode==='stp'?'sb':'rb');
+  ib.innerHTML=`<span class="tg" style="background:var(--gn);color:#000">ARP Broadcast</span><br>
+    <strong>PC-A</strong> envía ARP broadcast. <strong>${topo.root.toUpperCase()}</strong> inunda por puertos Designated.
+    Los puertos <strong class="${mode==='stp'?'hr':'hp'}">${mode==='stp'?'Blocked':'Alternate'}</strong> <strong>NO reenvían</strong> → se evita el bucle.
+    <br>Sin STP, esta trama circularía infinitamente causando <strong class="hr">tormenta de broadcast</strong>,
+    inestabilidad de tabla MAC y duplicación de tramas.`;
+}
+
+function showDataInfo(path){
+  const ib=document.getElementById('ib');
+  ib.className='ib '+(mode==='stp'?'sb':'rb');
+  const route = ['PC-A',...path.map(s=>s.toUpperCase()),'PC-B'].join(' → ');
+  const cost = (path.length-1)*19;
+  ib.innerHTML=`<span class="tg" style="background:var(--ci);color:#fff">Unicast PC-A → PC-B</span><br>
+    Ruta: <strong>${route}</strong> (Costo: ${cost}).
+    ${path.length>2?'<br>El tráfico viaja por la <strong>ruta alternativa</strong> a través de '+path[1].toUpperCase()+'.':''}
+    ${mode==='rstp'?'<br>Si esta ruta falla, el Alternate Port se activa en <strong class="hg">&lt;1s</strong>.':''}`;
+}
+
+function showFailInfoSTP(phase,sec){
+  const ib=document.getElementById('ib');
+  ib.className='ib sb';
+  const phases={
+    1:`<strong class="ha">Fase 1: Max Age (${sec}s/20s)</strong><br>SW2 dejó de recibir BPDUs. Debe esperar 20s antes de considerar la ruta muerta. <strong class="hr">Sin conectividad.</strong>`,
+    2:`<strong class="ha">Fase 2: Listening (${sec}s/15s)</strong><br>Puerto en transición. Procesa BPDUs pero <strong class="hr">NO reenvía datos</strong> ni aprende MACs.`,
+    3:`<strong style="color:var(--ci)">Fase 3: Learning (${sec}s/15s)</strong><br>Aprende MACs de tramas entrantes pero <strong class="ha">aún NO reenvía</strong> tráfico de usuario.`,
+    4:`<strong class="hg">✅ Forwarding</strong><br>Convergencia completada en <strong class="hr">~50 segundos</strong>. La ruta alternativa está activa. Los usuarios experimentaron pérdida total de conectividad durante la transición.`
+  };
+  ib.innerHTML=`<span class="tg" style="background:var(--rd);color:#fff">FALLO — STP</span><br>${phases[phase]}`;
+}
+
+function showFailInfoRSTP(){
+  const ib=document.getElementById('ib');
+  ib.className='ib rb';
+  ib.innerHTML=`<span class="tg" style="background:var(--gn);color:#000">CONVERGENCIA RSTP</span><br>
+    Alternate → <strong class="hg">Forwarding en ~300ms</strong>. RSTP usa Proposal/Agreement: transición inmediata sin Listening ni Learning.
+    <br>Comparación: <strong class="hg">~0.3s</strong> (RSTP) vs <strong class="hr">~50s</strong> (STP) = <strong>¡166× más rápido!</strong>`;
+}
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+runElection();
+</script>
+</body>
+</html>
