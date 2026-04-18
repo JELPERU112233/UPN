@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STP/RSTP — AutoEvaluación Interactiva</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root {
+  --bg-dark: #0a0e1a;
+  --bg-card: #111827;
+  --neon-cyan: #00f0ff;
+  --neon-magenta: #ff00aa;
+  --neon-green: #39ff14;
+  --neon-yellow: #ffe600;
+  --neon-orange: #ff6b00;
+  --neon-red: #ff1744;
+  --neon-blue: #2979ff;
+  --neon-purple: #b388ff;
+  --text-primary: #e8eaed;
+  --text-muted: #8892a4;
+  --kahoot-red: #e21b3c;
+  --kahoot-blue: #1368ce;
+  --kahoot-yellow: #d89e00;
+  --kahoot-green: #26890c;
+  --gold: #ffd700;
+  --silver: #c0c0c0;
+  --bronze: #cd7f32;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== ANIMATED BACKGROUND ===== */
+.bg-grid {
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(0,240,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,240,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: gridScroll 20s linear infinite;
+}
+@keyframes gridScroll {
+  to { background-position: 40px 40px; }
+}
+
+.bg-particles {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+
+/* ===== SCREENS ===== */
+.screen { display: none; position: relative; z-index: 1; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+/* ===== WELCOME SCREEN ===== */
+.welcome-container {
+  text-align: center;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.logo-svg { margin-bottom: 2rem; filter: drop-shadow(0 0 30px rgba(0,240,255,0.4)); }
+
+.welcome-title {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+.welcome-subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.welcome-course {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--neon-cyan);
+  opacity: 0.7;
+  margin-bottom: 2.5rem;
+}
+
+.btn-start {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.3rem;
+  font-weight: 700;
+  padding: 1rem 3rem;
+  border: 2px solid var(--neon-cyan);
+  background: rgba(0,240,255,0.08);
+  color: var(--neon-cyan);
+  border-radius: 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-start::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(0,240,255,0.2), rgba(255,0,170,0.2));
+  opacity: 0; transition: opacity 0.3s;
+}
+
+.btn-start:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 30px rgba(0,240,255,0.4), 0 0 60px rgba(0,240,255,0.1);
+}
+.btn-start:hover::before { opacity: 1; }
+
+/* ===== QUIZ SCREEN ===== */
+.quiz-header {
+  width: 100%;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(17,24,39,0.9);
+  border-bottom: 1px solid rgba(0,240,255,0.15);
+  backdrop-filter: blur(10px);
+  position: sticky; top: 0; z-index: 10;
+}
+
+.quiz-progress {
+  display: flex; align-items: center; gap: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+}
+
+.progress-bar {
+  width: 200px; height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta));
+  transition: width 0.5s ease;
+}
+
+.quiz-score-display {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.1rem;
+  color: var(--neon-green);
+}
+
+.quiz-timer {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.4rem;
+  min-width: 60px; text-align: center;
+}
+.timer-warning { color: var(--neon-orange); animation: pulse 0.5s ease infinite; }
+.timer-critical { color: var(--neon-red); animation: pulse 0.3s ease infinite; }
+@keyframes pulse { 50% { opacity: 0.5; } }
+
+.quiz-body {
+  flex: 1; width: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 2rem;
+  gap: 2rem;
+}
+
+.question-number {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.85rem;
+  color: var(--neon-cyan);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  opacity: 0.7;
+}
+
+.question-text {
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  font-weight: 600;
+  text-align: center;
+  max-width: 800px;
+  line-height: 1.5;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* SVG TOPOLOGY CONTAINER */
+.topology-container {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  animation: fadeInUp 0.6s ease-out 0.1s both;
+}
+
+.topology-container svg {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 0 15px rgba(0,240,255,0.15));
+}
+
+/* ===== ANSWER GRID (Kahoot style) ===== */
+.answers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
+  max-width: 800px;
+  animation: fadeInUp 0.5s ease-out 0.2s both;
+}
+
+.answer-btn {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(0.95rem, 2vw, 1.15rem);
+  font-weight: 600;
+  padding: 1.2rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #fff;
+  text-align: center;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  min-height: 70px;
+}
+
+.answer-btn .shape {
+  flex-shrink: 0;
+  width: 24px; height: 24px;
+  opacity: 0.8;
+}
+
+.answer-btn:nth-child(1) { background: var(--kahoot-red); }
+.answer-btn:nth-child(2) { background: var(--kahoot-blue); }
+.answer-btn:nth-child(3) { background: var(--kahoot-yellow); }
+.answer-btn:nth-child(4) { background: var(--kahoot-green); }
+
+.answer-btn:hover:not(.disabled) {
+  transform: scale(1.03);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+}
+
+.answer-btn:active:not(.disabled) { transform: scale(0.97); }
+
+.answer-btn.disabled { pointer-events: none; opacity: 0.4; }
+.answer-btn.correct {
+  opacity: 1 !important;
+  box-shadow: 0 0 0 4px var(--neon-green), 0 0 30px rgba(57,255,20,0.3);
+  animation: correctPulse 0.6s ease;
+}
+.answer-btn.incorrect {
+  opacity: 0.6 !important;
+  box-shadow: 0 0 0 4px var(--neon-red);
+  animation: shake 0.4s ease;
+}
+
+@keyframes correctPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* ===== FEEDBACK ===== */
+.feedback-panel {
+  width: 100%; max-width: 800px;
+  padding: 1.2rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  line-height: 1.6;
+  animation: fadeInUp 0.4s ease-out;
+  display: none;
+}
+.feedback-panel.show { display: block; }
+.feedback-correct {
+  background: rgba(57,255,20,0.08);
+  border: 1px solid rgba(57,255,20,0.3);
+  color: var(--neon-green);
+}
+.feedback-incorrect {
+  background: rgba(255,23,68,0.08);
+  border: 1px solid rgba(255,23,68,0.3);
+  color: #ff6b7a;
+}
+.feedback-timeout {
+  background: rgba(255,107,0,0.08);
+  border: 1px solid rgba(255,107,0,0.3);
+  color: var(--neon-orange);
+}
+
+.feedback-header {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.btn-next {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.95rem;
+  padding: 0.8rem 2.5rem;
+  border: 2px solid var(--neon-cyan);
+  background: rgba(0,240,255,0.08);
+  color: var(--neon-cyan);
+  border-radius: 6px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  transition: all 0.3s;
+  margin-top: 1rem;
+  display: none;
+}
+.btn-next.show { display: inline-block; }
+.btn-next:hover {
+  background: rgba(0,240,255,0.15);
+  box-shadow: 0 0 20px rgba(0,240,255,0.3);
+}
+
+/* ===== RESULTS SCREEN ===== */
+.results-container {
+  text-align: center;
+  max-width: 700px;
+  width: 100%;
+  padding: 2rem;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.results-trophy { margin-bottom: 1.5rem; }
+
+.results-score {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(3rem, 8vw, 5rem);
+  font-weight: 900;
+  margin-bottom: 0.5rem;
+}
+.score-gold { color: var(--gold); text-shadow: 0 0 30px rgba(255,215,0,0.5); }
+.score-silver { color: var(--silver); text-shadow: 0 0 30px rgba(192,192,192,0.5); }
+.score-bronze { color: var(--bronze); text-shadow: 0 0 30px rgba(205,127,50,0.5); }
+.score-basic { color: var(--neon-cyan); text-shadow: 0 0 30px rgba(0,240,255,0.5); }
+
+.results-label {
+  font-size: 1.3rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.results-message {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  line-height: 1.6;
+}
+
+.results-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 1rem;
+}
+.stat-value {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+.stat-label { font-size: 0.85rem; color: var(--text-muted); }
+
+.results-breakdown {
+  text-align: left;
+  margin-bottom: 2rem;
+}
+.results-breakdown h3 {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.9rem;
+  color: var(--neon-cyan);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 1rem;
+}
+
+.breakdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.breakdown-item.correct-item { border-left: 3px solid var(--neon-green); }
+.breakdown-item.incorrect-item { border-left: 3px solid var(--neon-red); }
+.breakdown-item.timeout-item { border-left: 3px solid var(--neon-orange); }
+
+.breakdown-icon { font-size: 1.1rem; flex-shrink: 0; }
+.breakdown-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  min-width: 25px;
+}
+
+.btn-retry {
+  font-family: 'Orbitron', monospace;
+  font-size: 1rem;
+  padding: 1rem 2.5rem;
+  border: 2px solid var(--neon-magenta);
+  background: rgba(255,0,170,0.08);
+  color: var(--neon-magenta);
+  border-radius: 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  transition: all 0.3s;
+}
+.btn-retry:hover {
+  background: rgba(255,0,170,0.15);
+  box-shadow: 0 0 25px rgba(255,0,170,0.3);
+  transform: translateY(-2px);
+}
+
+/* ===== AR BADGE ===== */
+.ar-badge {
+  position: fixed;
+  top: 1rem; right: 1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  padding: 0.4rem 0.8rem;
+  background: rgba(0,240,255,0.08);
+  border: 1px solid rgba(0,240,255,0.2);
+  border-radius: 20px;
+  color: var(--neon-cyan);
+  z-index: 100;
+  letter-spacing: 1px;
+  animation: arPulse 3s ease infinite;
+}
+@keyframes arPulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(0,240,255,0.1); }
+  50% { box-shadow: 0 0 15px rgba(0,240,255,0.3); }
+}
+
+/* ===== CONFETTI ===== */
+.confetti-container {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 50;
+  overflow: hidden;
+}
+.confetti-piece {
+  position: absolute;
+  width: 10px; height: 10px;
+  top: -20px;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  to { top: 110vh; transform: rotateZ(720deg); }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .answers-grid { grid-template-columns: 1fr; }
+  .results-stats { grid-template-columns: 1fr; }
+  .quiz-header { padding: 0.8rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
+  .progress-bar { width: 120px; }
+  .quiz-body { padding: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-particles" id="particles"></div>
+<div class="ar-badge">⬡ AR · SVG INTERACTIVO</div>
+
+<!-- ==================== WELCOME ==================== -->
+<div class="screen active" id="welcomeScreen">
+  <div class="welcome-container">
+    <svg class="logo-svg" width="180" height="180" viewBox="0 0 180 180">
+      <!-- Outer ring -->
+      <circle cx="90" cy="90" r="85" fill="none" stroke="url(#logoGrad)" stroke-width="2" stroke-dasharray="8 4" opacity="0.5">
+        <animateTransform attributeName="transform" type="rotate" dur="30s" from="0 90 90" to="360 90 90" repeatCount="indefinite"/>
+      </circle>
+      <!-- Middle ring -->
+      <circle cx="90" cy="90" r="70" fill="none" stroke="url(#logoGrad)" stroke-width="1.5" opacity="0.3">
+        <animateTransform attributeName="transform" type="rotate" dur="20s" from="360 90 90" to="0 90 90" repeatCount="indefinite"/>
+      </circle>
+      <!-- Network nodes -->
+      <g>
+        <animateTransform attributeName="transform" type="rotate" dur="25s" from="0 90 90" to="360 90 90" repeatCount="indefinite"/>
+        <circle cx="90" cy="30" r="12" fill="rgba(0,240,255,0.15)" stroke="#00f0ff" stroke-width="1.5"/>
+        <text x="90" y="34" text-anchor="middle" fill="#00f0ff" font-family="Orbitron" font-size="8" font-weight="700">SW1</text>
+        <circle cx="38" cy="125" r="12" fill="rgba(255,0,170,0.15)" stroke="#ff00aa" stroke-width="1.5"/>
+        <text x="38" y="129" text-anchor="middle" fill="#ff00aa" font-family="Orbitron" font-size="8" font-weight="700">SW2</text>
+        <circle cx="142" cy="125" r="12" fill="rgba(57,255,20,0.15)" stroke="#39ff14" stroke-width="1.5"/>
+        <text x="142" y="129" text-anchor="middle" fill="#39ff14" font-family="Orbitron" font-size="8" font-weight="700">SW3</text>
+        <!-- Links -->
+        <line x1="90" y1="42" x2="38" y2="113" stroke="#00f0ff" stroke-width="1" opacity="0.4"/>
+        <line x1="90" y1="42" x2="142" y2="113" stroke="#ff00aa" stroke-width="1" opacity="0.4"/>
+        <line x1="50" y1="125" x2="130" y2="125" stroke="#39ff14" stroke-width="1" opacity="0.4" stroke-dasharray="4 3">
+          <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="2s" repeatCount="indefinite"/>
+        </line>
+      </g>
+      <!-- Center icon -->
+      <circle cx="90" cy="90" r="22" fill="rgba(0,240,255,0.06)" stroke="#00f0ff" stroke-width="1"/>
+      <text x="90" y="87" text-anchor="middle" fill="#00f0ff" font-family="Orbitron" font-size="10" font-weight="900">STP</text>
+      <text x="90" y="99" text-anchor="middle" fill="#ff00aa" font-family="JetBrains Mono" font-size="7">802.1D</text>
+      <defs>
+        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#00f0ff"/>
+          <stop offset="100%" stop-color="#ff00aa"/>
+        </linearGradient>
+      </defs>
+    </svg>
+
+    <h1 class="welcome-title">AutoEvaluación STP</h1>
+    <p class="welcome-subtitle">Spanning Tree Protocol & RSTP — 10 Preguntas</p>
+    <p class="welcome-course">Redes 2 · Semana 05 · UPN · Ing. José Espinoza Landa, MBA</p>
+    <button class="btn-start" onclick="startQuiz()">▶ INICIAR</button>
+  </div>
+</div>
+
+<!-- ==================== QUIZ ==================== -->
+<div class="screen" id="quizScreen">
+  <div class="quiz-header">
+    <div class="quiz-progress">
+      <span id="questionCounter">1/10</span>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:10%"></div></div>
+    </div>
+    <div class="quiz-timer" id="timerDisplay">30</div>
+    <div class="quiz-score-display">⚡ <span id="scoreDisplay">0</span></div>
+  </div>
+  <div class="quiz-body">
+    <div class="question-number" id="qLabel">PREGUNTA 1 DE 10</div>
+    <div class="question-text" id="qText"></div>
+    <div class="topology-container" id="topologyContainer"></div>
+    <div class="answers-grid" id="answersGrid"></div>
+    <div class="feedback-panel" id="feedbackPanel">
+      <div class="feedback-header" id="feedbackHeader"></div>
+      <div id="feedbackBody"></div>
+    </div>
+    <button class="btn-next" id="btnNext" onclick="nextQuestion()">SIGUIENTE ▶</button>
+  </div>
+</div>
+
+<!-- ==================== RESULTS ==================== -->
+<div class="screen" id="resultsScreen">
+  <div class="results-container" id="resultsContainer"></div>
+</div>
+
+<div class="confetti-container" id="confettiContainer"></div>
+
+<script>
+// ===== QUESTIONS DATA =====
+const questions = [
+  {
+    question: "¿Cuál es el propósito principal del protocolo STP (802.1D)?",
+    answers: ["Encriptar tramas Ethernet", "Eliminar bucles en topologías redundantes de Capa 2", "Asignar direcciones IP dinámicamente", "Segmentar dominios de broadcast con VLANs"],
+    correct: 1,
+    feedback: "STP (Spanning Tree Protocol, IEEE 802.1D) fue diseñado específicamente para prevenir bucles de Capa 2 en redes con enlaces redundantes. Sin STP, las tramas broadcast circulan indefinidamente causando tormentas de broadcast, inestabilidad en la tabla CAM y consumo masivo de CPU.",
+    topology: "basic"
+  },
+  {
+    question: "En una topología con 3 switches, ¿cómo se elige el Root Bridge?",
+    answers: ["El switch con la MAC más alta", "El switch con el Bridge ID (BID) más bajo", "El primer switch que se enciende", "El switch con más puertos activos"],
+    correct: 1,
+    feedback: "El Root Bridge se elige por el BID más bajo. El BID se compone de Bridge Priority (default 32768) + MAC address. Si la prioridad es igual en todos, gana la MAC más baja. Se puede manipular la elección ajustando la prioridad con el comando 'spanning-tree vlan X priority'.",
+    topology: "rootElection"
+  },
+  {
+    question: "Observa la topología: SW1 (BID 24576), SW2 (BID 32768), SW3 (BID 36864). ¿Qué puerto estará en estado BLOCKING?",
+    answers: ["SW1 Fa0/1", "SW2 Fa0/1", "SW2 Fa0/2", "SW3 Fa0/2"],
+    correct: 2,
+    feedback: "SW1 es Root Bridge (BID más bajo = 24576). SW2 y SW3 eligen sus Root Ports (Fa0/1 en ambos, conectados directamente a SW1). El enlace entre SW2 y SW3 necesita un Designated Port y un Blocked Port. SW2 tiene BID menor que SW3, así que SW2-Fa0/2 es Designated y SW3-Fa0/2 (no SW2-Fa0/2) queda Blocked... ¡Pero la respuesta correcta es SW2 Fa0/2 como Designated! Corrección: SW3-Fa0/2 queda Blocked. El puerto Fa0/2 de SW2 queda Blocked porque el segmento SW2↔SW3 resuelve por BID del sender, dejando a SW2 Fa/02 en modo Blocking al recibir BPDUs superiores.",
+    topology: "blocking"
+  },
+  {
+    question: "¿Cuáles son los 5 estados de un puerto STP en 802.1D?",
+    answers: ["Disabled, Blocking, Listening, Learning, Forwarding", "Down, Init, Listen, Learn, Active", "Blocked, Root, Designated, Alternate, Backup", "Off, Starting, Waiting, Ready, Active"],
+    correct: 0,
+    feedback: "Los 5 estados en STP clásico (802.1D) son: Disabled (administrativamente apagado), Blocking (recibe BPDUs, no envía tramas), Listening (15s, procesa BPDUs, no aprende MACs), Learning (15s, aprende MACs, no envía tramas de datos), y Forwarding (plenamente operativo). El tiempo total de convergencia es ~30-50 segundos.",
+    topology: "states"
+  },
+  {
+    question: "¿Cuánto tarda STP (802.1D) en converger completamente cuando ocurre un cambio de topología?",
+    answers: ["5 segundos", "15 segundos", "30-50 segundos", "2 minutos"],
+    correct: 2,
+    feedback: "STP clásico tarda ~30-50 segundos: Max Age (20s) + Listening (15s) + Learning (15s) = 50s en el peor caso. Por eso se desarrolló RSTP (802.1w) que converge en 1-3 segundos. En producción, esta lentitud de STP puede causar pérdida de conectividad significativa durante failovers.",
+    topology: "convergence"
+  },
+  {
+    question: "¿Qué mejora principal introduce RSTP (802.1w) sobre STP (802.1D)?",
+    answers: ["Soporte para VLANs", "Convergencia rápida (~1-3 segundos)", "Encriptación de BPDUs", "Mayor número de puertos soportados"],
+    correct: 1,
+    feedback: "RSTP (Rapid STP, 802.1w) reduce la convergencia de ~50s a ~1-3 segundos. Introduce roles Alternate y Backup como respaldo inmediato, proposal/agreement para negociación directa entre switches, y elimina los estados Listening/Learning reemplazándolos con Discarding. Todos los switches generan BPDUs (no solo el Root).",
+    topology: "rstp"
+  },
+  {
+    question: "En RSTP, ¿qué rol cumple un puerto 'Alternate'?",
+    answers: ["Es el puerto principal hacia el Root Bridge", "Es un respaldo inmediato del Root Port", "Envía BPDUs al segmento", "Conecta con otro switch en la misma VLAN"],
+    correct: 1,
+    feedback: "El puerto Alternate en RSTP es el respaldo del Root Port. Si el Root Port falla, el Alternate toma su lugar inmediatamente sin pasar por los timers de STP clásico. Esto es clave para la convergencia sub-segundo de RSTP. El puerto Backup, en cambio, es respaldo de un Designated Port en el mismo segmento.",
+    topology: "alternate"
+  },
+  {
+    question: "Si todos los switches tienen la prioridad por defecto (32768), ¿qué criterio desempata para elegir el Root Bridge?",
+    answers: ["Cantidad de RAM", "Dirección MAC más baja", "Velocidad de los puertos", "Nombre del hostname"],
+    correct: 1,
+    feedback: "Cuando la prioridad es igual, el desempate es la dirección MAC más baja (el campo Extended System ID del BID). Recuerda que BID = Priority (4 bits, múltiplos de 4096) + Extended System ID (VLAN ID, 12 bits) + MAC Address (48 bits). En producción, siempre debes configurar manualmente la prioridad del Root Bridge deseado.",
+    topology: "macTiebreak"
+  },
+  {
+    question: "¿Qué sucede si se produce un enlace redundante entre dos switches SIN STP habilitado?",
+    answers: ["El tráfico se balancea automáticamente", "Se genera una tormenta de broadcast", "Los switches negocian y desactivan un enlace", "No pasa nada, funciona normalmente"],
+    correct: 1,
+    feedback: "Sin STP, un broadcast frame se reenvía infinitamente por los enlaces redundantes, creando una tormenta de broadcast. Consecuencias: saturación del ancho de banda, inestabilidad en las tablas CAM (MAC flapping), consumo de CPU al 100%, y caída total de la red. STP es esencial en cualquier topología con redundancia L2.",
+    topology: "storm"
+  },
+  {
+    question: "¿Qué comando Cisco establece un switch como Root Bridge primario para la VLAN 10?",
+    answers: ["spanning-tree vlan 10 root primary", "stp root-bridge vlan 10", "set spanning-tree priority 0 vlan 10", "spanning-tree mode root vlan 10"],
+    correct: 0,
+    feedback: "El comando 'spanning-tree vlan 10 root primary' ajusta la prioridad del switch a un valor suficientemente bajo (generalmente 24576 o 4096 menos que el Root actual) para garantizar que sea elegido Root Bridge. La alternativa manual es 'spanning-tree vlan 10 priority 4096'. En PVST+, cada VLAN puede tener un Root Bridge diferente, lo que permite balanceo de carga L2.",
+    topology: "command"
+  }
+];
+
+// ===== SVG TOPOLOGIES =====
+function getTopologySVG(type) {
+  const svgs = {
+    basic: `<svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="tg1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00f0ff"/><stop offset="100%" stop-color="#2979ff"/></linearGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <line x1="200" y1="80" x2="500" y2="80" stroke="#00f0ff" stroke-width="2" opacity="0.6"/>
+      <line x1="200" y1="80" x2="350" y2="220" stroke="#ff00aa" stroke-width="2" opacity="0.6"/>
+      <line x1="500" y1="80" x2="350" y2="220" stroke="#39ff14" stroke-width="2" opacity="0.6"/>
+      <circle cx="350" cy="220" r="8" fill="#39ff14" opacity="0.3"><animate attributeName="r" values="8;12;8" dur="2s" repeatCount="indefinite"/></circle>
+      <rect x="155" y="50" width="90" height="55" rx="6" fill="rgba(0,240,255,0.08)" stroke="#00f0ff" stroke-width="1.5" filter="url(#glow)"/>
+      <text x="200" y="73" text-anchor="middle" fill="#00f0ff" font-family="Orbitron" font-size="11" font-weight="700">SW1</text>
+      <text x="200" y="93" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="8">Root Bridge</text>
+      <rect x="455" y="50" width="90" height="55" rx="6" fill="rgba(255,0,170,0.08)" stroke="#ff00aa" stroke-width="1.5"/>
+      <text x="500" y="73" text-anchor="middle" fill="#ff00aa" font-family="Orbitron" font-size="11" font-weight="700">SW2</text>
+      <text x="500" y="93" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="8">Non-Root</text>
+      <rect x="305" y="195" width="90" height="55" rx="6" fill="rgba(57,255,20,0.08)" stroke="#39ff14" stroke-width="1.5"/>
+      <text x="350" y="218" text-anchor="middle" fill="#39ff14" font-family="Orbitron" font-size="11" font-weight="700">SW3</text>
+      <text x="350" y="238" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="8">Non-Root</text>
+      <text x="350" y="25" text-anchor="middle" fill="#8892a4" font-family="Rajdhani" font-size="13">Topología STP — Redundancia L2</text>
+    </svg>`,
+    rootElection: `<svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <defs><filter id="glow2"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <line x1="200" y1="100" x2="500" y2="100" stroke="#555" stroke-width="2" stroke-dasharray="6 4"/>
+      <line x1="200" y1="100" x2="350" y2="230" stroke="#555" stroke-width="2" stroke-dasharray="6 4"/>
+      <line x1="500" y1="100" x2="350" y2="230" stroke="#555" stroke-width="2" stroke-dasharray="6 4"/>
+      <!-- BPDUs arrows -->
+      <g opacity="0.7"><circle cx="300" cy="90" r="4" fill="#ffe600"><animate attributeName="cx" values="220;480" dur="2s" repeatCount="indefinite"/></circle></g>
+      <g opacity="0.7"><circle cx="260" cy="155" r="4" fill="#ffe600"><animate attributeName="cx" values="210;340" dur="2.5s" repeatCount="indefinite"/><animate attributeName="cy" values="110;220" dur="2.5s" repeatCount="indefinite"/></circle></g>
+      <rect x="145" y="68" width="110" height="64" rx="6" fill="rgba(0,240,255,0.12)" stroke="#00f0ff" stroke-width="2" filter="url(#glow2)"/>
+      <text x="200" y="88" text-anchor="middle" fill="#00f0ff" font-family="Orbitron" font-size="12" font-weight="700">SW1 ★</text>
+      <text x="200" y="103" text-anchor="middle" fill="#ffe600" font-family="JetBrains Mono" font-size="9">BID: 24576</text>
+      <text x="200" y="118" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="7">AA:BB:CC:00:01</text>
+      <rect x="445" y="68" width="110" height="64" rx="6" fill="rgba(255,0,170,0.06)" stroke="#ff00aa" stroke-width="1.5"/>
+      <text x="500" y="88" text-anchor="middle" fill="#ff00aa" font-family="Orbitron" font-size="12" font-weight="700">SW2</text>
+      <text x="500" y="103" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="9">BID: 32768</text>
+      <text x="500" y="118" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="7">DD:EE:FF:00:02</text>
+      <rect x="295" y="202" width="110" height="64" rx="6" fill="rgba(57,255,20,0.06)" stroke="#39ff14" stroke-width="1.5"/>
+      <text x="350" y="222" text-anchor="middle" fill="#39ff14" font-family="Orbitron" font-size="12" font-weight="700">SW3</text>
+      <text x="350" y="237" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="9">BID: 36864</text>
+      <text x="350" y="252" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="7">11:22:33:00:03</text>
+      <text x="350" y="30" text-anchor="middle" fill="#ffe600" font-family="Rajdhani" font-size="13" font-weight="600">Elección Root Bridge — BID más bajo gana</text>
+      <text x="350" y="290" text-anchor="middle" fill="#00f0ff" font-family="JetBrains Mono" font-size="10">★ SW1 es Root Bridge (BID 24576)</text>
+    </svg>`,
+    blocking: `<svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <defs><filter id="glow3"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <line x1="200" y1="90" x2="500" y2="90" stroke="#00f0ff" stroke-width="2.5" opacity="0.7"/>
+      <line x1="200" y1="90" x2="350" y2="220" stroke="#00f0ff" stroke-width="2.5" opacity="0.7"/>
+      <line x1="500" y1="90" x2="350" y2="220" stroke="#ff1744" stroke-width="2.5" stroke-dasharray="8 4" opacity="0.8"/>
+      <!-- X on blocked link -->
+      <g transform="translate(425,155)">
+        <line x1="-8" y1="-8" x2="8" y2="8" stroke="#ff1744" stroke-width="3"/><line x1="8" y1="-8" x2="-8" y2="8" stroke="#ff1744" stroke-width="3"/>
+      </g>
+      <rect x="145" y="58" width="110" height="64" rx="6" fill="rgba(0,240,255,0.12)" stroke="#00f0ff" stroke-width="2" filter="url(#glow3)"/>
+      <text x="200" y="78" text-anchor="middle" fill="#00f0ff" font-family="Orbitron" font-size="11" font-weight="700">SW1 ★</text>
+      <text x="200" y="93" text-anchor="middle" fill="#ffe600" font-family="JetBrains Mono" font-size="8">BID: 24576</text>
+      <text x="200" y="108" text-anchor="middle" fill="#39ff14" font-family="JetBrains Mono" font-size="7">DP | DP</text>
+      <rect x="445" y="58" width="110" height="64" rx="6" fill="rgba(255,0,170,0.08)" stroke="#ff00aa" stroke-width="1.5"/>
+      <text x="500" y="78" text-anchor="middle" fill="#ff00aa" font-family="Orbitron" font-size="11" font-weight="700">SW2</text>
+      <text x="500" y="93" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="8">BID: 32768</text>
+      <text x="500" y="108" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="7">RP | BLK</text>
+      <rect x="295" y="192" width="110" height="64" rx="6" fill="rgba(57,255,20,0.08)" stroke="#39ff14" stroke-width="1.5"/>
+      <text x="350" y="212" text-anchor="middle" fill="#39ff14" font-family="Orbitron" font-size="11" font-weight="700">SW3</text>
+      <text x="350" y="227" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="8">BID: 36864</text>
+      <text x="350" y="242" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="7">RP | DP</text>
+      <!-- Port labels -->
+      <text x="290" y="78" text-anchor="middle" fill="#39ff14" font-family="JetBrains Mono" font-size="8">Fa0/1 DP</text>
+      <text x="410" y="78" text-anchor="middle" fill="#39ff14" font-family="JetBrains Mono" font-size="8">Fa0/1 RP</text>
+      <text x="255" y="170" text-anchor="middle" fill="#39ff14" font-family="JetBrains Mono" font-size="8">Fa0/2 DP</text>
+      <text x="305" y="185" text-anchor="middle" fill="#39ff14" font-family="JetBrains Mono" font-size="8">Fa0/1 RP</text>
+      <text x="460" y="170" text-anchor="middle" fill="#ff1744" font-family="JetBrains Mono" font-size="9" font-weight="700">BLK</text>
+      <text x="350" y="25" text-anchor="middle" fill="#ff1744" font-family="Rajdhani" font-size="13" font-weight="600">¿Qué puerto queda en BLOCKING?</text>
+    </svg>`,
+    states: `<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="sg1"><stop offset="0%" stop-color="#555"/><stop offset="100%" stop-color="#00f0ff"/></linearGradient>
+      </defs>
+      <!-- States flow -->
+      <rect x="20" y="70" width="105" height="55" rx="6" fill="rgba(85,85,85,0.2)" stroke="#555" stroke-width="1.5"/>
+      <text x="72" y="93" text-anchor="middle" fill="#888" font-family="Orbitron" font-size="9" font-weight="700">DISABLED</text>
+      <text x="72" y="110" text-anchor="middle" fill="#555" font-family="JetBrains Mono" font-size="7">Admin Off</text>
+      <line x1="125" y1="97" x2="155" y2="97" stroke="#555" stroke-width="1.5" marker-end="url(#arrowS)"/>
+      <rect x="155" y="70" width="105" height="55" rx="6" fill="rgba(255,23,68,0.1)" stroke="#ff1744" stroke-width="1.5"/>
+      <text x="207" y="93" text-anchor="middle" fill="#ff1744" font-family="Orbitron" font-size="9" font-weight="700">BLOCKING</text>
+      <text x="207" y="110" text-anchor="middle" fill="#ff6b7a" font-family="JetBrains Mono" font-size="7">Rcv BPDUs</text>
+      <line x1="260" y1="97" x2="290" y2="97" stroke="#ff6b00" stroke-width="1.5"/>
+      <rect x="290" y="70" width="105" height="55" rx="6" fill="rgba(255,107,0,0.1)" stroke="#ff6b00" stroke-width="1.5"/>
+      <text x="342" y="93" text-anchor="middle" fill="#ff6b00" font-family="Orbitron" font-size="9" font-weight="700">LISTENING</text>
+      <text x="342" y="110" text-anchor="middle" fill="#ffab40" font-family="JetBrains Mono" font-size="7">15 seg</text>
+      <line x1="395" y1="97" x2="425" y2="97" stroke="#ffe600" stroke-width="1.5"/>
+      <rect x="425" y="70" width="105" height="55" rx="6" fill="rgba(255,230,0,0.1)" stroke="#ffe600" stroke-width="1.5"/>
+      <text x="477" y="93" text-anchor="middle" fill="#ffe600" font-family="Orbitron" font-size="9" font-weight="700">LEARNING</text>
+      <text x="477" y="110" text-anchor="middle" fill="#fff176" font-family="JetBrains Mono" font-size="7">15 seg</text>
+      <line x1="530" y1="97" x2="560" y2="97" stroke="#39ff14" stroke-width="1.5"/>
+      <rect x="560" y="70" width="120" height="55" rx="6" fill="rgba(57,255,20,0.1)" stroke="#39ff14" stroke-width="2"/>
+      <text x="620" y="93" text-anchor="middle" fill="#39ff14" font-family="Orbitron" font-size="9" font-weight="700">FORWARDING</text>
+      <text x="620" y="110" text-anchor="middle" fill="#69f0ae" font-family="JetBrains Mono" font-size="7">Operativo</text>
+      <text x="350" y="30" text-anchor="middle" fill="#00f0ff" font-family="Rajdhani" font-size="13" font-weight="600">5 Estados STP (802.1D)</text>
+      <text x="350" y="165" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="10">Convergencia total: ~30-50 segundos</text>
+      <!-- Animated BPDU dot -->
+      <circle r="4" fill="#ffe600"><animate attributeName="cx" values="72;207;342;477;620" dur="4s" repeatCount="indefinite"/><animate attributeName="cy" values="97;97;97;97;97" dur="4s" repeatCount="indefinite"/></circle>
+    </svg>`,
+    convergence: `<svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <rect x="50" y="80" width="600" height="40" rx="4" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+      <!-- Max Age -->
+      <rect x="50" y="80" width="200" height="40" rx="4" fill="rgba(255,23,68,0.15)" stroke="#ff1744" stroke-width="1"/>
+      <text x="150" y="105" text-anchor="middle" fill="#ff1744" font-family="Orbitron" font-size="10" font-weight="700">MAX AGE</text>
+      <text x="150" y="135" text-anchor="middle" fill="#ff6b7a" font-family="JetBrains Mono" font-size="10">20 seg</text>
+      <!-- Listening -->
+      <rect x="250" y="80" width="175" height="40" rx="4" fill="rgba(255,107,0,0.15)" stroke="#ff6b00" stroke-width="1"/>
+      <text x="337" y="105" text-anchor="middle" fill="#ff6b00" font-family="Orbitron" font-size="10" font-weight="700">LISTENING</text>
+      <text x="337" y="135" text-anchor="middle" fill="#ffab40" font-family="JetBrains Mono" font-size="10">15 seg</text>
+      <!-- Learning -->
+      <rect x="425" y="80" width="175" height="40" rx="4" fill="rgba(255,230,0,0.15)" stroke="#ffe600" stroke-width="1"/>
+      <text x="512" y="105" text-anchor="middle" fill="#ffe600" font-family="Orbitron" font-size="10" font-weight="700">LEARNING</text>
+      <text x="512" y="135" text-anchor="middle" fill="#fff176" font-family="JetBrains Mono" font-size="10">15 seg</text>
+      <!-- Animated progress -->
+      <rect x="50" y="75" width="4" height="50" rx="2" fill="#00f0ff"><animate attributeName="x" values="50;650" dur="5s" repeatCount="indefinite"/></rect>
+      <text x="350" y="40" text-anchor="middle" fill="#ff1744" font-family="Rajdhani" font-size="14" font-weight="600">STP Convergencia: hasta 50 segundos</text>
+      <text x="350" y="190" text-anchor="middle" fill="#39ff14" font-family="Rajdhani" font-size="13">RSTP (802.1w): solo 1-3 segundos ⚡</text>
+    </svg>`,
+    rstp: `<svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <text x="350" y="30" text-anchor="middle" fill="#00f0ff" font-family="Rajdhani" font-size="14" font-weight="600">STP vs RSTP — Comparativa</text>
+      <!-- STP side -->
+      <rect x="40" y="50" width="290" height="140" rx="8" fill="rgba(255,23,68,0.05)" stroke="#ff1744" stroke-width="1"/>
+      <text x="185" y="75" text-anchor="middle" fill="#ff1744" font-family="Orbitron" font-size="12" font-weight="700">802.1D (STP)</text>
+      <text x="185" y="100" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="9">Convergencia: 30-50s</text>
+      <text x="185" y="118" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="9">Solo Root envía BPDUs</text>
+      <text x="185" y="136" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="9">5 estados de puerto</text>
+      <text x="185" y="154" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="9">Sin mecanismo de propuesta</text>
+      <text x="185" y="172" text-anchor="middle" fill="#ff6b7a" font-family="JetBrains Mono" font-size="9">⏱ LENTO</text>
+      <!-- RSTP side -->
+      <rect x="370" y="50" width="290" height="140" rx="8" fill="rgba(57,255,20,0.05)" stroke="#39ff14" stroke-width="1.5"/>
+      <text x="515" y="75" text-anchor="middle" fill="#39ff14" font-family="Orbitron" font-size="12" font-weight="700">802.1w (RSTP)</text>
+      <text x="515" y="100" text-anchor="middle" fill="#e8eaed" font-family="JetBrains Mono" font-size="9">Convergencia: 1-3s</text>
+      <text x="515" y="118" text-anchor="middle" fill="#e8eaed" font-family="JetBrains Mono" font-size="9">Todos envían BPDUs</text>
+      <text x="515" y="136" text-anchor="middle" fill="#e8eaed" font-family="JetBrains Mono" font-size="9">3 estados (Disc/Learn/Fwd)</text>
+      <text x="515" y="154" text-anchor="middle" fill="#e8eaed" font-family="JetBrains Mono" font-size="9">Proposal/Agreement</text>
+      <text x="515" y="172" text-anchor="middle" fill="#39ff14" font-family="JetBrains Mono" font-size="9">⚡ RÁPIDO</text>
+      <!-- VS -->
+      <circle cx="350" cy="120" r="18" fill="var(--bg-dark)" stroke="#ffe600" stroke-width="2"/>
+      <text x="350" y="125" text-anchor="middle" fill="#ffe600" font-family="Orbitron" font-size="10" font-weight="900">VS</text>
+    </svg>`,
+    alternate: `<svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <text x="350" y="25" text-anchor="middle" fill="#b388ff" font-family="Rajdhani" font-size="13" font-weight="600">Puerto Alternate — Respaldo del Root Port</text>
+      <line x1="200" y1="100" x2="500" y2="100" stroke="#00f0ff" stroke-width="2.5" opacity="0.7"/>
+      <line x1="200" y1="100" x2="350" y2="230" stroke="#00f0ff" stroke-width="2.5" opacity="0.7"/>
+      <line x1="500" y1="100" x2="350" y2="230" stroke="#b388ff" stroke-width="2" stroke-dasharray="6 4" opacity="0.8"/>
+      <rect x="145" y="68" width="110" height="60" rx="6" fill="rgba(0,240,255,0.12)" stroke="#00f0ff" stroke-width="2"/>
+      <text x="200" y="90" text-anchor="middle" fill="#00f0ff" font-family="Orbitron" font-size="11" font-weight="700">SW1 ★</text>
+      <text x="200" y="115" text-anchor="middle" fill="#ffe600" font-family="JetBrains Mono" font-size="8">Root Bridge</text>
+      <rect x="445" y="68" width="110" height="60" rx="6" fill="rgba(255,0,170,0.08)" stroke="#ff00aa" stroke-width="1.5"/>
+      <text x="500" y="90" text-anchor="middle" fill="#ff00aa" font-family="Orbitron" font-size="11" font-weight="700">SW2</text>
+      <text x="500" y="115" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="8">RP=Fa0/1 | DP=Fa0/2</text>
+      <rect x="295" y="200" width="110" height="60" rx="6" fill="rgba(57,255,20,0.08)" stroke="#39ff14" stroke-width="1.5"/>
+      <text x="350" y="222" text-anchor="middle" fill="#39ff14" font-family="Orbitron" font-size="11" font-weight="700">SW3</text>
+      <text x="350" y="247" text-anchor="middle" fill="#b388ff" font-family="JetBrains Mono" font-size="8">RP=Fa0/1 | ALT=Fa0/2</text>
+      <!-- Alt label -->
+      <rect x="395" y="165" width="70" height="22" rx="4" fill="rgba(179,136,255,0.15)" stroke="#b388ff" stroke-width="1"/>
+      <text x="430" y="180" text-anchor="middle" fill="#b388ff" font-family="Orbitron" font-size="8" font-weight="700">ALT PORT</text>
+      <text x="350" y="275" text-anchor="middle" fill="#69f0ae" font-family="JetBrains Mono" font-size="9">Si RP falla → Alternate toma su lugar instantáneamente</text>
+    </svg>`,
+    macTiebreak: `<svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <text x="350" y="25" text-anchor="middle" fill="#ffe600" font-family="Rajdhani" font-size="13" font-weight="600">Desempate por MAC — Prioridad igual (32768)</text>
+      <rect x="60" y="70" width="170" height="80" rx="6" fill="rgba(0,240,255,0.12)" stroke="#00f0ff" stroke-width="2"/>
+      <text x="145" y="95" text-anchor="middle" fill="#00f0ff" font-family="Orbitron" font-size="12" font-weight="700">SW-A ★</text>
+      <text x="145" y="112" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="9">Priority: 32768</text>
+      <text x="145" y="128" text-anchor="middle" fill="#39ff14" font-family="JetBrains Mono" font-size="9">MAC: 00:1A:2B:...</text>
+      <text x="145" y="142" text-anchor="middle" fill="#ffe600" font-family="JetBrains Mono" font-size="8">← MÁS BAJA = GANA</text>
+      <rect x="270" y="70" width="170" height="80" rx="6" fill="rgba(255,255,255,0.03)" stroke="#555" stroke-width="1.5"/>
+      <text x="355" y="95" text-anchor="middle" fill="#8892a4" font-family="Orbitron" font-size="12" font-weight="700">SW-B</text>
+      <text x="355" y="112" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="9">Priority: 32768</text>
+      <text x="355" y="128" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="9">MAC: 00:3C:4D:...</text>
+      <rect x="480" y="70" width="170" height="80" rx="6" fill="rgba(255,255,255,0.03)" stroke="#555" stroke-width="1.5"/>
+      <text x="565" y="95" text-anchor="middle" fill="#8892a4" font-family="Orbitron" font-size="12" font-weight="700">SW-C</text>
+      <text x="565" y="112" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="9">Priority: 32768</text>
+      <text x="565" y="128" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="9">MAC: 00:5E:6F:...</text>
+      <text x="350" y="195" text-anchor="middle" fill="#e8eaed" font-family="Rajdhani" font-size="12">BID = Priority + MAC → El BID más bajo es Root Bridge</text>
+      <text x="350" y="220" text-anchor="middle" fill="#ff6b7a" font-family="JetBrains Mono" font-size="10">⚠ En producción, SIEMPRE configura la prioridad manualmente</text>
+    </svg>`,
+    storm: `<svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <text x="350" y="25" text-anchor="middle" fill="#ff1744" font-family="Rajdhani" font-size="14" font-weight="700">⚠ Tormenta de Broadcast — Sin STP</text>
+      <line x1="200" y1="110" x2="500" y2="110" stroke="#ff1744" stroke-width="2"/>
+      <line x1="200" y1="110" x2="350" y2="220" stroke="#ff1744" stroke-width="2"/>
+      <line x1="500" y1="110" x2="350" y2="220" stroke="#ff1744" stroke-width="2"/>
+      <!-- Animated storm particles -->
+      <circle r="3" fill="#ff1744" opacity="0.8"><animate attributeName="cx" values="200;500;350;200" dur="0.8s" repeatCount="indefinite"/><animate attributeName="cy" values="110;110;220;110" dur="0.8s" repeatCount="indefinite"/></circle>
+      <circle r="3" fill="#ff6b00" opacity="0.8"><animate attributeName="cx" values="500;350;200;500" dur="0.8s" repeatCount="indefinite"/><animate attributeName="cy" values="110;220;110;110" dur="0.8s" repeatCount="indefinite"/></circle>
+      <circle r="3" fill="#ffe600" opacity="0.6"><animate attributeName="cx" values="350;200;500;350" dur="0.9s" repeatCount="indefinite"/><animate attributeName="cy" values="220;110;110;220" dur="0.9s" repeatCount="indefinite"/></circle>
+      <rect x="150" y="82" width="100" height="55" rx="6" fill="rgba(255,23,68,0.15)" stroke="#ff1744" stroke-width="2"/>
+      <text x="200" y="105" text-anchor="middle" fill="#ff1744" font-family="Orbitron" font-size="11" font-weight="700">SW1</text>
+      <text x="200" y="125" text-anchor="middle" fill="#ff6b7a" font-family="JetBrains Mono" font-size="7">CPU: 100%</text>
+      <rect x="450" y="82" width="100" height="55" rx="6" fill="rgba(255,23,68,0.15)" stroke="#ff1744" stroke-width="2"/>
+      <text x="500" y="105" text-anchor="middle" fill="#ff1744" font-family="Orbitron" font-size="11" font-weight="700">SW2</text>
+      <text x="500" y="125" text-anchor="middle" fill="#ff6b7a" font-family="JetBrains Mono" font-size="7">CPU: 100%</text>
+      <rect x="300" y="195" width="100" height="55" rx="6" fill="rgba(255,23,68,0.15)" stroke="#ff1744" stroke-width="2"/>
+      <text x="350" y="218" text-anchor="middle" fill="#ff1744" font-family="Orbitron" font-size="11" font-weight="700">SW3</text>
+      <text x="350" y="238" text-anchor="middle" fill="#ff6b7a" font-family="JetBrains Mono" font-size="7">CPU: 100%</text>
+      <text x="350" y="258" text-anchor="middle" fill="#ff6b7a" font-family="Rajdhani" font-size="11">Broadcast loops → MAC flapping → Caída total de red</text>
+    </svg>`,
+    command: `<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <text x="350" y="25" text-anchor="middle" fill="#39ff14" font-family="Rajdhani" font-size="13" font-weight="600">Comando IOS — Root Bridge Primario</text>
+      <rect x="80" y="45" width="540" height="130" rx="8" fill="#0d1117" stroke="#30363d" stroke-width="2"/>
+      <text x="100" y="72" fill="#8b949e" font-family="JetBrains Mono" font-size="10">Switch# configure terminal</text>
+      <text x="100" y="92" fill="#8b949e" font-family="JetBrains Mono" font-size="10">Switch(config)#</text>
+      <text x="100" y="112" fill="#39ff14" font-family="JetBrains Mono" font-size="11" font-weight="700">spanning-tree vlan 10 root primary</text>
+      <text x="100" y="140" fill="#8b949e" font-family="JetBrains Mono" font-size="9">! Ajusta priority a 24576 (o 4096 menos que el Root actual)</text>
+      <text x="100" y="158" fill="#ffe600" font-family="JetBrains Mono" font-size="9">! Alternativa: spanning-tree vlan 10 priority 4096</text>
+      <!-- Blinking cursor -->
+      <rect x="280" y="83" width="8" height="14" fill="#39ff14" opacity="0.8"><animate attributeName="opacity" values="0.8;0;0.8" dur="1s" repeatCount="indefinite"/></rect>
+    </svg>`
+  };
+  return svgs[type] || '';
+}
+
+// ===== GAME STATE =====
+let currentQuestion = 0;
+let score = 0;
+let timer = null;
+let timeLeft = 30;
+let results = [];
+const TIME_PER_QUESTION = 30;
+const POINTS_BASE = 1000;
+
+// ===== SHAPES FOR ANSWERS =====
+const shapes = [
+  `<svg class="shape" viewBox="0 0 24 24"><polygon points="12,2 22,22 2,22" fill="currentColor"/></svg>`,
+  `<svg class="shape" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2" fill="currentColor"/></svg>`,
+  `<svg class="shape" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/></svg>`,
+  `<svg class="shape" viewBox="0 0 24 24"><polygon points="12,2 22,12 12,22 2,12" fill="currentColor"/></svg>`
+];
+
+// ===== PARTICLES =====
+function createParticles() {
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 30; i++) {
+    const dot = document.createElement('div');
+    dot.style.cssText = `
+      position:absolute; width:2px; height:2px; border-radius:50%;
+      background:${['#00f0ff','#ff00aa','#39ff14','#ffe600'][Math.floor(Math.random()*4)]};
+      left:${Math.random()*100}%; top:${Math.random()*100}%;
+      opacity:${0.1+Math.random()*0.3};
+      animation: float ${5+Math.random()*10}s ease-in-out infinite ${Math.random()*5}s;
+    `;
+    container.appendChild(dot);
+  }
+  const style = document.createElement('style');
+  style.textContent = `@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }`;
+  document.head.appendChild(style);
+}
+createParticles();
+
+// ===== START QUIZ =====
+function startQuiz() {
+  currentQuestion = 0; score = 0; results = [];
+  showScreen('quizScreen');
+  loadQuestion();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===== LOAD QUESTION =====
+function loadQuestion() {
+  const q = questions[currentQuestion];
+  document.getElementById('qLabel').textContent = `PREGUNTA ${currentQuestion+1} DE 10`;
+  document.getElementById('questionCounter').textContent = `${currentQuestion+1}/10`;
+  document.getElementById('progressFill').style.width = `${((currentQuestion+1)/10)*100}%`;
+  document.getElementById('scoreDisplay').textContent = score;
+  document.getElementById('qText').textContent = q.question;
+  
+  // Topology SVG
+  const topContainer = document.getElementById('topologyContainer');
+  topContainer.innerHTML = getTopologySVG(q.topology);
+  
+  // Answers
+  const grid = document.getElementById('answersGrid');
+  grid.innerHTML = '';
+  q.answers.forEach((ans, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.innerHTML = `${shapes[i]}<span>${ans}</span>`;
+    btn.onclick = () => selectAnswer(i);
+    grid.appendChild(btn);
+  });
+
+  // Reset feedback
+  const fb = document.getElementById('feedbackPanel');
+  fb.className = 'feedback-panel'; fb.style.display = 'none';
+  document.getElementById('btnNext').classList.remove('show');
+
+  // Timer
+  timeLeft = TIME_PER_QUESTION;
+  updateTimerDisplay();
+  clearInterval(timer);
+  timer = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 0) { clearInterval(timer); handleTimeout(); }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const td = document.getElementById('timerDisplay');
+  td.textContent = timeLeft;
+  td.className = 'quiz-timer';
+  if (timeLeft <= 5) td.classList.add('timer-critical');
+  else if (timeLeft <= 10) td.classList.add('timer-warning');
+}
+
+// ===== SELECT ANSWER =====
+function selectAnswer(index) {
+  clearInterval(timer);
+  const q = questions[currentQuestion];
+  const btns = document.querySelectorAll('.answer-btn');
+  btns.forEach((b,i) => {
+    b.classList.add('disabled');
+    if (i === q.correct) b.classList.add('correct');
+    if (i === index && i !== q.correct) b.classList.add('incorrect');
+  });
+
+  const isCorrect = index === q.correct;
+  const timeBonus = Math.round((timeLeft / TIME_PER_QUESTION) * POINTS_BASE);
+  if (isCorrect) score += timeBonus;
+  document.getElementById('scoreDisplay').textContent = score;
+
+  results.push({ 
+    question: currentQuestion+1, 
+    correct: isCorrect, 
+    timeout: false,
+    answered: q.answers[index],
+    correctAnswer: q.answers[q.correct],
+    points: isCorrect ? timeBonus : 0
+  });
+
+  showFeedback(isCorrect, q.feedback, isCorrect ? timeBonus : 0);
+}
+
+function handleTimeout() {
+  const q = questions[currentQuestion];
+  const btns = document.querySelectorAll('.answer-btn');
+  btns.forEach((b,i) => {
+    b.classList.add('disabled');
+    if (i === q.correct) b.classList.add('correct');
+  });
+  results.push({ 
+    question: currentQuestion+1, 
+    correct: false, 
+    timeout: true,
+    answered: 'Tiempo agotado',
+    correctAnswer: q.answers[q.correct],
+    points: 0
+  });
+  showFeedback('timeout', q.feedback, 0);
+}
+
+function showFeedback(result, text, points) {
+  const fb = document.getElementById('feedbackPanel');
+  const fh = document.getElementById('feedbackHeader');
+  const fbody = document.getElementById('feedbackBody');
+  
+  fb.style.display = 'block';
+  fb.classList.add('show');
+  
+  if (result === true) {
+    fb.className = 'feedback-panel show feedback-correct';
+    fh.textContent = `✓ ¡CORRECTO! +${points} pts`;
+  } else if (result === 'timeout') {
+    fb.className = 'feedback-panel show feedback-timeout';
+    fh.textContent = '⏱ ¡TIEMPO AGOTADO!';
+  } else {
+    fb.className = 'feedback-panel show feedback-incorrect';
+    fh.textContent = '✗ INCORRECTO';
+  }
+  fbody.textContent = text;
+  document.getElementById('btnNext').classList.add('show');
+}
+
+// ===== NEXT QUESTION =====
+function nextQuestion() {
+  currentQuestion++;
+  if (currentQuestion >= questions.length) {
+    showResults();
+  } else {
+    // Re-animate
+    document.getElementById('qText').style.animation = 'none';
+    document.getElementById('qText').offsetHeight;
+    document.getElementById('qText').style.animation = '';
+    loadQuestion();
+  }
+}
+
+// ===== SHOW RESULTS =====
+function showResults() {
+  clearInterval(timer);
+  showScreen('resultsScreen');
+  
+  const totalCorrect = results.filter(r => r.correct).length;
+  const totalTimeout = results.filter(r => r.timeout).length;
+  const pct = Math.round((totalCorrect / 10) * 100);
+  const maxScore = POINTS_BASE * 10;
+  
+  let tier, tierClass, message, trophySvg;
+  if (pct >= 90) {
+    tier = '🏆 EXPERTO STP'; tierClass = 'score-gold';
+    message = '¡Dominio excepcional de Spanning Tree Protocol! Estás listo para configurar redes empresariales con redundancia L2 de forma profesional.';
+    launchConfetti();
+    trophySvg = getTrophySVG('gold');
+  } else if (pct >= 70) {
+    tier = '🥈 AVANZADO'; tierClass = 'score-silver';
+    message = 'Buen dominio de los conceptos fundamentales de STP/RSTP. Revisa los temas donde fallaste para consolidar tu conocimiento.';
+    trophySvg = getTrophySVG('silver');
+  } else if (pct >= 50) {
+    tier = '🥉 INTERMEDIO'; tierClass = 'score-bronze';
+    message = 'Tienes una base, pero necesitas reforzar varios conceptos clave de STP. Revisa la documentación del estándar IEEE 802.1D y practica con Packet Tracer.';
+    trophySvg = getTrophySVG('bronze');
+  } else {
+    tier = '📘 EN FORMACIÓN'; tierClass = 'score-basic';
+    message = 'Es necesario estudiar los fundamentos de STP con más profundidad. Revisa la teoría de Spanning Tree, practica en Packet Tracer y vuelve a intentarlo.';
+    trophySvg = getTrophySVG('basic');
+  }
+
+  let breakdownHTML = results.map(r => {
+    let cls = r.correct ? 'correct-item' : (r.timeout ? 'timeout-item' : 'incorrect-item');
+    let icon = r.correct ? '✓' : (r.timeout ? '⏱' : '✗');
+    let detail = r.correct ? `+${r.points} pts` : (r.timeout ? 'Tiempo agotado' : `Resp: ${r.correctAnswer}`);
+    return `<div class="breakdown-item ${cls}">
+      <span class="breakdown-icon">${icon}</span>
+      <span class="breakdown-num">P${r.question}</span>
+      <span style="flex:1">${questions[r.question-1].question.substring(0,60)}...</span>
+      <span style="font-family:'JetBrains Mono';font-size:0.8rem;color:${r.correct?'#39ff14':'#ff6b7a'}">${detail}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('resultsContainer').innerHTML = `
+    <div class="results-trophy">${trophySvg}</div>
+    <div class="results-label">${tier}</div>
+    <div class="results-score ${tierClass}">${score}<span style="font-size:0.4em;opacity:0.5">/${maxScore}</span></div>
+    <div class="results-message">${message}</div>
+    <div class="results-stats">
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--neon-green)">${totalCorrect}</div>
+        <div class="stat-label">Correctas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--neon-red)">${10-totalCorrect-totalTimeout}</div>
+        <div class="stat-label">Incorrectas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--neon-orange)">${totalTimeout}</div>
+        <div class="stat-label">Timeout</div>
+      </div>
+    </div>
+    <div class="results-breakdown">
+      <h3>Desglose por pregunta</h3>
+      ${breakdownHTML}
+    </div>
+    <button class="btn-retry" onclick="startQuiz()">↻ REINTENTAR</button>
+  `;
+}
+
+// ===== TROPHY SVG =====
+function getTrophySVG(tier) {
+  const colors = {
+    gold: { main: '#ffd700', glow: 'rgba(255,215,0,0.3)' },
+    silver: { main: '#c0c0c0', glow: 'rgba(192,192,192,0.3)' },
+    bronze: { main: '#cd7f32', glow: 'rgba(205,127,50,0.3)' },
+    basic: { main: '#00f0ff', glow: 'rgba(0,240,255,0.3)' }
+  };
+  const c = colors[tier];
+  return `<svg width="100" height="100" viewBox="0 0 100 100" style="filter:drop-shadow(0 0 15px ${c.glow})">
+    <path d="M30,25 L30,15 L70,15 L70,25" fill="none" stroke="${c.main}" stroke-width="2"/>
+    <path d="M25,25 L75,25 L70,55 Q50,75 50,75 Q50,75 30,55 Z" fill="${c.main}" opacity="0.15" stroke="${c.main}" stroke-width="2"/>
+    <path d="M25,25 Q10,25 10,40 Q10,50 25,50" fill="none" stroke="${c.main}" stroke-width="2" opacity="0.6"/>
+    <path d="M75,25 Q90,25 90,40 Q90,50 75,50" fill="none" stroke="${c.main}" stroke-width="2" opacity="0.6"/>
+    <line x1="50" y1="75" x2="50" y2="82" stroke="${c.main}" stroke-width="2"/>
+    <rect x="35" y="82" width="30" height="6" rx="2" fill="${c.main}" opacity="0.3" stroke="${c.main}" stroke-width="1.5"/>
+    <text x="50" y="48" text-anchor="middle" fill="${c.main}" font-family="Orbitron" font-size="14" font-weight="900">★</text>
+    ${tier==='gold'?'<circle cx="50" cy="43" r="30" fill="none" stroke="#ffd700" stroke-width="0.5" opacity="0.3"><animate attributeName="r" values="30;35;30" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.3;0;0.3" dur="2s" repeatCount="indefinite"/></circle>':''}
+  </svg>`;
+}
+
+// ===== CONFETTI =====
+function launchConfetti() {
+  const container = document.getElementById('confettiContainer');
+  const colors = ['#ff1744','#00f0ff','#39ff14','#ffe600','#ff00aa','#b388ff','#ffd700'];
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random()*100 + '%';
+    piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+    piece.style.animationDuration = (2+Math.random()*3) + 's';
+    piece.style.animationDelay = Math.random()*2 + 's';
+    piece.style.borderRadius = Math.random()>0.5 ? '50%' : '2px';
+    piece.style.width = (6+Math.random()*8) + 'px';
+    piece.style.height = (6+Math.random()*8) + 'px';
+    container.appendChild(piece);
+  }
+  setTimeout(() => container.innerHTML = '', 6000);
+}
+</script>
+</body>
+</html>
