@@ -1,0 +1,397 @@
+
+<style>
+@keyframes pulse-ring { 0%{transform:scale(1);opacity:.9} 70%{transform:scale(1.6);opacity:0} 100%{transform:scale(1);opacity:0} }
+@keyframes scan-line  { 0%{top:0} 100%{top:100%} }
+@keyframes float      { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+@keyframes glow-pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+@media (prefers-reduced-motion: no-preference) {
+  .anim-float { animation: float 3s ease-in-out infinite; }
+}
+* { box-sizing: border-box; }
+:root {
+  --red:    #FF0000;
+  --blue:   #0055FF;
+  --yellow: #FFD700;
+  --green:  #00CC44;
+  --white:  #FFFFFF;
+  --gray:   #AAAAAA;
+  --bg:     #000000;
+  --bg2:    #111111;
+  --bg3:    #1A1A1A;
+  --bd:     #333333;
+  --bd2:    #444444;
+  --fz-base: 16px;
+  --fz-sm:   14px;
+  --fz-xs:   13px;
+}
+.root-wrap { background: #000; font-family: Arial, sans-serif; font-size: var(--fz-base); color: var(--white); }
+.top-bar { padding: 14px 20px 12px; border-bottom: 1px solid var(--bd); background: #0a0a0a; display:flex; align-items:center; gap:12px; }
+.top-bar-dot { width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 6px var(--red); }
+.top-title { font-family:Arial,sans-serif; font-size:16px; font-weight:700; color:var(--white); }
+.top-sub   { font-family:Arial,sans-serif; font-size:14px; color:var(--gray); margin-left:auto; }
+
+.body-grid { display:grid; grid-template-columns:1fr 1fr; }
+
+.arena-wrap { position:relative; height:230px; background:#000; overflow:hidden; border:1px solid var(--bd); }
+.scan { position:absolute; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(0,85,255,0.4),transparent); animation: scan-line 4s linear infinite; pointer-events:none; }
+.arena-grid { position:absolute; inset:0; pointer-events:none; }
+
+.device { display:flex;flex-direction:column;align-items:center;gap:5px; }
+.dev-label { font-family:Arial,sans-serif; font-size:14px; font-weight:700; color:var(--white); }
+.dev-badge { font-family:Arial,sans-serif; font-size:13px; font-weight:700; padding:2px 9px; border-radius:3px; }
+.badge-pc  { background:var(--blue);   color:#fff; }
+.badge-rt  { background:var(--red);    color:#fff; }
+
+.info-box { background:var(--bg3); border:1px solid var(--bd2); border-radius:4px; padding:12px 14px; min-height:96px; }
+.info-title { font-family:Arial,sans-serif; font-size:16px; font-weight:700; color:var(--yellow); margin-bottom:6px; }
+.info-body  { font-family:Arial,sans-serif; font-size:14px; color:#ccc; line-height:1.55; }
+.info-meta  { font-family:Arial,sans-serif; font-size:13px; color:var(--gray); margin-top:7px; }
+
+.tag { display:inline-block; padding:2px 10px; border-radius:3px; font-family:Arial,sans-serif; font-size:13px; font-weight:700; }
+.tag-bc { background:var(--blue); color:#fff; }
+.tag-uc { background:var(--red);  color:#fff; }
+
+.prog-wrap { margin: 10px 0 12px; }
+.prog-label { font-family:Arial,sans-serif; font-size:13px; color:var(--gray); display:flex; justify-content:space-between; margin-bottom:5px; }
+.prog-track { height:4px; background:var(--bd2); border-radius:2px; }
+.prog-fill  { height:100%; background:var(--yellow); border-radius:2px; transition:width .5s; }
+
+.legend { display:flex; gap:14px; margin-top:10px; }
+.leg-item { display:flex; align-items:center; gap:5px; font-family:Arial,sans-serif; font-size:13px; color:var(--gray); }
+.leg-dot  { width:10px;height:10px;border-radius:50%; }
+
+.steps-col { padding:14px 18px 14px 14px; display:flex; flex-direction:column; gap:8px; border-left:1px solid var(--bd); }
+.steps-head { font-family:Arial,sans-serif; font-size:13px; font-weight:700; color:var(--gray); letter-spacing:.6px; margin-bottom:2px; }
+
+.step-btn { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--bg3); border:1px solid var(--bd); border-radius:4px; cursor:pointer; text-align:left; width:100%; transition:border-color .2s, background .2s; }
+.step-btn:hover  { border-color:var(--yellow); background:#1e1e00; }
+.step-btn.active { border-color:var(--yellow); background:#1e1e00; }
+
+.step-num { width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center; font-family:Arial,sans-serif; font-size:14px; font-weight:700; flex-shrink:0; transition:all .25s; }
+.num-idle   { background:var(--bg); border:1px solid var(--bd2); color:var(--gray); }
+.num-active { background:var(--yellow); color:#000; }
+.num-done   { background:var(--green);  color:#000; }
+
+.step-text h4 { font-family:Arial,sans-serif; font-size:14px; font-weight:700; color:var(--white); margin:0 0 2px; }
+.step-text p  { font-family:Arial,sans-serif; font-size:13px; color:var(--gray); margin:0; line-height:1.4; }
+
+.btn-run { width:100%; padding:10px; background:var(--yellow); color:#000; border:none; border-radius:4px; cursor:pointer; font-family:Arial,sans-serif; font-size:15px; font-weight:700; margin-top:4px; transition:opacity .2s; }
+.btn-run:hover { opacity:.85; }
+.btn-reset { width:100%; padding:9px; background:transparent; color:var(--gray); border:1px solid var(--bd2); border-radius:4px; cursor:pointer; font-family:Arial,sans-serif; font-size:14px; transition:border-color .2s, color .2s; }
+.btn-reset:hover { border-color:var(--red); color:var(--red); }
+
+.cmd-section { padding:12px 18px; border-top:1px solid var(--bd); background:#080808; display:none; }
+.cmd-head { font-family:Arial,sans-serif; font-size:13px; font-weight:700; color:var(--gray); letter-spacing:.6px; margin-bottom:8px; }
+.cmd-block { font-family:Arial,sans-serif; font-size:13px; line-height:1.9; }
+.cmd-prompt { color:var(--yellow); }
+.cmd-body   { color:var(--green); }
+
+.ar-hint { position:absolute; bottom:9px; left:0; right:0; text-align:center; font-family:Arial,sans-serif; font-size:13px; color:#555; transition:opacity .3s; }
+.ip-disp  { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-family:Arial,sans-serif; font-size:13px; font-weight:700; color:var(--yellow); text-align:center; line-height:1.5; opacity:0; transition:opacity .3s; pointer-events:none; white-space:nowrap; }
+.left-col  { padding:14px 14px 14px 18px; }
+</style>
+
+<div class="root-wrap">
+
+  <div class="top-bar">
+    <div class="top-bar-dot"></div>
+    <span class="top-title">Proceso DHCP — Arrendamiento IPv4</span>
+    <span class="top-sub">Cisco 4321 · Protocolo DORA · UDP 67/68</span>
+  </div>
+
+  <div class="body-grid">
+
+    <div class="left-col">
+
+      <div class="arena-wrap" id="arena">
+        <svg class="arena-grid" viewBox="0 0 320 230" preserveAspectRatio="none" width="100%" height="100%">
+          <defs>
+            <pattern id="g" width="24" height="24" patternUnits="userSpaceOnUse">
+              <path d="M24 0L0 0 0 24" fill="none" stroke="#222" stroke-width="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="320" height="230" fill="url(#g)"/>
+          <line x1="82" y1="115" x2="238" y2="115" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
+          <rect x="86" y="111" width="148" height="8" rx="3" fill="#1a1a1a"/>
+        </svg>
+        <div class="scan"></div>
+
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;pointer-events:none;">
+
+          <div class="device anim-float" style="animation-delay:.2s">
+            <svg width="58" height="58" viewBox="0 0 58 58">
+              <rect x="5" y="9" width="46" height="30" rx="4" fill="#111" stroke="var(--blue)" stroke-width="1.5"/>
+              <rect x="11" y="14" width="34" height="20" rx="2" fill="#0a1a3a"/>
+              <text x="28" y="26" text-anchor="middle" font-family="Arial" font-size="8" font-weight="700" fill="var(--blue)">PC-A</text>
+              <rect x="20" y="39" width="16" height="3" fill="var(--blue)" opacity=".5"/>
+              <rect x="9" y="42" width="38" height="5" rx="1" fill="var(--blue)" opacity=".25"/>
+              <circle id="pc-pulse" cx="52" cy="13" r="5" fill="none" stroke="var(--blue)" stroke-width="1.5" opacity="0"/>
+            </svg>
+            <span class="dev-label">PC-A</span>
+            <span class="dev-badge badge-pc">Cliente DHCP</span>
+          </div>
+
+          <div id="lane" style="position:relative;flex:1;height:44px;margin:0 10px;">
+            <div id="ip-disp" class="ip-disp"></div>
+          </div>
+
+          <div class="device anim-float" style="animation-delay:.9s">
+            <svg width="58" height="58" viewBox="0 0 58 58">
+              <rect x="3" y="17" width="50" height="24" rx="5" fill="#111" stroke="var(--red)" stroke-width="1.5"/>
+              <rect x="9" y="22" width="34" height="12" rx="2" fill="#1a0000"/>
+              <text x="26" y="30" text-anchor="middle" font-family="Arial" font-size="7" font-weight="700" fill="var(--red)">Cisco 4321</text>
+              <circle cx="47" cy="23" r="2.5" fill="var(--green)"/>
+              <circle cx="47" cy="31" r="2.5" fill="var(--green)"/>
+              <circle cx="47" cy="39" r="2.5" fill="#333"/>
+              <path d="M29 9L36 17L22 17Z" fill="var(--red)" opacity=".6"/>
+              <circle id="rt-pulse" cx="5" cy="18" r="5" fill="none" stroke="var(--red)" stroke-width="1.5" opacity="0"/>
+            </svg>
+            <span class="dev-label">R1</span>
+            <span class="dev-badge badge-rt">Servidor DHCP</span>
+          </div>
+        </div>
+        <div id="ar-hint" class="ar-hint">Selecciona un paso para ver la animación</div>
+      </div>
+
+      <div class="prog-wrap">
+        <div class="prog-label">
+          <span>Progreso del arrendamiento</span>
+          <span id="prog-lbl" style="color:var(--yellow);font-weight:700;">0 / 4 mensajes</span>
+        </div>
+        <div class="prog-track"><div id="prog-fill" class="prog-fill" style="width:0%"></div></div>
+      </div>
+
+      <div id="info-panel" class="info-box">
+        <div class="info-body">Selecciona uno de los 4 pasos del protocolo DORA para visualizar el intercambio de mensajes con animación en tiempo real.</div>
+      </div>
+
+      <div class="legend">
+        <div class="leg-item"><span class="leg-dot" style="background:var(--blue)"></span> Broadcast</div>
+        <div class="leg-item"><span class="leg-dot" style="background:var(--red)"></span> Unicast</div>
+        <div class="leg-item"><span class="leg-dot" style="background:var(--yellow)"></span> IP asignada</div>
+      </div>
+    </div>
+
+    <div class="steps-col">
+      <div class="steps-head">SECUENCIA DORA</div>
+
+      <button class="step-btn" id="btn-0" onclick="runStep(0)">
+        <div class="step-num num-idle" id="dot-0">1</div>
+        <div class="step-text"><h4>DHCPDISCOVER</h4><p>Cliente busca servidor · Broadcast</p></div>
+      </button>
+
+      <button class="step-btn" id="btn-1" onclick="runStep(1)">
+        <div class="step-num num-idle" id="dot-1">2</div>
+        <div class="step-text"><h4>DHCPOFFER</h4><p>Servidor ofrece IP · Unicast</p></div>
+      </button>
+
+      <button class="step-btn" id="btn-2" onclick="runStep(2)">
+        <div class="step-num num-idle" id="dot-2">3</div>
+        <div class="step-text"><h4>DHCPREQUEST</h4><p>Cliente acepta la oferta · Broadcast</p></div>
+      </button>
+
+      <button class="step-btn" id="btn-3" onclick="runStep(3)">
+        <div class="step-num num-idle" id="dot-3">4</div>
+        <div class="step-text"><h4>DHCPACK</h4><p>Servidor confirma asignación · Unicast</p></div>
+      </button>
+
+      <button class="btn-run" onclick="runAll()">▶ Ejecutar secuencia completa</button>
+      <button class="btn-reset" onclick="resetAll()">↺ Reiniciar</button>
+    </div>
+  </div>
+
+  <div class="cmd-section" id="cmd-section">
+    <div class="cmd-head">VERIFICACIÓN EN CLI — CISCO IOS</div>
+    <div class="cmd-block" id="cmd-block"></div>
+  </div>
+
+</div>
+
+<script>
+const C = {
+  red:    '#FF0000',
+  blue:   '#0055FF',
+  yellow: '#FFD700',
+  green:  '#00CC44'
+};
+
+const steps = [
+  {
+    name: 'DHCPDISCOVER', tag: 'broadcast', dir: 'right',
+    from: 'PC-A (0.0.0.0)', to: 'Broadcast 255.255.255.255',
+    port: 'UDP 67', color: C.blue,
+    label: '¿Hay algún servidor DHCP en la red?',
+    detail: 'El cliente no tiene IP. Envía DHCPDISCOVER a 255.255.255.255 buscando cualquier servidor DHCP disponible. Puerto destino: UDP 67.',
+    cmd: [['R1# debug ip dhcp server events','p'],['R1# show ip dhcp pool','p'],['Pool POOL-VLAN10 — Red: 192.168.10.0/24','b']],
+    ip: '0.0.0.0 → 255.255.255.255'
+  },
+  {
+    name: 'DHCPOFFER', tag: 'unicast', dir: 'left',
+    from: 'R1 (192.168.10.1)', to: 'PC-A (MAC destino)',
+    port: 'UDP 68', color: C.red,
+    label: 'Soy servidor DHCP. Te ofrezco 192.168.10.11',
+    detail: 'El router responde vía unicast (MAC del cliente). Ofrece IP: 192.168.10.11/24, GW: 192.168.10.1, DNS: 8.8.8.8, Lease: 2 días.',
+    cmd: [['R1# show ip dhcp pool','p'],['Libres: 244 / Utilizadas: 1','b'],['Lease: 2 days — GW: 192.168.10.1','b']],
+    ip: 'Oferta: 192.168.10.11/24'
+  },
+  {
+    name: 'DHCPREQUEST', tag: 'broadcast', dir: 'right',
+    from: 'PC-A (0.0.0.0)', to: 'Broadcast 255.255.255.255',
+    port: 'UDP 67', color: C.blue,
+    label: 'Acepto la IP 192.168.10.11 del servidor R1',
+    detail: 'El cliente confirma la oferta por broadcast para notificar a todos los servidores DHCP de la red cuál fue aceptado.',
+    cmd: [['C:\\> ipconfig /release','p'],['C:\\> ipconfig /renew','p'],['Servidor DHCP: 192.168.10.1','b']],
+    ip: 'Solicita: 192.168.10.11'
+  },
+  {
+    name: 'DHCPACK', tag: 'unicast', dir: 'left',
+    from: 'R1 (192.168.10.1)', to: 'PC-A (unicast)',
+    port: 'UDP 68', color: C.red,
+    label: 'Confirmado — arrendamiento activo por 2 días',
+    detail: 'El servidor confirma la asignación definitiva. PC-A configura: IP 192.168.10.11/24, GW 192.168.10.1, DNS 8.8.8.8. Lease: 2 días.',
+    cmd: [['R1# show ip dhcp binding','p'],['IP: 192.168.10.11  MAC: 00a0.c9xx.xxxx','b'],['Lease: Sep 2026  State: Active','b']],
+    ip: '192.168.10.11/24 ✓'
+  }
+];
+
+let completed = new Set();
+let running = false;
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+async function animatePacket(s) {
+  const lane = document.getElementById('lane');
+  const ipDisp = document.getElementById('ip-disp');
+  const pcP = document.getElementById('pc-pulse');
+  const rtP = document.getElementById('rt-pulse');
+  const lw = lane.offsetWidth || 160;
+  const goRight = s.dir === 'right';
+
+  const pkt = document.createElement('div');
+  pkt.style.cssText = `position:absolute;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:3px;font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#fff;white-space:nowrap;background:${s.color};z-index:10;`;
+  pkt.innerHTML = `✉ ${s.name}`;
+  pkt.style.left = goRight ? '-5px' : (lw + 5) + 'px';
+  lane.appendChild(pkt);
+
+  const srcPulse = goRight ? pcP : rtP;
+  const dstPulse = goRight ? rtP : pcP;
+  srcPulse.style.opacity = '1';
+  srcPulse.style.animation = 'pulse-ring 1s ease-out';
+
+  const start = goRight ? -5 : lw + 5;
+  const end   = goRight ? lw + 5 : -5;
+  const spd   = (end - start) / 45;
+  let pos = start;
+
+  await new Promise(res => {
+    function tick() {
+      pos += spd;
+      pkt.style.left = pos + 'px';
+      const done = goRight ? pos >= end : pos <= end;
+      if(!done) { requestAnimationFrame(tick); return; }
+      pkt.remove();
+      srcPulse.style.opacity = '0'; srcPulse.style.animation = '';
+      dstPulse.style.opacity = '1'; dstPulse.style.animation = 'pulse-ring .9s ease-out';
+      ipDisp.innerHTML = s.ip;
+      ipDisp.style.color = s.color === C.yellow ? '#000' : C.yellow;
+      ipDisp.style.opacity = '1';
+      setTimeout(() => { ipDisp.style.opacity = '0'; dstPulse.style.opacity = '0'; dstPulse.style.animation = ''; }, 2000);
+      setTimeout(res, 500);
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
+function showInfo(s) {
+  const tagCls = s.tag === 'broadcast' ? 'tag-bc' : 'tag-uc';
+  document.getElementById('info-panel').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <span class="info-title">${s.name}</span>
+      <span class="tag ${tagCls}">${s.tag === 'broadcast' ? 'Broadcast' : 'Unicast'}</span>
+    </div>
+    <div class="info-body">${s.detail}</div>
+    <div class="info-meta">
+      <b style="color:#fff">De:</b> ${s.from} &nbsp;|&nbsp;
+      <b style="color:#fff">A:</b> ${s.to} &nbsp;|&nbsp;
+      <b style="color:#fff">Puerto:</b> ${s.port}
+    </div>`;
+
+  const sec = document.getElementById('cmd-section');
+  sec.style.display = 'block';
+  let html = '';
+  s.cmd.forEach(([line, type]) => {
+    const cls = type === 'p' ? 'cmd-prompt' : 'cmd-body';
+    html += `<div class="${cls}" style="font-family:Arial,sans-serif;font-size:13px;">${line}</div>`;
+  });
+  document.getElementById('cmd-block').innerHTML = html;
+}
+
+async function runStep(i, auto=false) {
+  if(running && !auto) return;
+  if(!auto) running = true;
+  const btn = document.getElementById('btn-'+i);
+  const dot = document.getElementById('dot-'+i);
+  btn.classList.add('active');
+  dot.className = 'step-num num-active';
+  dot.textContent = '●';
+  document.getElementById('ar-hint').style.opacity = '0';
+  showInfo(steps[i]);
+  await animatePacket(steps[i]);
+  if(!auto) {
+    completed.add(i);
+    dot.className = 'step-num num-done';
+    dot.textContent = '✓';
+    btn.classList.remove('active');
+    updateProg();
+    running = false;
+  }
+}
+
+function updateProg() {
+  const n = completed.size;
+  document.getElementById('prog-fill').style.width = (n/4*100) + '%';
+  document.getElementById('prog-lbl').textContent = n + ' / 4 mensajes';
+}
+
+async function runAll() {
+  if(running) return;
+  running = true;
+  resetAll();
+  await sleep(300);
+  for(let i=0;i<4;i++){
+    const btn=document.getElementById('btn-'+i);
+    const dot=document.getElementById('dot-'+i);
+    btn.classList.add('active');
+    dot.className='step-num num-active';
+    dot.textContent='●';
+    document.getElementById('ar-hint').style.opacity='0';
+    showInfo(steps[i]);
+    await animatePacket(steps[i]);
+    completed.add(i);
+    dot.className='step-num num-done';
+    dot.textContent='✓';
+    btn.classList.remove('active');
+    updateProg();
+    await sleep(500);
+  }
+  document.getElementById('ar-hint').innerHTML='<span style="color:var(--green);font-weight:700;">✓ PC-A tiene IP 192.168.10.11/24 — arrendamiento activo</span>';
+  document.getElementById('ar-hint').style.opacity='1';
+  running=false;
+}
+
+function resetAll() {
+  completed.clear(); running=false;
+  for(let i=0;i<4;i++){
+    document.getElementById('btn-'+i).classList.remove('active');
+    const d=document.getElementById('dot-'+i);
+    d.className='step-num num-idle'; d.textContent=i+1;
+  }
+  document.getElementById('prog-fill').style.width='0%';
+  document.getElementById('prog-lbl').textContent='0 / 4 mensajes';
+  document.getElementById('info-panel').innerHTML='<div class="info-body">Selecciona uno de los 4 pasos del protocolo DORA para visualizar el intercambio de mensajes con animación en tiempo real.</div>';
+  document.getElementById('cmd-section').style.display='none';
+  document.getElementById('ar-hint').innerHTML='Selecciona un paso para ver la animación';
+  document.getElementById('ar-hint').style.opacity='1';
+  document.getElementById('ip-disp').style.opacity='0';
+}
+</script>
