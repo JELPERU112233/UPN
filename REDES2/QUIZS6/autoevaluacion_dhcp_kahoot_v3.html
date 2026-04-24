@@ -1,0 +1,339 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+#qw { background: #1a1a2e; min-height: 520px; padding: 16px; border-radius: 12px; font-family: Arial, sans-serif; }
+
+#start-screen { text-align: center; padding: 2.5rem 1rem; }
+#start-screen .badge { font-size: 48px; margin-bottom: 12px; }
+#start-screen h1 { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+#start-screen p { font-size: 14px; color: #bbb; margin-bottom: 24px; line-height: 1.8; }
+#start-btn { background: #e91e8c; color: #fff; border: none; border-radius: 8px; padding: 14px 40px; font-size: 18px; font-weight: 700; cursor: pointer; font-family: Arial, sans-serif; transition: background .15s; }
+#start-btn:hover { background: #c4166f; }
+
+#main-quiz { display: none; }
+
+#hud { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+#q-counter { font-size: 13px; color: #aaa; min-width: 44px; }
+#timer-bar-wrap { flex: 1; height: 10px; background: #333; border-radius: 5px; overflow: hidden; }
+#timer-bar { height: 100%; width: 100%; background: #26c6da; transition: width .1s linear, background .3s; border-radius: 5px; }
+#timer-num { font-size: 20px; font-weight: 700; color: #fff; min-width: 28px; text-align: right; }
+#score-display { font-size: 13px; color: #ffd700; font-weight: 700; min-width: 80px; text-align: right; }
+
+#q-box { background: #16213e; border-radius: 10px; padding: 22px 24px; margin-bottom: 16px; min-height: 90px; display: flex; align-items: center; justify-content: center; }
+#question-text { font-size: 20px; font-weight: 700; color: #fff; text-align: center; line-height: 1.45; font-family: Arial, sans-serif; }
+
+#options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+
+.opt-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 16px 18px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  line-height: 1.35;
+  min-height: 72px;
+  display: flex; align-items: center; gap: 12px;
+  transition: filter .12s, transform .08s;
+  font-family: Arial, sans-serif;
+}
+.opt-btn:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
+.opt-btn:active:not(:disabled) { transform: scale(0.97) translateY(2px); }
+.opt-btn:disabled { cursor: default; }
+
+.opt-0 { background: #FF0000; box-shadow: 0 4px 0 #990000; }
+.opt-1 { background: #0000FF; box-shadow: 0 4px 0 #000099; }
+.opt-2 { background: #FFD700; box-shadow: 0 4px 0 #997f00; color: #fff; }
+.opt-3 { background: #00AA00; box-shadow: 0 4px 0 #006600; }
+
+.opt-btn .icon { font-size: 22px; flex-shrink: 0; }
+.opt-btn .txt  { flex: 1; }
+
+.opt-btn.correct { filter: brightness(1.15) !important; outline: 4px solid #fff; transform: scale(1.03); }
+.opt-btn.wrong   { filter: brightness(0.3) saturate(0.3) !important; }
+.opt-btn.reveal  { filter: brightness(1.15) !important; outline: 4px solid #fff; transform: scale(1.03); }
+
+#feedback-box {
+  border-radius: 8px; padding: 11px 15px; font-size: 13px; line-height: 1.55;
+  margin-bottom: 12px; display: none; font-family: Arial, sans-serif;
+}
+#feedback-box.show    { display: block; }
+#feedback-box.ok      { background: #1b5e20; color: #a5d6a7; border: 1.5px solid #43a047; }
+#feedback-box.fail    { background: #b71c1c; color: #ffcdd2; border: 1.5px solid #e53935; }
+#feedback-box.timeout { background: #e65100; color: #ffe0b2; border: 1.5px solid #fb8c00; }
+
+#next-btn { display: none; background: #e91e8c; color: #fff; border: none; border-radius: 8px; padding: 11px 28px; font-size: 14px; font-weight: 700; cursor: pointer; float: right; font-family: Arial, sans-serif; }
+#next-btn:hover { background: #c4166f; }
+.clearfix::after { content: ''; display: block; clear: both; }
+
+#result-screen { text-align: center; padding: 1.5rem 1rem; display: none; }
+#result-screen h2 { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 8px; font-family: Arial, sans-serif; }
+#final-score { font-size: 64px; font-weight: 700; margin: 16px 0 4px; font-family: Arial, sans-serif; }
+#score-msg { font-size: 15px; color: #ccc; margin-bottom: 20px; font-family: Arial, sans-serif; }
+#score-breakdown { background: #16213e; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; font-size: 13px; color: #aaa; text-align: left; line-height: 2; font-family: Arial, sans-serif; }
+#score-breakdown strong { color: #ffd700; }
+#restart-btn { background: #e91e8c; color: #fff; border: none; border-radius: 8px; padding: 12px 32px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Arial, sans-serif; }
+#restart-btn:hover { background: #c4166f; }
+</style>
+
+<h2 class="sr-only">Autoevaluación DHCP Redes 2 S05 — estilo Kahoot, 10 preguntas, 30 segundos cada una</h2>
+
+<div id="qw">
+
+<div id="start-screen">
+  <div class="badge">📡</div>
+  <h1>Autoevaluación · Redes 2 — S05</h1>
+  <p>DHCPv4 · DHCPv6 · SLAAC · Relay<br>10 preguntas · 30 segundos cada una<br>¡Más rápido = más puntaje!</p>
+  <button id="start-btn">¡Iniciar!</button>
+</div>
+
+<div id="main-quiz">
+  <div id="hud">
+    <span id="q-counter">1/10</span>
+    <div id="timer-bar-wrap"><div id="timer-bar"></div></div>
+    <span id="timer-num">30</span>
+    <span id="score-display">★ 0 pts</span>
+  </div>
+  <div id="q-box"><div id="question-text"></div></div>
+  <div id="options-grid"></div>
+  <div id="feedback-box"></div>
+  <div class="clearfix"><button id="next-btn">Siguiente →</button></div>
+</div>
+
+<div id="result-screen">
+  <div style="font-size:52px;margin-bottom:8px;" id="result-icon">🏆</div>
+  <h2>Resultado final</h2>
+  <div id="final-score">0 / 20</div>
+  <div id="score-msg"></div>
+  <div id="score-breakdown"></div>
+  <button id="restart-btn">Reintentar</button>
+</div>
+
+</div>
+
+<script>
+const TOTAL_TIME = 30;
+const ICONS = ['▲','●','■','★'];
+
+const questions = [
+  {
+    q: "¿Cuál es el primer mensaje que envía un cliente DHCP cuando busca un servidor en la red?",
+    opts: ["DHCPOFFER","DHCPREQUEST","DHCPDISCOVER","DHCPACK"],
+    ans: 2,
+    fb_ok: "✓ Correcto. DHCPDISCOVER es un broadcast que el cliente envía para localizar cualquier servidor DHCP disponible.",
+    fb_fail: "✗ Incorrecto. El primer mensaje es DHCPDISCOVER, un broadcast del cliente buscando un servidor DHCP."
+  },
+  {
+    q: "¿Cuántos mensajes componen el proceso completo de obtención de un arrendamiento DHCP por primera vez?",
+    opts: ["2 mensajes","3 mensajes","4 mensajes","6 mensajes"],
+    ans: 2,
+    fb_ok: "✓ Correcto. Son 4: DISCOVER → OFFER → REQUEST → ACK.",
+    fb_fail: "✗ Incorrecto. Son 4 mensajes: DHCPDISCOVER, DHCPOFFER, DHCPREQUEST y DHCPACK."
+  },
+  {
+    q: "¿Cuál es el comando IOS para excluir las IPs 192.168.10.1 a 192.168.10.9 de la asignación dinámica?",
+    opts: [
+      "ip dhcp pool 192.168.10.1 192.168.10.9",
+      "ip dhcp excluded-address 192.168.10.1 192.168.10.9",
+      "no ip dhcp 192.168.10.1 192.168.10.9",
+      "ip dhcp reserve 192.168.10.1 192.168.10.9"
+    ],
+    ans: 1,
+    fb_ok: "✓ Correcto. ip dhcp excluded-address reserva IPs que el servidor no asignará dinámicamente.",
+    fb_fail: "✗ Incorrecto. El comando correcto es: ip dhcp excluded-address low-address [high-address]."
+  },
+  {
+    q: "¿Qué comando IOS muestra la lista de IPs asignadas junto con sus MACs correspondientes?",
+    opts: [
+      "show ip dhcp pool",
+      "show running-config | section dhcp",
+      "show ip dhcp binding",
+      "show ip dhcp server statistics"
+    ],
+    ans: 2,
+    fb_ok: "✓ Correcto. 'show ip dhcp binding' muestra IP, MAC, fecha de expiración e interfaz.",
+    fb_fail: "✗ Incorrecto. El comando correcto es 'show ip dhcp binding'."
+  },
+  {
+    q: "¿Qué función cumple 'ip helper-address 192.168.11.6' configurado en la interfaz del router hacia el cliente?",
+    opts: [
+      "Convierte el router en servidor DHCP principal",
+      "Retransmite los broadcasts DHCP hacia el servidor remoto",
+      "Asigna una IP estática al cliente automáticamente",
+      "Bloquea broadcasts para evitar tormentas de red"
+    ],
+    ans: 1,
+    fb_ok: "✓ Correcto. El relay DHCP convierte el broadcast del cliente en unicast y lo envía al servidor en otra red.",
+    fb_fail: "✗ Incorrecto. ip helper-address actúa como relay: convierte broadcast en unicast hacia el servidor remoto."
+  },
+  {
+    q: "Para renovar un arrendamiento DHCP existente, ¿qué mensajes intercambian cliente y servidor?",
+    opts: [
+      "DISCOVER → OFFER → REQUEST → ACK",
+      "REQUEST → ACK (2 mensajes unicast)",
+      "DISCOVER → ACK solamente",
+      "REQUEST → OFFER → ACK"
+    ],
+    ans: 1,
+    fb_ok: "✓ Correcto. La renovación usa solo REQUEST y ACK, ambos unicast. No se necesita DISCOVER ni OFFER.",
+    fb_fail: "✗ Incorrecto. En renovación solo se usan 2 mensajes unicast: DHCPREQUEST y DHCPACK."
+  },
+  {
+    q: "En DHCPv6 stateless, ¿qué flags del RA indican SLAAC para la dirección y DHCP solo para DNS/dominio?",
+    opts: ["M=1, O=0, A=1","M=0, O=1, A=1","M=1, O=1, A=0","M=0, O=0, A=1"],
+    ans: 1,
+    fb_ok: "✓ Correcto. A=1 activa SLAAC, O=1 indica otros parámetros por DHCP, M=0 sin gestión estatal de dirección.",
+    fb_fail: "✗ Incorrecto. Stateless DHCPv6: A=1 (SLAAC activo), O=1 (otros datos por DHCP), M=0."
+  },
+  {
+    q: "¿Cuál es la diferencia fundamental entre DHCPv6 statefull y stateless?",
+    opts: [
+      "Stateful asigna solo DNS; stateless asigna dirección completa",
+      "Stateful asigna y rastrea la dirección IPv6 completa; stateless solo provee DNS mientras SLAAC genera la dirección",
+      "Stateless usa broadcast; stateful usa multicast exclusivamente",
+      "No hay diferencia real entre ambos modos"
+    ],
+    ans: 1,
+    fb_ok: "✓ Correcto. Stateful gestiona la asignación completa de dirección IPv6. Stateless solo provee parámetros adicionales.",
+    fb_fail: "✗ Incorrecto. Stateful gestiona la dirección IPv6 completa; stateless solo provee DNS y dominio."
+  },
+  {
+    q: "¿Qué comando en la interfaz establece M=1 en el RA, activando DHCPv6 con estado (statefull)?",
+    opts: [
+      "ipv6 nd other-config-flag",
+      "ipv6 nd managed-config-flag",
+      "ip dhcp server stateful",
+      "ipv6 dhcp relay destination"
+    ],
+    ans: 1,
+    fb_ok: "✓ Correcto. 'ipv6 nd managed-config-flag' establece M=1. Para stateless se usa 'other-config-flag' (O=1).",
+    fb_fail: "✗ Incorrecto. Para DHCPv6 stateful se usa 'ipv6 nd managed-config-flag' (M=1)."
+  },
+  {
+    q: "¿Cuántos servicios UDP reenvía por defecto el comando 'ip helper-address'?",
+    opts: [
+      "Solo DHCP (puertos 67 y 68)",
+      "3 servicios: DNS, TFTP, TACACS",
+      "8 servicios: Time, TACACS, DNS, DHCP/67, DHCP/68, TFTP, NetBIOS-ns, NetBIOS-dg",
+      "Todos los puertos UDP sin excepción"
+    ],
+    ans: 2,
+    fb_ok: "✓ Correcto. ip helper-address reenvía 8 puertos UDP: 37, 49, 53, 67, 68, 69, 137 y 138.",
+    fb_fail: "✗ Incorrecto. Por defecto reenvía 8 puertos: Time(37), TACACS(49), DNS(53), DHCP(67/68), TFTP(69), NetBIOS(137/138)."
+  }
+];
+
+let current=0, totalRaw=0, correctCount=0, detailLog=[], timer=null, secondsLeft=TOTAL_TIME, answered=false;
+
+function startQuiz(){
+  current=0; totalRaw=0; correctCount=0; detailLog=[];
+  document.getElementById('start-screen').style.display='none';
+  document.getElementById('result-screen').style.display='none';
+  document.getElementById('main-quiz').style.display='block';
+  loadQuestion();
+}
+
+function loadQuestion(){
+  answered=false; secondsLeft=TOTAL_TIME;
+  const q=questions[current];
+  document.getElementById('q-counter').textContent=(current+1)+'/'+questions.length;
+  document.getElementById('score-display').textContent='★ '+calcScore()+' pts';
+  document.getElementById('question-text').textContent=q.q;
+  const fb=document.getElementById('feedback-box');
+  fb.className=''; fb.style.display='none';
+  document.getElementById('next-btn').style.display='none';
+  document.getElementById('timer-bar').style.width='100%';
+  document.getElementById('timer-bar').style.background='#26c6da';
+  document.getElementById('timer-num').textContent=TOTAL_TIME;
+
+  const grid=document.getElementById('options-grid');
+  grid.innerHTML='';
+  q.opts.forEach((opt,i)=>{
+    const btn=document.createElement('button');
+    btn.className='opt-btn opt-'+i;
+    btn.innerHTML='<span class="icon">'+ICONS[i]+'</span><span class="txt">'+opt+'</span>';
+    btn.onclick=()=>selectAnswer(i);
+    grid.appendChild(btn);
+  });
+
+  clearInterval(timer);
+  timer=setInterval(tick,1000);
+}
+
+function tick(){
+  secondsLeft--;
+  const pct=(secondsLeft/TOTAL_TIME)*100;
+  document.getElementById('timer-bar').style.width=pct+'%';
+  document.getElementById('timer-num').textContent=secondsLeft;
+  if(secondsLeft<=10) document.getElementById('timer-bar').style.background='#e53935';
+  if(secondsLeft<=0){clearInterval(timer); if(!answered) timeOut();}
+}
+
+function selectAnswer(idx){
+  if(answered) return;
+  answered=true; clearInterval(timer);
+  const q=questions[current];
+  const btns=document.querySelectorAll('.opt-btn');
+  btns.forEach(b=>b.disabled=true);
+  if(idx===q.ans){
+    btns[idx].classList.add('correct');
+    const pts=pointsForTime(secondsLeft);
+    totalRaw+=pts; correctCount++;
+    showFeedback('ok',q.fb_ok+' (+'+pts.toFixed(1)+' pts brutos)');
+    detailLog.push({result:'correct',pts});
+  } else {
+    btns[idx].classList.add('wrong');
+    btns[q.ans].classList.add('reveal');
+    showFeedback('fail',q.fb_fail);
+    detailLog.push({result:'wrong',pts:0});
+  }
+  document.getElementById('score-display').textContent='★ '+calcScore()+' pts';
+  document.getElementById('next-btn').style.display='inline-block';
+}
+
+function timeOut(){
+  answered=true;
+  const q=questions[current];
+  const btns=document.querySelectorAll('.opt-btn');
+  btns.forEach(b=>b.disabled=true);
+  btns[q.ans].classList.add('reveal');
+  showFeedback('timeout','⏱ Tiempo agotado. '+q.fb_fail);
+  detailLog.push({result:'timeout',pts:0});
+  document.getElementById('next-btn').style.display='inline-block';
+}
+
+function showFeedback(type,msg){
+  const fb=document.getElementById('feedback-box');
+  fb.textContent=msg; fb.className='show '+type; fb.style.display='block';
+}
+
+function pointsForTime(s){ return 1+(s/TOTAL_TIME); }
+function calcScore(){ return Math.round((totalRaw/(questions.length*2))*20); }
+
+function nextQuestion(){
+  current++;
+  if(current>=questions.length) showResults();
+  else loadQuestion();
+}
+
+function showResults(){
+  document.getElementById('main-quiz').style.display='none';
+  const rs=document.getElementById('result-screen');
+  rs.style.display='block';
+  const score=calcScore();
+  document.getElementById('final-score').textContent=score+' / 20';
+  document.getElementById('final-score').style.color=score>=14?'#69f0ae':score>=10?'#ffd740':'#ff5252';
+  document.getElementById('result-icon').textContent=score>=16?'🏆':score>=10?'📚':'💪';
+  document.getElementById('score-msg').textContent=score>=16?'¡Excelente dominio del tema!':score>=14?'Muy buen desempeño.':score>=10?'Aprobado — repasa los temas fallados.':'Necesitas repasar DHCP a fondo.';
+  document.getElementById('score-breakdown').innerHTML=
+    '<strong>Aciertos:</strong> '+correctCount+' / '+questions.length+'<br>'+
+    '<strong>Errores + timeouts:</strong> '+(questions.length-correctCount)+'<br>'+
+    '<strong>Puntaje final:</strong> '+score+' / 20';
+}
+
+document.getElementById('start-btn').onclick=startQuiz;
+document.getElementById('next-btn').onclick=nextQuestion;
+document.getElementById('restart-btn').onclick=startQuiz;
+</script>
