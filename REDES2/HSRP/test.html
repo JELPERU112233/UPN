@@ -1,1 +1,330 @@
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#1a0a3e;color:#fff;padding:10px}
+h2.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+#wrap{max-width:640px;margin:0 auto}
+.hdr{background:#2d1060;border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.hdr-title{font-size:13px;font-weight:bold;color:#c8aaff}
+.hdr-stats{display:flex;gap:14px;align-items:center}
+.stat{text-align:center}
+.stat b{display:block;font-size:18px;color:#fff}
+.stat small{font-size:10px;color:#9980cc}
+.pbar{background:#0d0520;border-radius:6px;height:7px;margin-bottom:8px;overflow:hidden}
+.pfill{height:100%;background:#7c3aed;border-radius:6px;transition:width .3s}
+.qcard{background:#2d1060;border-radius:12px;padding:16px;margin-bottom:10px;min-height:100px;display:flex;flex-direction:column;justify-content:center}
+.qnum{font-size:11px;color:#9980cc;margin-bottom:6px}
+.qtext{font-size:15px;font-weight:bold;line-height:1.45}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px}
+.opt{border:none;border-radius:9px;padding:13px 11px;cursor:pointer;font-size:13px;font-weight:bold;color:#fff;text-align:left;line-height:1.3;display:flex;align-items:flex-start;gap:8px;transition:opacity .15s}
+.opt span.ic{width:26px;height:26px;border-radius:5px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.opt.A{background:#c0392b}
+.opt.B{background:#2980b9}
+.opt.C{background:#27ae60}
+.opt.D{background:#d35400}
+.opt.hit{outline:3px solid #00ff88;background:#00704a}
+.opt.miss{opacity:0.4;background:#555}
+.opt.show-correct{outline:3px solid #00ff88;background:#00704a}
+.opt:disabled{pointer-events:none}
+.fb{border-radius:9px;padding:12px 14px;margin-bottom:9px;font-size:13px;line-height:1.5;display:none}
+.fb.ok{background:#003d2a;border:1px solid #00b894;color:#a0ffd8}
+.fb.bad{background:#3d0010;border:1px solid #e74c3c;color:#ffb0b0}
+.fb.tout{background:#3d2800;border:1px solid #f39c12;color:#ffd07f}
+.fb b{display:block;font-size:13px;margin-bottom:4px}
+.nxt{width:100%;background:#7c3aed;border:none;border-radius:9px;padding:12px;color:#fff;font-size:14px;font-weight:bold;cursor:pointer;display:none}
+.nxt:hover{background:#6d28d9}
+.timer-wrap{position:relative;width:50px;height:50px}
+.timer-wrap svg{transform:rotate(-90deg)}
+.timer-n{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:15px;font-weight:bold}
+.intro,.result{background:#2d1060;border-radius:12px;padding:22px 16px;text-align:center}
+.intro h3,.result h3{font-size:18px;font-weight:bold;color:#c8aaff;margin-bottom:6px}
+.intro p,.result p{font-size:13px;color:#9980cc;margin-bottom:14px;line-height:1.5}
+.feats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:16px;text-align:left}
+.feat{background:#1a0a3e;border-radius:7px;padding:9px 11px;font-size:12px;color:#c8aaff;display:flex;align-items:center;gap:7px}
+.sbtn{background:#7c3aed;border:none;border-radius:9px;padding:13px 28px;color:#fff;font-size:14px;font-weight:bold;cursor:pointer}
+.sbtn:hover{background:#6d28d9}
+.score-big{font-size:60px;font-weight:bold;margin:6px 0}
+.dgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin:12px 0 16px}
+.dcell{background:#1a0a3e;border-radius:7px;padding:9px 5px;text-align:center}
+.dcell b{display:block;font-size:20px}
+.dcell small{font-size:10px;color:#9980cc}
+.rmsg{font-size:14px;margin-bottom:14px;line-height:1.5}
+</style>
+
+<h2 class="sr-only">Autoevaluación FHRP y HSRP — Redes 2 Semana 07 — 10 preguntas escala vigesimal</h2>
+
+<div id="wrap">
+  <div class="hdr">
+    <div class="hdr-title">Redes 2 — s07<br><span style="color:#fff;font-size:14px">FHRP / HSRP</span></div>
+    <div class="hdr-stats">
+      <div class="stat"><b id="h-pts">0</b><small>puntos</small></div>
+      <div class="stat"><b id="h-q">—</b><small>pregunta</small></div>
+      <div class="timer-wrap" id="tw" style="display:none">
+        <svg width="50" height="50" viewBox="0 0 50 50">
+          <circle cx="25" cy="25" r="21" fill="none" stroke="#3d1a7a" stroke-width="4"/>
+          <circle id="arc" cx="25" cy="25" r="21" fill="none" stroke="#7c3aed" stroke-width="4"
+            stroke-dasharray="131.9" stroke-dashoffset="0" stroke-linecap="round"/>
+        </svg>
+        <div class="timer-n" id="tn">30</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pbar"><div class="pfill" id="pf" style="width:0%"></div></div>
+
+  <div id="s-intro">
+    <div class="intro">
+      <h3>Autoevaluación Semana 07</h3>
+      <p>Conceptos de FHRP y HSRP<br>CCNAv7 — Módulo 8</p>
+      <div class="feats">
+        <div class="feat"><span style="font-size:16px">❓</span>10 preguntas</div>
+        <div class="feat"><span style="font-size:16px">⏱</span>30 seg / pregunta</div>
+        <div class="feat"><span style="font-size:16px">📊</span>Escala 0–20</div>
+        <div class="feat"><span style="font-size:16px">🔄</span>Reintentos ilimitados</div>
+      </div>
+      <button class="sbtn" onclick="start()">Iniciar autoevaluación</button>
+    </div>
+  </div>
+
+  <div id="s-quiz" style="display:none">
+    <div class="qcard">
+      <div class="qnum" id="qnum"></div>
+      <div class="qtext" id="qtext"></div>
+    </div>
+    <div class="grid" id="opts-grid"></div>
+    <div class="fb" id="fb"></div>
+    <button class="nxt" id="nxt" onclick="next()">Siguiente →</button>
+  </div>
+
+  <div id="s-result" style="display:none">
+    <div class="result">
+      <h3>Resultado final</h3>
+      <div class="score-big" id="r-nota">—</div>
+      <div style="font-size:12px;color:#9980cc;margin-bottom:8px">de 20 puntos</div>
+      <div class="rmsg" id="r-msg"></div>
+      <div class="dgrid">
+        <div class="dcell"><b id="r-ok" style="color:#00ff88">—</b><small>correctas</small></div>
+        <div class="dcell"><b id="r-bad" style="color:#e74c3c">—</b><small>incorrectas</small></div>
+        <div class="dcell"><b id="r-to" style="color:#f39c12">—</b><small>sin tiempo</small></div>
+      </div>
+      <button class="sbtn" onclick="start()">Rendir de nuevo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var BANK = [
+  {
+    q: "¿Qué significa la sigla FHRP?",
+    o: ["First Hop Redundancy Protocol","Fast Host Routing Protocol","Forward Host Relay Protocol","First Hardware Routing Protocol"],
+    c: 0,
+    ok: "FHRP significa First Hop Redundancy Protocol. Es la familia de protocolos que garantiza disponibilidad del gateway ante fallos de router, sin reconfigurar los hosts.",
+    bad: "La sigla correcta es First Hop Redundancy Protocol (Protocolo de Redundancia del Primer Salto). Incluye protocolos como HSRP, VRRP y GLBP."
+  },
+  {
+    q: "Si R1 es el gateway de los PCs y cae, ¿qué ocurre sin FHRP configurado?",
+    o: ["Los PCs redirigen automáticamente a R2","Los PCs pierden Internet aunque R2 esté operativo","El Switch L2 redirige el tráfico","DHCP actualiza el gateway"],
+    c: 1,
+    ok: "Correcto. Sin FHRP, el gateway del PC es fijo. Si R1 cae, el PC sigue enviando a 172.16.10.2 que no responde. R2 existe pero nadie le envía tráfico.",
+    bad: "Sin FHRP, el gateway del PC está estático. Si R1 cae, el tráfico sigue apuntando a esa IP que ya no responde, perdiendo conectividad aunque R2 funcione."
+  },
+  {
+    q: "¿Cuál es la función principal de HSRP?",
+    o: ["Balancear carga entre ISP","Redundancia de gateway sin reconfigurar hosts","Asignar IPs dinámicas","Cifrar tráfico entre routers"],
+    c: 1,
+    ok: "HSRP crea un router virtual compartido. Los hosts usan la IP virtual como gateway; si el router activo falla, el standby asume sin que los hosts cambien nada.",
+    bad: "HSRP — Hot Standby Router Protocol — permite que routers Cisco compartan una IP virtual de gateway. Los hosts apuntan a esa IP y no necesitan reconfigurarse ante un fallo."
+  },
+  {
+    q: "Con Priority y Preempt habilitado, ¿qué router asume el rol ACTIVE en HSRP?",
+    o: ["El que arrancó primero","El que tiene IP más baja","El de mayor prioridad (IP más alta si empatan)","El de más interfaces activas"],
+    c: 2,
+    ok: "Con preempt activo, el router con mayor valor numérico de prioridad toma el rol Active. Si dos tienen igual prioridad, desempata la IP más alta.",
+    bad: "Con standby priority + preempt, gana el de mayor prioridad. Sin preempt, gana el que arranca primero independientemente de la prioridad configurada."
+  },
+  {
+    q: "¿Cuál es la MAC virtual de HSRP versión 1 para el grupo 1?",
+    o: ["0000.0C9F.F001","0000.0C07.AC01","0005.73A0.0001","0014.A866.2898"],
+    c: 1,
+    ok: "HSRP v1 usa el rango 0000.0C07.AC00 a 0000.0C07.ACFF. Los últimos dos dígitos hex indican el grupo. Grupo 1 = 0000.0C07.AC01.",
+    bad: "HSRP v1 asigna MACs en el rango 0000.0C07.AC00–ACFF. El sufijo indica el grupo en hexadecimal. 0000.0C9F.Fxxx pertenece a HSRP v2."
+  },
+  {
+    q: "¿Qué comando IOS configura la IP virtual 192.168.0.1 en el grupo 1?",
+    o: ["standby 1 ip 192.168.0.1","hsrp group 1 virtual-ip 192.168.0.1","ip virtual-router 192.168.0.1","standby virtual 1 address 192.168.0.1"],
+    c: 0,
+    ok: "La sintaxis Cisco IOS es: standby [grupo] ip [IP-virtual]. Se configura bajo la interfaz LAN del router. Ejemplo: standby 1 ip 192.168.0.1",
+    bad: "El comando correcto es 'standby 1 ip 192.168.0.1' aplicado en modo configuración de interfaz. El número 1 es el grupo HSRP y debe coincidir en todos los routers."
+  },
+  {
+    q: "¿Qué estado HSRP tiene el router listo para asumir como Active si el actual falla?",
+    o: ["Listen","Learn","Standby","Speak"],
+    c: 2,
+    ok: "El estado Standby indica que el router es el candidato inmediato para Active. Envía Hellos periódicos y monitorea al router activo continuamente.",
+    bad: "El estado Standby es el rol del router de respaldo. Listen significa que el router conoce la IP virtual pero no es Active ni Standby. Speak es cuando participa en la elección."
+  },
+  {
+    q: "¿Por qué DHCP NO resuelve el problema de redundancia de gateway?",
+    o: ["DHCP no asigna gateway en su oferta","DHCP asigna gateway estático y no detecta fallos de router","DHCP solo funciona con IPv6","DHCP requiere que el router sea Active"],
+    c: 1,
+    ok: "DHCP asigna parámetros estáticos (IP, máscara, gateway) desde su configuración. Si el router configurado como gateway falla, DHCP no lo detecta ni cambia ese valor.",
+    bad: "DHCP sí entrega el gateway (opción 3), pero ese valor es estático. Si el admin configuró R1 como gateway en el servidor DHCP, los clientes siempre recibirán R1 aunque falle."
+  },
+  {
+    q: "¿Qué hace 'standby 1 track FastEthernet0/1 decrement 10' en HSRP?",
+    o: ["Aumenta la prioridad si F0/1 sube","Reduce prioridad en 10 si F0/1 cae, provocando failover","Bloquea tráfico en F0/1","Sincroniza la MAC virtual con F0/1"],
+    c: 1,
+    ok: "Interface Tracking monitorea F0/1. Si cae, la prioridad baja en 10. Si el standby tiene ahora mayor prioridad y tiene preempt, asume como Active automáticamente.",
+    bad: "El comando track monitorea una interfaz upstream. Al caer, reduce la prioridad del router activo. Si el standby supera esa prioridad y tiene preempt, toma el control."
+  },
+  {
+    q: "¿Qué protocolo FHRP de Cisco combina redundancia Y balanceo de carga activo-activo?",
+    o: ["VRRPv2","HSRP","GLBP","IRDP"],
+    c: 2,
+    ok: "GLBP — Gateway Load Balancing Protocol — es propiedad Cisco y combina redundancia con balanceo de carga activo-activo, a diferencia de HSRP que es activo-pasivo.",
+    bad: "GLBP (Gateway Load Balancing Protocol) es la opción Cisco que permite que múltiples routers actúen simultáneamente como gateways, distribuyendo la carga entre ellos."
+  }
+];
+
+var IDX=["A","B","C","D"];
+var ICONS=["▲","◆","●","✖"];
+var CIRC=131.9;
+var cur=0,pts=0,nOk=0,nBad=0,nTo=0,tmr=null,done=false,order=[];
+
+function shuffle(a){
+  var b=a.slice();
+  for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}
+  return b;
+}
+
+function start(){
+  order=shuffle([0,1,2,3,4,5,6,7,8,9]);
+  cur=0;pts=0;nOk=0;nBad=0;nTo=0;done=false;
+  document.getElementById('h-pts').textContent='0';
+  document.getElementById('h-q').textContent='1/10';
+  document.getElementById('s-intro').style.display='none';
+  document.getElementById('s-result').style.display='none';
+  document.getElementById('s-quiz').style.display='block';
+  document.getElementById('tw').style.display='block';
+  document.getElementById('pf').style.width='0%';
+  showQ();
+}
+
+function showQ(){
+  done=false;
+  var q=BANK[order[cur]];
+  document.getElementById('qnum').textContent='Pregunta '+(cur+1)+' de 10';
+  document.getElementById('h-q').textContent=(cur+1)+'/10';
+  document.getElementById('qtext').textContent=q.q;
+  document.getElementById('pf').style.width=(cur*10)+'%';
+  document.getElementById('fb').style.display='none';
+  document.getElementById('nxt').style.display='none';
+
+  var g=document.getElementById('opts-grid');
+  g.innerHTML='';
+  for(var i=0;i<4;i++){
+    var btn=document.createElement('button');
+    btn.className='opt '+IDX[i];
+    btn.setAttribute('data-i',i);
+    var ic=document.createElement('span');
+    ic.className='ic';
+    ic.textContent=ICONS[i];
+    btn.appendChild(ic);
+    var tx=document.createTextNode(' '+q.o[i]);
+    btn.appendChild(tx);
+    btn.onclick=(function(ii){return function(){pick(ii)}})(i);
+    g.appendChild(btn);
+  }
+  runTimer();
+}
+
+function runTimer(){
+  clearInterval(tmr);
+  var sec=30;
+  var arc=document.getElementById('arc');
+  var tn=document.getElementById('tn');
+  arc.style.stroke='#7c3aed';
+  arc.setAttribute('stroke-dashoffset','0');
+  tn.textContent='30';
+  tmr=setInterval(function(){
+    sec--;
+    tn.textContent=sec;
+    arc.setAttribute('stroke-dashoffset',(CIRC*((30-sec)/30)).toFixed(1));
+    if(sec<=10) arc.style.stroke='#e74c3c';
+    if(sec<=0){clearInterval(tmr);if(!done)outOfTime();}
+  },1000);
+}
+
+function disableOpts(){
+  var btns=document.getElementById('opts-grid').querySelectorAll('button');
+  for(var i=0;i<btns.length;i++) btns[i].onclick=null;
+}
+
+function markOpts(chosen){
+  var q=BANK[order[cur]];
+  var btns=document.getElementById('opts-grid').querySelectorAll('button');
+  for(var i=0;i<btns.length;i++){
+    if(i===q.c) btns[i].classList.add('hit');
+    else if(chosen!==null && i===chosen && chosen!==q.c) btns[i].classList.add('miss');
+  }
+}
+
+function showFb(type,text){
+  var fb=document.getElementById('fb');
+  fb.className='fb '+type;
+  fb.innerHTML='<b>'+{ok:'✓ Correcto',bad:'✗ Incorrecto',tout:'⏱ Tiempo agotado'}[type]+'</b>'+text;
+  fb.style.display='block';
+  document.getElementById('nxt').style.display='block';
+}
+
+function pick(i){
+  if(done) return;
+  done=true;
+  clearInterval(tmr);
+  disableOpts();
+  var q=BANK[order[cur]];
+  markOpts(i);
+  if(i===q.c){
+    nOk++;pts+=2;
+    document.getElementById('h-pts').textContent=pts;
+    showFb('ok',q.ok);
+  } else {
+    nBad++;
+    showFb('bad','La respuesta correcta es la opción '+(q.c+1)+'. '+q.bad);
+  }
+}
+
+function outOfTime(){
+  done=true;
+  nTo++;
+  disableOpts();
+  var q=BANK[order[cur]];
+  markOpts(null);
+  showFb('tout','Respuesta correcta: opción '+(q.c+1)+'. '+q.bad);
+}
+
+function next(){
+  cur++;
+  if(cur>=10){showResult();}else{showQ();}
+}
+
+function showResult(){
+  clearInterval(tmr);
+  document.getElementById('s-quiz').style.display='none';
+  document.getElementById('tw').style.display='none';
+  document.getElementById('s-result').style.display='block';
+  document.getElementById('pf').style.width='100%';
+  document.getElementById('r-nota').textContent=pts;
+  document.getElementById('r-ok').textContent=nOk;
+  document.getElementById('r-bad').textContent=nBad;
+  document.getElementById('r-to').textContent=nTo;
+  var msg,col;
+  if(pts>=18){msg='Excelente dominio de FHRP y HSRP. Estás preparado para configurar redundancia de gateway en entornos Cisco reales.';col='#7fffd4';}
+  else if(pts>=14){msg='Buen desempeño. Repasa prioridad, preempt e interface tracking para consolidar el conocimiento.';col='#ffe08a';}
+  else if(pts>=11){msg='Desempeño aceptable. Revisa los estados HSRP, el problema de gateway estático y la diferencia entre HSRP, VRRP y GLBP.';col='#ffb347';}
+  else{msg='Necesitas reforzar los conceptos. Vuelve a revisar las diapositivas de FHRP, estados HSRP y configuración básica.';col='#ff8888';}
+  var rm=document.getElementById('r-msg');
+  rm.textContent=msg;rm.style.color=col;
+  document.getElementById('r-nota').style.color=pts>=14?'#00ff88':pts>=11?'#f39c12':'#e74c3c';
+}
+</script>
 
