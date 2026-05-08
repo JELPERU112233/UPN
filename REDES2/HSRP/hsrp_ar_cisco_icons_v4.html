@@ -1,0 +1,567 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+#hsrp-root{background:#050a12;border-radius:12px;overflow:hidden;position:relative}
+.hud-top{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:rgba(0,180,255,.06);border-bottom:1px solid rgba(0,180,255,.2)}
+.hud-title{font-family:Arial,sans-serif;color:#00c8ff;font-size:12px;letter-spacing:2px;font-weight:700}
+.hud-status{display:flex;gap:10px;align-items:center}
+.status-dot{width:8px;height:8px;border-radius:50%;animation:blink 1.2s infinite}
+.status-dot.active{background:#00ff88}.status-dot.standby{background:#ffaa00}.status-dot.off{background:#ff4444;animation:none}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.status-label{font-family:Arial,sans-serif;font-size:11px;color:#aaa}
+.canvas-wrap{position:relative;width:100%}
+canvas#main{display:block;width:100%;cursor:pointer}
+.info-panel{position:absolute;top:8px;right:8px;width:185px;background:rgba(5,10,18,.94);border:1px solid rgba(0,200,255,.25);border-radius:7px;padding:10px;font-size:10.5px;color:#ccc;font-family:Arial,sans-serif}
+.info-panel h3{color:#00c8ff;font-size:11px;margin-bottom:7px;letter-spacing:1px;font-weight:700}
+.info-row{display:flex;justify-content:space-between;margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:3px}
+.info-val{color:#00ff88;font-weight:700}.info-val.warn{color:#ffaa00}.info-val.err{color:#ff4444}
+.btn-row{display:flex;gap:5px;padding:7px 10px;background:rgba(0,0,0,.3);flex-wrap:wrap}
+.hbtn{padding:5px 11px;border:1px solid rgba(0,200,255,.4);background:rgba(0,180,255,.08);color:#00c8ff;border-radius:5px;font-size:10.5px;font-family:Arial,sans-serif;cursor:pointer;transition:all .2s;font-weight:700}
+.hbtn:hover{background:rgba(0,180,255,.2);border-color:#00c8ff}
+.hbtn.active-btn{background:rgba(0,200,100,.15);border-color:#00ff88;color:#00ff88}
+.hbtn.danger{border-color:#ff4444;color:#ff4466}.hbtn.danger:hover{background:rgba(255,50,50,.15)}
+.legend{display:flex;flex-wrap:wrap;gap:7px;padding:6px 10px;border-top:1px solid rgba(255,255,255,.07)}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:9.5px;color:#888;font-family:Arial,sans-serif}
+.leg-dot{width:10px;height:10px;border-radius:2px}
+.tooltip-box{position:absolute;pointer-events:none;background:rgba(5,10,18,.97);border:1px solid rgba(0,200,255,.4);border-radius:6px;padding:8px 11px;font-size:10px;font-family:Arial,sans-serif;color:#ccc;max-width:180px;display:none;z-index:20}
+.tooltip-box b{color:#00c8ff;display:block;margin-bottom:4px;font-size:11px}
+.event-log{padding:5px 10px 8px;background:rgba(0,0,0,.25);max-height:62px;overflow-y:auto;border-top:1px solid rgba(255,255,255,.06)}
+.log-line{font-family:Arial,sans-serif;font-size:9.5px;color:#666;line-height:1.7}
+.log-line.hi{color:#00ff88}.log-line.warn{color:#ffaa00}.log-line.err{color:#ff5555}
+</style>
+<div id="hsrp-root">
+  <div class="hud-top">
+    <span class="hud-title">◈ HSRP — HOT STANDBY ROUTER PROTOCOL — AR SIMULATOR</span>
+    <div class="hud-status">
+      <div class="status-dot active" id="dot-active"></div><span class="status-label" id="lbl-active">R1 ACTIVE</span>
+      <div class="status-dot standby" id="dot-standby"></div><span class="status-label" id="lbl-standby">R2 STANDBY</span>
+    </div>
+  </div>
+  <div class="canvas-wrap">
+    <canvas id="main" height="490"></canvas>
+    <div class="info-panel">
+      <h3>▸ GRUPO HSRP #1</h3>
+      <div class="info-row"><span>IP Virtual</span><span class="info-val">172.16.10.1</span></div>
+      <div class="info-row"><span>MAC Virtual</span><span class="info-val" style="font-size:8.5px">0000.0C07.AC01</span></div>
+      <div class="info-row"><span>Router ACTIVO</span><span class="info-val" id="pi-active">R1</span></div>
+      <div class="info-row"><span>Router STANDBY</span><span class="info-val warn" id="pi-standby">R2</span></div>
+      <div class="info-row"><span>Estado</span><span class="info-val" id="pi-state">NORMAL</span></div>
+      <div class="info-row"><span>Hellos (3s)</span><span class="info-val" id="pi-hellos">0</span></div>
+      <div class="info-row"><span>Hold Time</span><span class="info-val" id="pi-hold">10s</span></div>
+      <div class="info-row"><span>Prioridad R1</span><span class="info-val">110</span></div>
+      <div class="info-row"><span>Prioridad R2</span><span class="info-val warn">100</span></div>
+    </div>
+    <div class="tooltip-box" id="tooltip"></div>
+  </div>
+  <div class="btn-row">
+    <button class="hbtn active-btn" id="btn-play" onclick="togglePlay()">⏸ PAUSAR</button>
+    <button class="hbtn" onclick="simFailover()">⚡ FAILOVER R1</button>
+    <button class="hbtn" onclick="simRecover()">↩ RECUPERAR R1</button>
+    <button class="hbtn" onclick="toggleHello()">📡 HELLOS</button>
+    <button class="hbtn" onclick="showPacket()">📦 ENVIAR PAQUETE</button>
+    <button class="hbtn danger" onclick="simBothDown()">☠ AMBOS CAEN</button>
+  </div>
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#00ff88"></div>Enlace activo R1</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#ffaa00"></div>Enlace standby R2</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#ff4444"></div>Enlace caído</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#00aaff"></div>Router virtual</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#ff3333"></div>Enlace HSRP</div>
+  </div>
+  <div class="event-log" id="event-log">
+    <div class="log-line hi">[BOOT] HSRP Grupo 1 iniciado. R1 elected ACTIVE (prioridad 110 &gt; 100)</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('main');
+const ctx = canvas.getContext('2d');
+canvas.width = canvas.offsetWidth || 680;
+canvas.height = 490;
+const W = canvas.width, H = canvas.height;
+
+const state = {
+  playing:true, t:0, r1Down:false, r2Down:false, showHellos:false,
+  failoverActive:false, packetActive:false, packetT:0,
+  helloT:0, helloPulses:[], hellos:0, holdT:0
+};
+
+const N = {
+  R1:  {x:W*.22, y:H*.44},
+  R2:  {x:W*.72, y:H*.44},
+  RV:  {x:W*.47, y:H*.44},
+  SW:  {x:W*.47, y:H*.65},
+  ISP1:{x:W*.2,  y:H*.11},
+  ISP2:{x:W*.74, y:H*.11},
+  PC1: {x:W*.25, y:H*.83},
+  PC2: {x:W*.38, y:H*.83},
+  PC3: {x:W*.54, y:H*.83},
+  PC4: {x:W*.67, y:H*.83},
+};
+
+function addLog(msg,cls=''){
+  const el=document.getElementById('event-log');
+  const d=document.createElement('div'); d.className='log-line '+cls;
+  const ts=new Date().toLocaleTimeString('es-PE',{hour12:false});
+  d.textContent='['+ts+'] '+msg; el.appendChild(d);
+  el.scrollTop=el.scrollHeight;
+  if(el.children.length>20) el.children[0].remove();
+}
+
+function shade(color,pct){
+  let n=parseInt(color.replace('#',''),16);
+  let r=Math.min(255,Math.max(0,(n>>16)+pct));
+  let g=Math.min(255,Math.max(0,((n>>8)&0xff)+pct));
+  let b=Math.min(255,Math.max(0,(n&0xff)+pct));
+  return `rgb(${r},${g},${b})`;
+}
+
+// ── LÍNEA FIJA (sin animación) con glow opcional ─────────────
+function fixedLine(x1,y1,x2,y2,color,width,glowIntensity){
+  ctx.save();
+  if(glowIntensity>0){
+    ctx.shadowColor=color;
+    ctx.shadowBlur=glowIntensity;
+  }
+  ctx.strokeStyle=color;
+  ctx.lineWidth=width||1.5;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.restore();
+}
+
+// ── LÍNEA PUNTEADA ANIMADA (router→ISP) ──────────────────────
+function dashedAnim(x1,y1,x2,y2,color,t,width,dir){
+  ctx.save();
+  ctx.strokeStyle=color; ctx.lineWidth=width||1.8;
+  ctx.setLineDash([8,7]);
+  ctx.lineDashOffset=-(t*60*(dir||1));
+  ctx.shadowColor=color; ctx.shadowBlur=8;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.restore();
+}
+
+// ── LÍNEA MUERTA ─────────────────────────────────────────────
+function deadLine(x1,y1,x2,y2){
+  ctx.save(); ctx.strokeStyle='#ff4444'; ctx.lineWidth=1.2;
+  ctx.setLineDash([5,5]); ctx.globalAlpha=.4;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.restore();
+}
+
+// ── HSRP ROJO PUNTEADO ESTÁTICO ──────────────────────────────
+function hsrpDotted(x1,y1,x2,y2,down){
+  ctx.save(); ctx.strokeStyle=down?'#444':'#ff3333';
+  ctx.lineWidth=2; ctx.setLineDash([5,5]);
+  ctx.shadowColor='#ff0000'; ctx.shadowBlur=down?0:5;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.restore();
+}
+
+// ── HELLO PULSE ──────────────────────────────────────────────
+function helloPulse(x1,y1,x2,y2,prog,col){
+  const px=x1+(x2-x1)*prog, py=y1+(y2-y1)*prog;
+  ctx.save(); ctx.beginPath(); ctx.arc(px,py,5,0,Math.PI*2);
+  ctx.fillStyle=col; ctx.shadowColor=col; ctx.shadowBlur=14; ctx.fill(); ctx.restore();
+}
+
+// ── ROUTER CISCO CILÍNDRICO ───────────────────────────────────
+function drawRouter(x,y,pCol,tCol,down,label,role,ip,isActive){
+  const rx=28,ry=10,h=14;
+  ctx.save();
+  if(!down){ ctx.shadowColor=pCol; ctx.shadowBlur=isActive?22:8; }
+  ctx.beginPath(); ctx.ellipse(x,y+h,rx,ry,0,0,Math.PI*2);
+  ctx.fillStyle=down?'#1e1e1e':shade(pCol,-30); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x-rx,y); ctx.lineTo(x-rx,y+h);
+  ctx.ellipse(x,y+h,rx,ry,0,Math.PI,0,true);
+  ctx.lineTo(x+rx,y);
+  ctx.ellipse(x,y,rx,ry,0,0,Math.PI,true);
+  ctx.closePath();
+  ctx.fillStyle=down?'#2a2a2a':pCol; ctx.fill();
+  ctx.strokeStyle=down?'#555':(isActive?'#ffffff':pCol); ctx.lineWidth=isActive?2:1.2; ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
+  ctx.fillStyle=down?'#1a1a1a':tCol; ctx.fill();
+  ctx.strokeStyle=down?'#555':(isActive?'#ffffff':pCol); ctx.lineWidth=isActive?2:1.2; ctx.stroke();
+  if(!down){
+    ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=1.8; ctx.shadowBlur=0;
+    const a=(ax,ay,dx,dy)=>{
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(ax+dx,ay+dy);
+      ctx.moveTo(ax+dx,ay+dy); ctx.lineTo(ax+dx-dy*.4,ay+dy+dx*.4);
+      ctx.moveTo(ax+dx,ay+dy); ctx.lineTo(ax+dx+dy*.4,ay+dy-dx*.4);
+      ctx.stroke();
+    };
+    a(x,y,-10,-5);a(x,y,10,-5);a(x,y,-10,5);a(x,y,10,5);
+  }
+  ctx.restore();
+
+  // Label del router
+  ctx.font='bold 12px Arial'; ctx.fillStyle=down?'#555':'#fff';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(label,x,y+h+14);
+
+  // IP
+  if(ip){ ctx.font='9px Arial'; ctx.fillStyle='#5599bb'; ctx.fillText(ip,x,y-ry-10); }
+
+  // Role label con oscilación si es ACTIVE
+  if(role){
+    ctx.font='bold 10px Arial';
+    if(role==='ACTIVE' && !down){
+      // oscila entre verde brillante y verde más tenue
+      const pulse=0.6+0.4*Math.sin(state.t*4);
+      const g=Math.round(180+75*pulse);
+      ctx.fillStyle=`rgb(0,${g},80)`;
+      ctx.shadowColor='#00ff88'; ctx.shadowBlur=8*pulse;
+    } else {
+      ctx.fillStyle=down?'#ff4444':'#ffaa00';
+    }
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(role,x,y+h+26);
+    ctx.shadowBlur=0;
+  }
+
+  // X si caído
+  if(down){
+    ctx.save(); ctx.strokeStyle='#ff4444'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(x-14,y-8); ctx.lineTo(x+14,y+8);
+    ctx.moveTo(x+14,y-8); ctx.lineTo(x-14,y+8); ctx.stroke(); ctx.restore();
+  }
+}
+
+// ── ROUTER VIRTUAL VERDE ──────────────────────────────────────
+function drawVR(x,y,t){
+  const rx=28,ry=10,h=14;
+  const p=0.7+0.3*Math.sin(t*3);
+  ctx.save(); ctx.shadowColor='#00dd66'; ctx.shadowBlur=18*p;
+  ctx.beginPath(); ctx.ellipse(x,y,rx+10,ry+5,0,0,Math.PI*2);
+  ctx.strokeStyle=`rgba(0,220,100,${0.3*p})`; ctx.lineWidth=1; ctx.setLineDash([3,3]); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.ellipse(x,y+h,rx,ry,0,0,Math.PI*2);
+  ctx.fillStyle='#003322'; ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x-rx,y); ctx.lineTo(x-rx,y+h);
+  ctx.ellipse(x,y+h,rx,ry,0,Math.PI,0,true);
+  ctx.lineTo(x+rx,y);
+  ctx.ellipse(x,y,rx,ry,0,0,Math.PI,true);
+  ctx.closePath();
+  ctx.fillStyle='#1a6640'; ctx.fill();
+  ctx.strokeStyle='#00cc55'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
+  ctx.fillStyle='#22aa55'; ctx.fill();
+  ctx.strokeStyle='#00cc55'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.9)'; ctx.lineWidth=1.8; ctx.shadowBlur=0;
+  const a=(ax,ay,dx,dy)=>{
+    ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(ax+dx,ay+dy);
+    ctx.moveTo(ax+dx,ay+dy); ctx.lineTo(ax+dx-dy*.4,ay+dy+dx*.4);
+    ctx.moveTo(ax+dx,ay+dy); ctx.lineTo(ax+dx+dy*.4,ay+dy-dx*.4);
+    ctx.stroke();
+  };
+  a(x,y,-10,-5);a(x,y,10,-5);a(x,y,-10,5);a(x,y,10,5);
+  ctx.restore();
+  ctx.font='bold 12px Arial'; ctx.fillStyle='#00ff88'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('RV',x,y+h+14);
+  ctx.font='8.5px Arial'; ctx.fillStyle='#00cc66'; ctx.fillText('172.16.10.1',x,y-ry-10);
+  ctx.font='bold 9px Arial'; ctx.fillStyle='#00aaff'; ctx.fillText('ROUTER VIRTUAL HSRP',x,y-ry-20);
+  ctx.font='8px Arial'; ctx.fillStyle='#336655'; ctx.fillText('MAC: 0000.0C07.AC01',x,y-ry-30);
+}
+
+// ── ISP SERVER ────────────────────────────────────────────────
+function drawISP(x,y,label){
+  ctx.save(); ctx.shadowColor='#5599ff'; ctx.shadowBlur=12;
+  ctx.fillStyle='#1a2a4a'; ctx.strokeStyle='#5599ff'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.roundRect(x-16,y-22,32,38,3); ctx.fill(); ctx.stroke();
+  for(let i=0;i<3;i++){
+    ctx.fillStyle='#2244aa'; ctx.beginPath(); ctx.roundRect(x-12,y-18+i*10,24,7,2); ctx.fill();
+    ctx.fillStyle='#00ff88'; ctx.beginPath(); ctx.arc(x+8,y-14+i*10,2,0,Math.PI*2); ctx.fill();
+  }
+  ctx.shadowColor='#33aaff'; ctx.shadowBlur=8;
+  ctx.beginPath(); ctx.arc(x,y+24,11,0,Math.PI*2);
+  ctx.fillStyle='#1a4488'; ctx.fill(); ctx.strokeStyle='#55aaff'; ctx.lineWidth=1; ctx.stroke();
+  ctx.strokeStyle='rgba(100,180,255,.5)'; ctx.lineWidth=.7;
+  ctx.beginPath(); ctx.ellipse(x,y+24,11,5,0,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x,y+13); ctx.lineTo(x,y+35); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x-11,y+24); ctx.lineTo(x+11,y+24); ctx.stroke();
+  ctx.restore();
+  ctx.font='bold 10px Arial'; ctx.fillStyle='#88bbff'; ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillText(label,x,y+38);
+}
+
+// ── CLOUD ─────────────────────────────────────────────────────
+function drawCloud(x,y){
+  ctx.save(); ctx.shadowColor='#4499ff'; ctx.shadowBlur=20;
+  ctx.fillStyle='#2266cc'; ctx.strokeStyle='#55aaff'; ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.arc(x,y,28,0,Math.PI*2); ctx.arc(x-24,y+8,20,0,Math.PI*2);
+  ctx.arc(x+24,y+8,20,0,Math.PI*2); ctx.arc(x-10,y+18,16,0,Math.PI*2);
+  ctx.arc(x+10,y+18,16,0,Math.PI*2);
+  ctx.fill(); ctx.stroke(); ctx.restore();
+  ctx.font='bold 10px Arial'; ctx.fillStyle='#aaddff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('INTERNET / WAN',x,y+6);
+}
+
+// ── SWITCH ────────────────────────────────────────────────────
+function drawSwitch(x,y){
+  ctx.save(); ctx.shadowColor='#33cccc'; ctx.shadowBlur=10;
+  ctx.fillStyle='#003a3a'; ctx.strokeStyle='#33cccc'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.roundRect(x-36,y-11,72,22,4); ctx.fill(); ctx.stroke();
+  for(let i=0;i<5;i++){
+    ctx.fillStyle='#22aaaa'; ctx.beginPath(); ctx.roundRect(x-28+i*13,y-6,10,12,2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.3)'; ctx.beginPath(); ctx.roundRect(x-25+i*13,y-3,5,3,1); ctx.fill();
+  }
+  ctx.restore();
+  ctx.font='bold 10px Arial'; ctx.fillStyle='#33cccc'; ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText('SW L2',x+40,y);
+}
+
+// ── PC / DESKTOP ──────────────────────────────────────────────
+function drawPC(x,y,icon){
+  ctx.save(); ctx.shadowColor='#33cccc'; ctx.shadowBlur=8;
+  ctx.fillStyle='#0d1b2a'; ctx.strokeStyle='#336688'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.roundRect(x-16,y-20,32,22,2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#0a2a4a'; ctx.fillRect(x-13,y-18,26,16);
+  ctx.font='12px Arial'; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(icon,x,y-10);
+  ctx.fillStyle='#1a2a3a'; ctx.strokeStyle='#336688'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(x-20,y+2); ctx.lineTo(x+20,y+2); ctx.lineTo(x+22,y+6); ctx.lineTo(x-22,y+6); ctx.closePath();
+  ctx.fill(); ctx.stroke(); ctx.restore();
+  ctx.font='bold 8px Arial'; ctx.fillStyle='#ffffff'; ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillText('GATEWAY',x,y+10); ctx.fillText('172.16.10.1',x,y+20);
+}
+function drawDesktop(x,y,icon){
+  ctx.save(); ctx.shadowColor='#33cccc'; ctx.shadowBlur=8;
+  ctx.fillStyle='#0d1b2a'; ctx.strokeStyle='#336688'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.roundRect(x-15,y-18,30,24,2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#0a2a4a'; ctx.fillRect(x-12,y-15,24,16);
+  ctx.font='11px Arial'; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(icon,x,y-7);
+  ctx.fillStyle='#1a2a3a'; ctx.strokeStyle='#336688'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.roundRect(x-3,y+6,6,8,1); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.roundRect(x-10,y+14,20,4,2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  ctx.font='bold 8px Arial'; ctx.fillStyle='#ffffff'; ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillText('GATEWAY',x,y+22); ctx.fillText('172.16.10.1',x,y+32);
+}
+
+// ── PACKET ────────────────────────────────────────────────────
+function drawPacket(){
+  if(!state.packetActive) return;
+  const activeRouter=state.r1Down?N.R2:N.R1;
+  const activeISP=state.r1Down?N.ISP2:N.ISP1;
+  const path=[N.PC1,N.SW,activeRouter,activeISP];
+  const total=path.length-1;
+  const seg=Math.floor(state.packetT*total);
+  if(seg>=total){state.packetActive=false;return;}
+  const p0=path[seg],p1=path[seg+1];
+  const frac=(state.packetT*total)-seg;
+  const px=p0.x+(p1.x-p0.x)*frac, py=p0.y+(p1.y-p0.y)*frac;
+  ctx.save(); ctx.beginPath(); ctx.arc(px,py,7,0,Math.PI*2);
+  ctx.fillStyle='#00ff88'; ctx.shadowColor='#00ff88'; ctx.shadowBlur=22; ctx.fill(); ctx.restore();
+}
+
+// ── CONTROLS ──────────────────────────────────────────────────
+function togglePlay(){
+  state.playing=!state.playing;
+  document.getElementById('btn-play').textContent=state.playing?'⏸ PAUSAR':'▶ CONTINUAR';
+}
+function simFailover(){
+  if(state.r1Down) return;
+  state.r1Down=true; state.failoverActive=true; state.holdT=0;
+  document.getElementById('dot-active').className='status-dot off';
+  addLog('R1 CAÍDO — Hold Timer 10s iniciado...','err');
+  addLog('R2 detecta ausencia de Hellos de R1','warn');
+  setTimeout(()=>{
+    document.getElementById('dot-standby').className='status-dot active';
+    document.getElementById('lbl-active').textContent='R2 ACTIVE';
+    document.getElementById('lbl-standby').textContent='R1 DOWN';
+    document.getElementById('pi-active').textContent='R2';
+    document.getElementById('pi-active').className='info-val warn';
+    document.getElementById('pi-standby').textContent='NINGUNO';
+    document.getElementById('pi-state').textContent='FAILOVER';
+    document.getElementById('pi-state').className='info-val warn';
+    addLog('R2 asume ACTIVE — tráfico redirigido a ISP2','hi');
+    addLog('Gratuitous ARP: 0000.0C07.AC01 → R2','hi');
+  },3000);
+}
+function simRecover(){
+  if(!state.r1Down) return;
+  state.r1Down=false; state.r2Down=false; state.failoverActive=false; state.holdT=0;
+  document.getElementById('dot-active').className='status-dot active';
+  document.getElementById('dot-standby').className='status-dot standby';
+  document.getElementById('lbl-active').textContent='R1 ACTIVE';
+  document.getElementById('lbl-standby').textContent='R2 STANDBY';
+  document.getElementById('pi-active').textContent='R1';
+  document.getElementById('pi-active').className='info-val';
+  document.getElementById('pi-standby').textContent='R2';
+  document.getElementById('pi-state').textContent='NORMAL';
+  document.getElementById('pi-state').className='info-val';
+  addLog('R1 recuperado — Preempt (prioridad 110 > 100)','hi');
+  addLog('Tráfico retorna a ISP1 vía R1','hi');
+}
+function toggleHello(){ state.showHellos=!state.showHellos; }
+function showPacket(){
+  if(!state.packetActive){
+    state.packetActive=true; state.packetT=0;
+    const via=state.r1Down?'R2→ISP2':'R1→ISP1';
+    addLog('Paquete PC1→Internet (gw:172.16.10.1) via '+via,'hi');
+  }
+}
+function simBothDown(){
+  state.r1Down=true; state.r2Down=true;
+  document.getElementById('dot-active').className='status-dot off';
+  document.getElementById('dot-standby').className='status-dot off';
+  document.getElementById('lbl-active').textContent='R1 DOWN';
+  document.getElementById('lbl-standby').textContent='R2 DOWN';
+  document.getElementById('pi-state').textContent='SIN GATEWAY';
+  document.getElementById('pi-state').className='info-val err';
+  addLog('CRÍTICO: Ambos routers caídos. Red sin gateway!','err');
+}
+
+// ── MAIN LOOP ─────────────────────────────────────────────────
+function frame(){
+  if(state.playing){
+    state.t+=0.016; state.helloT+=0.016;
+    state.hellos=Math.floor(state.t/3);
+    document.getElementById('pi-hellos').textContent=state.hellos;
+    if(state.r1Down){
+      state.holdT+=0.016;
+      const s=Math.max(0,10-Math.floor(state.holdT));
+      document.getElementById('pi-hold').textContent=s+'s restantes';
+      document.getElementById('pi-hold').className=s===0?'info-val err':'info-val';
+    } else {
+      state.holdT=0;
+      document.getElementById('pi-hold').textContent='10s';
+      document.getElementById('pi-hold').className='info-val';
+    }
+    if(state.packetActive) state.packetT=Math.min(1,state.packetT+.007);
+    if(state.showHellos && state.helloT>1.5){
+      if(!state.r1Down) state.helloPulses.push({from:'R1',to:'R2',t:0,col:'#ffaa00'});
+      if(!state.r2Down) state.helloPulses.push({from:'R2',to:'R1',t:0,col:'#ffcc00'});
+      state.helloT=0;
+    }
+    state.helloPulses=state.helloPulses.filter(p=>{p.t+=0.03;return p.t<1;});
+  }
+
+  ctx.clearRect(0,0,W,H);
+
+  // Grid
+  ctx.save(); ctx.strokeStyle='rgba(0,180,255,.04)'; ctx.lineWidth=.5;
+  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.restore();
+
+  const CX=W*.47, CY=H*.09;
+  drawCloud(CX,CY);
+
+  // ISP ↔ Cloud: animadas
+  dashedAnim(N.ISP1.x+16,N.ISP1.y,CX-30,CY+12,'#4488ff',state.t,1.2,1);
+  dashedAnim(N.ISP2.x-16,N.ISP2.y,CX+30,CY+12,'#4488ff',state.t,1.2,-1);
+
+  // Router ↔ ISP: animadas punteadas
+  // R1 ↔ ISP1
+  if(!state.r1Down){
+    const colR1=(!state.r2Down)?'#00ff88':'#00ff88';
+    dashedAnim(N.R1.x,N.R1.y-28,N.ISP1.x,N.ISP1.y+36,colR1,state.t,2,1);
+  } else deadLine(N.R1.x,N.R1.y-28,N.ISP1.x,N.ISP1.y+36);
+
+  // R2 ↔ ISP2
+  if(!state.r2Down){
+    const colR2=state.r1Down?'#00ff88':'#ffaa00';
+    dashedAnim(N.R2.x,N.R2.y-28,N.ISP2.x,N.ISP2.y+36,colR2,state.t,state.r1Down?2:1.5,-1);
+  } else deadLine(N.R2.x,N.R2.y-28,N.ISP2.x,N.ISP2.y+36);
+
+  // HSRP rojo punteado estático: R1↔RV, RV↔R2, RV↔SW
+  hsrpDotted(N.R1.x+30,N.R1.y+7,N.RV.x-30,N.RV.y+7,state.r1Down);
+  hsrpDotted(N.RV.x+30,N.RV.y+7,N.R2.x-30,N.R2.y+7,state.r2Down);
+  hsrpDotted(N.RV.x,N.RV.y+24,N.SW.x,N.SW.y-11,false);
+
+  // SW ↔ R1: FIJA — glow sutil si R1 activo
+  const r1Active=!state.r1Down&&!state.r2Down;
+  const r1Glow=r1Active?(8+6*Math.sin(state.t*3)):0;
+  if(!state.r1Down){
+    fixedLine(N.SW.x-10,N.SW.y-11,N.R1.x+18,N.R1.y+20,'#00ff88',r1Active?2.5:1.2,r1Glow);
+  } else deadLine(N.SW.x-10,N.SW.y-11,N.R1.x+18,N.R1.y+20);
+
+  // SW ↔ R2: FIJA — glow sutil si R2 activo (failover)
+  const r2Active=state.r1Down&&!state.r2Down;
+  const r2Glow=r2Active?(8+6*Math.sin(state.t*3)):0;
+  if(!state.r2Down){
+    const colSWR2=r2Active?'#00ff88':'#ffaa00';
+    fixedLine(N.SW.x+10,N.SW.y-11,N.R2.x-18,N.R2.y+20,colSWR2,r2Active?2.5:1.2,r2Glow);
+  } else deadLine(N.SW.x+10,N.SW.y-11,N.R2.x-18,N.R2.y+20);
+
+  // SW ↔ PCs: FIJAS, colores distintos por segmento
+  const pcColors=['#00cc66','#ffcc00','#4499ff','#cc88ff'];
+  [N.PC1,N.PC2,N.PC3,N.PC4].forEach((pc,i)=>{
+    fixedLine(N.SW.x,N.SW.y+11,pc.x,pc.y-22,pcColors[i],1.2,0);
+  });
+
+  // Hello pulses
+  state.helloPulses.forEach(p=>{
+    const fr=N[p.from], to=N[p.to];
+    helloPulse(fr.x,fr.y,to.x,to.y,p.t,p.col);
+  });
+  if(state.showHellos){
+    const prog=(state.helloT%1.5)/1.5;
+    if(!state.r1Down) helloPulse(N.R1.x,N.R1.y,N.R2.x,N.R2.y,prog,'#ffaa00');
+    if(!state.r2Down) helloPulse(N.R2.x,N.R2.y,N.R1.x,N.R1.y,(prog+.5)%1,'#ffcc00');
+  }
+
+  // Dispositivos
+  drawISP(N.ISP1.x,N.ISP1.y,'ISP 1');
+  drawISP(N.ISP2.x,N.ISP2.y,'ISP 2');
+
+  drawRouter(N.R1.x,N.R1.y-14,'#2266aa','#3399dd',state.r1Down,'R1',
+    state.r1Down?null:'ACTIVE','172.16.10.2',r1Active);
+  drawRouter(N.R2.x,N.R2.y-14,'#2266aa','#3399dd',state.r2Down,'R2',
+    state.r2Down?null:(state.r1Down?'ACTIVE':'STANDBY'),'172.16.10.3',r2Active);
+  drawVR(N.RV.x,N.RV.y-14,state.t);
+  drawSwitch(N.SW.x,N.SW.y);
+
+  drawPC(N.PC1.x,N.PC1.y,'⊞');
+  drawPC(N.PC2.x,N.PC2.y,'');
+  drawDesktop(N.PC3.x,N.PC3.y,'⊞');
+  drawDesktop(N.PC4.x,N.PC4.y,'🐧');
+
+  // Failover glow R1
+  if(state.failoverActive){
+    ctx.save(); ctx.globalAlpha=.1+.07*Math.sin(state.t*8);
+    ctx.fillStyle='#ff2200';
+    ctx.beginPath(); ctx.arc(N.R1.x,N.R1.y-7,44,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  drawPacket();
+
+  if(!state.playing){
+    ctx.font='bold 11px Arial'; ctx.fillStyle='rgba(255,200,0,.7)'; ctx.textAlign='center';
+    ctx.fillText('⏸ PAUSADO',W*.5,H*.5);
+  }
+
+  requestAnimationFrame(frame);
+}
+
+// Tooltip
+canvas.addEventListener('mousemove',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const mx=(e.clientX-rect.left)*(W/rect.width);
+  const my=(e.clientY-rect.top)*(H/rect.height);
+  const tip=document.getElementById('tooltip');
+  const checks=[
+    {x:N.R1.x,y:N.R1.y-7,r:36,title:'Router R1 (HSRP)',lines:['IP: 172.16.10.2','Prioridad: 110','Rol: ACTIVE (normal)','Hello: 3s / Hold: 10s','Salida: ISP1']},
+    {x:N.R2.x,y:N.R2.y-7,r:36,title:'Router R2 (HSRP)',lines:['IP: 172.16.10.3','Prioridad: 100','Rol: STANDBY','Asume si R1 falla','Salida: ISP2']},
+    {x:N.RV.x,y:N.RV.y-7,r:36,title:'Router Virtual HSRP',lines:['IP: 172.16.10.1','MAC: 0000.0C07.AC01','Gateway lógico de hosts','No es dispositivo físico']},
+    {x:N.SW.x,y:N.SW.y,r:28,title:'Switch L2',lines:['Conecta hosts a la red','Dominio broadcast único']},
+    {x:N.ISP1.x,y:N.ISP1.y,r:28,title:'ISP 1 — WAN',lines:['Enlace salida principal','Usado por R1 (ACTIVE)']},
+    {x:N.ISP2.x,y:N.ISP2.y,r:28,title:'ISP 2 — WAN',lines:['Enlace salida secundario','Usado por R2 si es ACTIVE']},
+  ];
+  let found=null;
+  for(const c of checks){const dx=mx-c.x,dy=my-c.y;if(Math.sqrt(dx*dx+dy*dy)<c.r){found=c;break;}}
+  if(found){
+    tip.style.display='block';
+    tip.style.left=Math.min(mx+12,W-195)+'px';
+    tip.style.top=Math.max(my-20,4)+'px';
+    tip.innerHTML=`<b>${found.title}</b>${found.lines.map(l=>`<span style="display:block;color:#aaa">${l}</span>`).join('')}`;
+  } else tip.style.display='none';
+});
+canvas.addEventListener('mouseleave',()=>{document.getElementById('tooltip').style.display='none';});
+
+frame();
+</script>
