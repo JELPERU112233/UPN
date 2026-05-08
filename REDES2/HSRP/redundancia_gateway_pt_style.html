@@ -1,0 +1,379 @@
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#050d18;font-family:Arial,sans-serif;color:#fff;padding:10px}
+h2.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.ctrl-panel{background:#080f1e;border:1px solid #1a3a5a;border-radius:8px;padding:10px 14px;margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{background:#0a1525;border:1px solid #1e4a6a;color:#7ab8e0;font-family:Arial,sans-serif;font-size:12px;padding:6px 13px;border-radius:5px;cursor:pointer;transition:all .2s}
+.btn:hover{background:#0d1f35;border-color:#3a8aaa}
+.btn.active{background:#6b0000;border-color:#cc2222;color:#fff}
+.btn.active-green{background:#005520;border-color:#00cc55;color:#afffcf}
+.btn.active-blue{background:#001a40;border-color:#2266cc;color:#88bbff}
+.msg-box{background:#060e1c;border:1px solid #1a3a5a;border-radius:8px;padding:10px 14px;margin-top:8px;font-size:12px;line-height:1.6}
+.msg-label{font-size:10px;color:#2a6a9a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.msg-text{color:#8ab8d8}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:7px;padding:0 2px}
+.li{display:flex;align-items:center;gap:5px;font-size:11px;color:#4a7a9a}
+.ld{width:22px;height:2px;border-radius:1px}
+.quiz-box{background:#060e1c;border:1px solid #1a3a5a;border-radius:8px;padding:12px;margin-top:8px}
+.qtitle{font-size:12px;font-weight:bold;color:#5aaad0;margin-bottom:8px}
+.qbtn{background:#0a1525;border:1px solid #1e4a6a;color:#7ab8d8;font-size:11px;padding:6px 10px;border-radius:5px;cursor:pointer;margin:3px;display:block;width:100%;text-align:left;transition:background .15s}
+.qbtn:hover{background:#0d1f35}
+.qbtn.correct{background:#003318;border-color:#00aa44;color:#66ffaa}
+.qbtn.wrong{background:#2a0000;border-color:#cc2222;color:#ff7777}
+.qfb{margin-top:7px;font-size:11px;display:none}
+</style>
+
+<h2 class="sr-only">Simulador HSRP / redundancia de gateway estilo Packet Tracer con fondo oscuro</h2>
+
+<svg id="topo" width="100%" viewBox="0 0 680 440" xmlns="http://www.w3.org/2000/svg">
+<rect width="680" height="440" fill="#050d18"/>
+
+<defs>
+  <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+
+<!-- ===== INTERNET / WAN CLOUD ===== -->
+<g id="cloud">
+  <circle cx="340" cy="46" r="36" fill="none" stroke="#00aaff" stroke-width="1.2" opacity="0.7"/>
+  <circle cx="340" cy="46" r="26" fill="none" stroke="#00ccff" stroke-width="1" opacity="0.5"/>
+  <circle cx="340" cy="46" r="16" fill="none" stroke="#00eeff" stroke-width="0.8" opacity="0.4"/>
+  <ellipse cx="340" cy="46" rx="36" ry="22" fill="none" stroke="#00aaff" stroke-width="1" opacity="0.4"/>
+  <ellipse cx="340" cy="46" rx="22" ry="36" fill="none" stroke="#00aaff" stroke-width="1" opacity="0.4"/>
+  <circle cx="340" cy="46" r="6" fill="#00ccff" opacity="0.6"/>
+  <text x="340" y="90" text-anchor="middle" font-family="Arial" font-size="10" fill="#00ccff" font-weight="bold">INTERNET / WAN</text>
+</g>
+
+<!-- ===== ISP 1 (server rack icon, cyan) ===== -->
+<g id="isp1-icon">
+  <rect x="28" y="22" width="34" height="46" rx="3" fill="#050d18" stroke="#00aaff" stroke-width="1.2"/>
+  <rect x="31" y="26" width="28" height="6" rx="1" fill="#003355" stroke="#00aaff" stroke-width="0.6"/>
+  <circle cx="55" cy="29" r="2" fill="#00ff88"/>
+  <circle cx="55" cy="29" r="1" fill="#00ffaa"/>
+  <rect x="31" y="35" width="28" height="6" rx="1" fill="#003355" stroke="#00aaff" stroke-width="0.6"/>
+  <circle cx="55" cy="38" r="2" fill="#00ff88"/>
+  <rect x="31" y="44" width="28" height="6" rx="1" fill="#003355" stroke="#00aaff" stroke-width="0.6"/>
+  <circle cx="55" cy="47" r="2" fill="#00ff88"/>
+  <rect x="31" y="53" width="28" height="6" rx="1" fill="#003355" stroke="#00aaff" stroke-width="0.6"/>
+  <circle cx="55" cy="56" r="2" fill="#00ff88"/>
+  <rect x="34" y="62" width="10" height="4" rx="1" fill="#004488"/>
+  <text x="45" y="80" text-anchor="middle" font-family="Arial" font-size="11" fill="#00ccff" font-weight="bold">ISP 1</text>
+</g>
+
+<!-- ===== ISP 2 (server rack icon, cyan) ===== -->
+<g id="isp2-icon">
+  <rect x="618" y="22" width="34" height="46" rx="3" fill="#050d18" stroke="#00aaff" stroke-width="1.2"/>
+  <rect x="621" y="26" width="28" height="6" rx="1" fill="#003355" stroke="#00aaff" stroke-width="0.6"/>
+  <circle cx="645" cy="29" r="2" fill="#00ff88"/>
+  <rect x="621" y="35" width="28" height="6" rx="1" fill="#003355" stroke="#00aaff" stroke-width="0.6"/>
+  <circle cx="645" cy="38" r="2" fill="#00ff88"/>
+  <rect x="621" y="44" width="28" height="6" rx="1" fill="#003355" stroke="#00aaff" stroke-width="0.6"/>
+  <circle cx="645" cy="47" r="2" fill="#00ff88"/>
+  <rect x="621" y="53" width="28" height="6" rx="1" fill="#003355" stroke="#00aaff" stroke-width="0.6"/>
+  <circle cx="645" cy="56" r="2" fill="#00ff88"/>
+  <rect x="636" y="62" width="10" height="4" rx="1" fill="#004488"/>
+  <text x="635" y="80" text-anchor="middle" font-family="Arial" font-size="11" fill="#00ccff" font-weight="bold">ISP 2</text>
+</g>
+
+<!-- ISP1 — CLOUD dashed blue -->
+<line id="lk-isp1-cloud" x1="62" y1="46" x2="304" y2="46" stroke="#00aaff" stroke-width="1.5" stroke-dasharray="7,4"/>
+<!-- ISP2 — CLOUD dashed blue -->
+<line id="lk-isp2-cloud" x1="618" y1="46" x2="376" y2="46" stroke="#00aaff" stroke-width="1.5" stroke-dasharray="7,4"/>
+
+<!-- ===== R1 (Cisco router disk, cyan/blue) ===== -->
+<g id="r1-grp">
+  <ellipse cx="118" cy="235" rx="30" ry="11" fill="#051828" stroke="#00aaff" stroke-width="1.2"/>
+  <rect x="88" y="221" width="60" height="14" fill="#051828"/>
+  <ellipse cx="118" cy="221" rx="30" ry="11" fill="#082040" stroke="#00ccff" stroke-width="1.5"/>
+  <path d="M104 218 L118 214 L132 218 M104 224 L118 228 L132 224" fill="none" stroke="#00eeff" stroke-width="1.2"/>
+  <text x="118" y="250" text-anchor="middle" font-family="Arial" font-size="11" fill="#00ccff" font-weight="bold">R1</text>
+  <text id="r1-status" x="118" y="263" text-anchor="middle" font-family="Arial" font-size="9" fill="#00ff66" font-weight="bold">ACTIVE</text>
+  <text x="80" y="215" text-anchor="middle" font-family="Arial" font-size="8" fill="#5599bb">172.16.10.2</text>
+</g>
+<g id="r1-fail" display="none">
+  <circle cx="146" cy="208" r="12" fill="#660000" stroke="#cc2222" stroke-width="1.2"/>
+  <text x="146" y="213" text-anchor="middle" font-family="Arial" font-size="12" fill="#ff4444" font-weight="bold">✕</text>
+</g>
+
+<!-- ===== R2 (Cisco router disk, cyan/blue) ===== -->
+<g id="r2-grp">
+  <ellipse cx="562" cy="235" rx="30" ry="11" fill="#051828" stroke="#00aaff" stroke-width="1.2"/>
+  <rect x="532" y="221" width="60" height="14" fill="#051828"/>
+  <ellipse cx="562" cy="221" rx="30" ry="11" fill="#082040" stroke="#00ccff" stroke-width="1.5"/>
+  <path d="M548 218 L562 214 L576 218 M548 224 L562 228 L576 224" fill="none" stroke="#00eeff" stroke-width="1.2"/>
+  <text x="562" y="250" text-anchor="middle" font-family="Arial" font-size="11" fill="#00ccff" font-weight="bold">R2</text>
+  <text id="r2-status" x="562" y="263" text-anchor="middle" font-family="Arial" font-size="9" fill="#ffaa00" font-weight="bold">STANDBY</text>
+  <text x="600" y="215" text-anchor="middle" font-family="Arial" font-size="8" fill="#5599bb">172.16.10.3</text>
+</g>
+
+<!-- ISP1 -> R1 dashed green -->
+<line id="lk-isp1-r1" x1="55" y1="68" x2="108" y2="212" stroke="#00cc44" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arr)"/>
+<!-- ISP2 -> R2 dashed orange -->
+<line id="lk-isp2-r2" x1="625" y1="68" x2="572" y2="212" stroke="#ffaa00" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arr)"/>
+
+<!-- ===== SW L2 (Cisco switch) ===== -->
+<g id="sw">
+  <rect x="278" y="308" width="104" height="20" rx="3" fill="#051828" stroke="#00ccff" stroke-width="1.2"/>
+  <rect x="284" y="312" width="8" height="8" rx="1" fill="#00aacc" opacity="0.8"/>
+  <rect x="295" y="312" width="8" height="8" rx="1" fill="#00aacc" opacity="0.8"/>
+  <rect x="306" y="312" width="8" height="8" rx="1" fill="#00aacc" opacity="0.8"/>
+  <rect x="317" y="312" width="8" height="8" rx="1" fill="#00aacc" opacity="0.8"/>
+  <rect x="328" y="312" width="8" height="8" rx="1" fill="#00aacc" opacity="0.8"/>
+  <rect x="339" y="312" width="8" height="8" rx="1" fill="#00aacc" opacity="0.8"/>
+  <text x="392" y="321" font-family="Arial" font-size="10" fill="#00ccff" font-weight="bold">SW L2</text>
+</g>
+
+<!-- R1 -> SW (green solid) -->
+<line id="lk-r1-sw" x1="136" y1="238" x2="280" y2="312" stroke="#00dd44" stroke-width="1.8"/>
+<!-- R2 -> SW (orange solid) -->
+<line id="lk-r2-sw" x1="544" y1="238" x2="380" y2="312" stroke="#ffaa00" stroke-width="1.8"/>
+
+<!-- PC1 -> SW (green) -->
+<line id="lk-pc1" x1="90" y1="375" x2="288" y2="328" stroke="#00cc44" stroke-width="1.2"/>
+<!-- PC2 -> SW (yellow) -->
+<line id="lk-pc2" x1="220" y1="375" x2="308" y2="328" stroke="#dddd00" stroke-width="1.2"/>
+<!-- PC3 -> SW (cyan) -->
+<line id="lk-pc3" x1="430" y1="370" x2="358" y2="328" stroke="#00cccc" stroke-width="1.2"/>
+<!-- PC4 -> SW (violet) -->
+<line id="lk-pc4" x1="560" y1="370" x2="375" y2="328" stroke="#aa55ff" stroke-width="1.2"/>
+
+<!-- Gateway arrow indicator -->
+<line id="gw-line" x1="290" y1="308" x2="148" y2="248" stroke="#00ff66" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+<text id="gw-label" x="196" y="285" text-anchor="middle" font-family="Arial" font-size="9" fill="#00ff66" font-weight="bold">GW → R1</text>
+
+<!-- ===== PC1 Windows laptop ===== -->
+<g id="pc1">
+  <rect x="56" y="365" width="68" height="42" rx="2" fill="#050d18" stroke="#00aaff" stroke-width="0.8"/>
+  <rect x="60" y="369" width="60" height="30" rx="1" fill="#081828" stroke="#006699" stroke-width="0.6"/>
+  <rect x="48" y="407" width="84" height="5" rx="2" fill="#082030" stroke="#00aaff" stroke-width="0.6"/>
+  <rect x="72" y="407" width="36" height="3" rx="1" fill="#0a3055"/>
+  <rect x="64" y="372" width="22" height="14" fill="#004488" opacity="0.7"/>
+  <rect x="88" y="372" width="22" height="14" fill="#004488" opacity="0.7"/>
+  <rect x="64" y="388" width="22" height="9" fill="#004488" opacity="0.7"/>
+  <rect x="88" y="388" width="22" height="9" fill="#004488" opacity="0.7"/>
+  <line x1="76" y1="372" x2="76" y2="399" stroke="#00aaff" stroke-width="0.4" opacity="0.6"/>
+  <line x1="64" y1="386" x2="110" y2="386" stroke="#00aaff" stroke-width="0.4" opacity="0.6"/>
+  <text x="90" y="422" text-anchor="middle" font-family="Arial" font-size="7" fill="#5599bb">GATEWAY</text>
+  <text id="pc1-gw" x="90" y="431" text-anchor="middle" font-family="Arial" font-size="7" fill="#5599bb">172.16.10.2</text>
+  <text id="pc1-st" x="90" y="442" text-anchor="middle" font-family="Arial" font-size="8" fill="#00cc44">● OK</text>
+</g>
+
+<!-- ===== PC2 generic laptop ===== -->
+<g id="pc2">
+  <rect x="186" y="365" width="68" height="42" rx="2" fill="#050d18" stroke="#00aaff" stroke-width="0.8"/>
+  <rect x="190" y="369" width="60" height="30" rx="1" fill="#081828" stroke="#006699" stroke-width="0.6"/>
+  <rect x="178" y="407" width="84" height="5" rx="2" fill="#082030" stroke="#00aaff" stroke-width="0.6"/>
+  <rect x="202" y="407" width="36" height="3" rx="1" fill="#0a3055"/>
+  <line x1="190" y1="378" x2="250" y2="378" stroke="#00aaff" stroke-width="0.5" opacity="0.5"/>
+  <line x1="190" y1="386" x2="250" y2="386" stroke="#00aaff" stroke-width="0.5" opacity="0.5"/>
+  <line x1="190" y1="394" x2="250" y2="394" stroke="#00aaff" stroke-width="0.5" opacity="0.5"/>
+  <text x="220" y="422" text-anchor="middle" font-family="Arial" font-size="7" fill="#5599bb">GATEWAY</text>
+  <text id="pc2-gw" x="220" y="431" text-anchor="middle" font-family="Arial" font-size="7" fill="#5599bb">172.16.10.2</text>
+  <text id="pc2-st" x="220" y="442" text-anchor="middle" font-family="Arial" font-size="8" fill="#00cc44">● OK</text>
+</g>
+
+<!-- ===== PC3 Windows desktop monitor ===== -->
+<g id="pc3">
+  <rect x="396" y="358" width="68" height="48" rx="2" fill="#050d18" stroke="#00aaff" stroke-width="0.8"/>
+  <rect x="400" y="362" width="60" height="36" rx="1" fill="#081828" stroke="#006699" stroke-width="0.6"/>
+  <rect x="418" y="406" width="14" height="7" rx="1" fill="#082030"/>
+  <rect x="408" y="413" width="34" height="3" rx="1" fill="#0a3055" stroke="#00aaff" stroke-width="0.4"/>
+  <rect x="404" y="365" width="22" height="14" fill="#004488" opacity="0.7"/>
+  <rect x="428" y="365" width="22" height="14" fill="#004488" opacity="0.7"/>
+  <rect x="404" y="381" width="22" height="9" fill="#004488" opacity="0.7"/>
+  <rect x="428" y="381" width="22" height="9" fill="#004488" opacity="0.7"/>
+  <line x1="426" y1="365" x2="426" y2="392" stroke="#00aaff" stroke-width="0.4" opacity="0.6"/>
+  <line x1="404" y1="379" x2="450" y2="379" stroke="#00aaff" stroke-width="0.4" opacity="0.6"/>
+  <text x="430" y="425" text-anchor="middle" font-family="Arial" font-size="7" fill="#5599bb">GATEWAY</text>
+  <text id="pc3-gw" x="430" y="434" text-anchor="middle" font-family="Arial" font-size="7" fill="#5599bb">172.16.10.2</text>
+  <text id="pc3-st" x="430" y="445" text-anchor="middle" font-family="Arial" font-size="8" fill="#00cc44">● OK</text>
+</g>
+
+<!-- ===== PC4 desktop monitor ===== -->
+<g id="pc4">
+  <rect x="524" y="358" width="68" height="48" rx="2" fill="#050d18" stroke="#00aaff" stroke-width="0.8"/>
+  <rect x="528" y="362" width="60" height="36" rx="1" fill="#081828" stroke="#006699" stroke-width="0.6"/>
+  <rect x="546" y="406" width="14" height="7" rx="1" fill="#082030"/>
+  <rect x="536" y="413" width="34" height="3" rx="1" fill="#0a3055" stroke="#00aaff" stroke-width="0.4"/>
+  <line x1="528" y1="372" x2="588" y2="372" stroke="#00aaff" stroke-width="0.5" opacity="0.5"/>
+  <line x1="528" y1="380" x2="588" y2="380" stroke="#00aaff" stroke-width="0.5" opacity="0.5"/>
+  <line x1="528" y1="388" x2="588" y2="388" stroke="#00aaff" stroke-width="0.5" opacity="0.5"/>
+  <line x1="528" y1="396" x2="588" y2="396" stroke="#00aaff" stroke-width="0.5" opacity="0.5"/>
+  <text x="558" y="425" text-anchor="middle" font-family="Arial" font-size="7" fill="#5599bb">GATEWAY</text>
+  <text id="pc4-gw" x="558" y="434" text-anchor="middle" font-family="Arial" font-size="7" fill="#5599bb">172.16.10.2</text>
+  <text id="pc4-st" x="558" y="445" text-anchor="middle" font-family="Arial" font-size="8" fill="#00cc44">● OK</text>
+</g>
+
+</svg>
+
+<div class="ctrl-panel">
+  <span style="font-size:11px;color:#2a6a9a">Escenario:</span>
+  <button class="btn active" id="b-norm" onclick="go('normal')">🟢 Red normal</button>
+  <button class="btn" id="b-fail" onclick="go('fail')">🔴 Falla enlace R1</button>
+  <button class="btn" id="b-man" onclick="go('manual')">🔧 Cambio manual GW</button>
+  <button class="btn" id="b-dhcp" onclick="go('dhcp')">📡 ¿DHCP resuelve?</button>
+</div>
+
+<div class="msg-box">
+  <div class="msg-label">Explicación del escenario</div>
+  <div class="msg-text" id="msgtext">Red funcionando con normalidad. Los 4 PCs tienen Gateway 172.16.10.2 apuntando a R1 (ACTIVE). El tráfico sale por ISP 1. R2 está activo (STANDBY) conectado a ISP 2, pero ningún PC le envía tráfico porque su Gateway no apunta a él.</div>
+</div>
+
+<div class="legend">
+  <div class="li"><div class="ld" style="background:#00aaff;border-top:1px dashed #00aaff"></div>Enlace ISP</div>
+  <div class="li"><div class="ld" style="background:#00cc44"></div>Enlace R1 activo</div>
+  <div class="li"><div class="ld" style="background:#ffaa00"></div>Enlace R2 standby</div>
+  <div class="li"><div class="ld" style="background:#cc2222"></div>Enlace caído</div>
+  <div class="li"><span style="color:#00cc44;font-size:11px">●</span>&nbsp;Con internet</div>
+  <div class="li"><span style="color:#cc2222;font-size:11px">✕</span>&nbsp;Sin internet</div>
+</div>
+
+<div class="quiz-box">
+  <div class="qtitle" id="qtitle">❓ Autoevaluación</div>
+  <div id="qopts"></div>
+  <div class="qfb" id="qfb"></div>
+</div>
+
+<script>
+const data={
+  normal:{
+    msg:"Red funcionando con normalidad. Los 4 PCs tienen Gateway 172.16.10.2 apuntando a R1 (ACTIVE). El tráfico sale por ISP 1. R2 está activo (STANDBY) conectado a ISP 2, pero ningún PC le envía tráfico porque su Gateway no apunta a él.",
+    r1ok:true,pcok:true,gwTarget:"r1",
+    q:"❓ ¿Por qué R2 (STANDBY) no da acceso a Internet a los PCs?",
+    opts:[
+      {t:"a) Porque R2 no tiene conexión a Internet",c:false},
+      {t:"b) Porque los PCs envían todo su tráfico a 172.16.10.2 (R1). R2 no recibe ningún paquete de los clientes",c:true},
+      {t:"c) Porque el Switch bloquea el tráfico hacia R2",c:false},
+      {t:"d) Porque R2 está apagado",c:false}
+    ]
+  },
+  fail:{
+    msg:"⚠ ENLACE R1–ISP1 CAÍDO. Los PCs pierden Internet aunque R2 sigue operativo con ISP 2. Los paquetes de los clientes van a 172.16.10.2 (R1), que ya no puede rutar hacia Internet. R2 tiene conectividad plena pero nadie le envía tráfico. Conclusión: solo tener 2 routers NO garantiza redundancia.",
+    r1ok:false,pcok:false,gwTarget:"r1",
+    q:"❓ ¿Qué problema demuestra este escenario?",
+    opts:[
+      {t:"a) Que agregar un segundo router siempre garantiza redundancia automática",c:false},
+      {t:"b) Que 2 routers NO resuelven la redundancia si el GW de los clientes apunta solo a uno de ellos",c:true},
+      {t:"c) Que el Switch L2 es el punto de falla",c:false},
+      {t:"d) Que ISP 2 también falló al mismo tiempo",c:false}
+    ]
+  },
+  manual:{
+    msg:"🔧 SOLUCIÓN MANUAL: El admin cambió el Gateway de cada PC a 172.16.10.3 (R2). El tráfico fluye ahora por R2 → ISP 2. Funciona, pero es completamente inviable: hay que hacerlo manualmente en cada equipo. En redes de 100+ PCs esto toma horas y no es automático.",
+    r1ok:false,pcok:true,gwTarget:"r2",
+    q:"❓ ¿Por qué el cambio manual de Gateway NO es una solución de redundancia real?",
+    opts:[
+      {t:"a) Porque R2 no tiene suficiente ancho de banda",c:false},
+      {t:"b) Porque requiere intervención manual en cada PC — no es automático ni tolerante a fallos en tiempo real",c:true},
+      {t:"c) Porque el cambio de GW elimina la IP asignada por DHCP",c:false},
+      {t:"d) Porque ISP 2 tiene mayor latencia que ISP 1",c:false}
+    ]
+  },
+  dhcp:{
+    msg:"📡 ¿DHCP RESUELVE EL PROBLEMA? NO. DHCP asigna: IP, máscara y Gateway predeterminado. Si el servidor DHCP tiene 172.16.10.2 configurado como Gateway, todos los PCs recibirán ese valor aunque hagan un nuevo 'ipconfig /renew'. DHCP asigna parámetros estáticos — no detecta fallos de router ni cambia el Gateway dinámicamente.",
+    r1ok:false,pcok:false,gwTarget:"r1",
+    q:"❓ ¿Qué tecnología SÍ resuelve la redundancia de Gateway automáticamente?",
+    opts:[
+      {t:"a) DHCP con tiempo de arrendamiento muy corto (lease time)",c:false},
+      {t:"b) HSRP, VRRP o GLBP: protocolos de gateway virtual redundante que hacen failover automático",c:true},
+      {t:"c) Spanning Tree Protocol (STP / RSTP)",c:false},
+      {t:"d) Aumentar el ancho de banda de los enlaces ISP",c:false}
+    ]
+  }
+};
+
+let cur='normal';
+
+function go(name){
+  cur=name;
+  const d=data[name];
+  document.getElementById('msgtext').textContent=d.msg;
+  ['norm','fail','man','dhcp'].forEach(b=>document.getElementById('b-'+b).className='btn');
+  const bmap={normal:'b-norm',fail:'b-fail',manual:'b-man',dhcp:'b-dhcp'};
+  document.getElementById(bmap[name]).className='btn active';
+
+  const lkR1=document.getElementById('lk-isp1-r1');
+  const lkCloud1=document.getElementById('lk-isp1-cloud');
+  const lkR1sw=document.getElementById('lk-r1-sw');
+  const r1fail=document.getElementById('r1-fail');
+  const r1st=document.getElementById('r1-status');
+
+  if(!d.r1ok){
+    lkR1.setAttribute('stroke','#cc2222');
+    lkCloud1.setAttribute('stroke','#660000');
+    lkR1sw.setAttribute('stroke','#440000');
+    r1fail.setAttribute('display','inline');
+    r1st.setAttribute('fill','#cc2222');
+    r1st.textContent='CAÍDO';
+  } else {
+    lkR1.setAttribute('stroke','#00cc44');
+    lkCloud1.setAttribute('stroke','#00aaff');
+    lkR1sw.setAttribute('stroke','#00dd44');
+    r1fail.setAttribute('display','none');
+    r1st.setAttribute('fill','#00ff66');
+    r1st.textContent='ACTIVE';
+  }
+
+  const pcColor=d.pcok?'#00cc44':'#cc2222';
+  const pcText=d.pcok?'● OK':'✕ Sin internet';
+  [1,2,3,4].forEach(i=>{
+    const el=document.getElementById('pc'+i+'-st');
+    el.setAttribute('fill',pcColor);
+    el.textContent=pcText;
+  });
+
+  const gwLine=document.getElementById('gw-line');
+  const gwLbl=document.getElementById('gw-label');
+  if(d.gwTarget==='r2'){
+    gwLine.setAttribute('x1','380');gwLine.setAttribute('y1','308');
+    gwLine.setAttribute('x2','532');gwLine.setAttribute('y2','248');
+    gwLine.setAttribute('stroke','#00ff66');
+    gwLbl.setAttribute('x','470');gwLbl.setAttribute('y','285');
+    gwLbl.setAttribute('fill','#00ff66');gwLbl.textContent='GW → R2';
+    [1,2,3,4].forEach(i=>document.getElementById('pc'+i+'-gw').textContent='172.16.10.3');
+  } else {
+    gwLine.setAttribute('x1','290');gwLine.setAttribute('y1','308');
+    gwLine.setAttribute('x2','148');gwLine.setAttribute('y2','248');
+    const clr=d.r1ok?'#00ff66':'#cc2222';
+    gwLine.setAttribute('stroke',clr);
+    gwLbl.setAttribute('x','196');gwLbl.setAttribute('y','285');
+    gwLbl.setAttribute('fill',clr);gwLbl.textContent='GW → R1';
+    [1,2,3,4].forEach(i=>document.getElementById('pc'+i+'-gw').textContent='172.16.10.2');
+  }
+
+  loadQuiz(d);
+}
+
+function loadQuiz(d){
+  document.getElementById('qtitle').textContent=d.q;
+  const c=document.getElementById('qopts');
+  c.innerHTML='';
+  d.opts.forEach(o=>{
+    const b=document.createElement('button');
+    b.className='qbtn';b.textContent=o.t;
+    b.onclick=function(){answer(this,o.c,d.opts);};
+    c.appendChild(b);
+  });
+  const fb=document.getElementById('qfb');
+  fb.style.display='none';fb.textContent='';
+}
+
+function answer(btn,correct,opts){
+  document.querySelectorAll('.qbtn').forEach(b=>b.onclick=null);
+  btn.classList.add(correct?'correct':'wrong');
+  if(!correct){
+    document.querySelectorAll('.qbtn').forEach((b,i)=>{
+      if(opts[i]&&opts[i].c) b.classList.add('correct');
+    });
+  }
+  const fb=document.getElementById('qfb');
+  fb.style.display='block';
+  fb.style.color=correct?'#66ffaa':'#ff6666';
+  fb.textContent=correct
+    ?'✓ ¡Correcto! Comprendes el principio fundamental del problema de redundancia de gateway.'
+    :'✗ Incorrecto. Recuerda: el PC siempre envía sus paquetes a la IP configurada como Gateway, sin importar si hay otro router disponible.';
+}
+
+go('normal');
+</script>
