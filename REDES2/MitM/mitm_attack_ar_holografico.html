@@ -1,0 +1,563 @@
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#060b14;font-family:'Inter',sans-serif;color:#e2e8f0;overflow-x:hidden}
+.app{display:grid;grid-template-columns:1fr 290px;min-height:100vh}
+.left{display:flex;flex-direction:column;padding:18px 14px 14px;position:relative}
+.right{background:#0a1020;border-left:1px solid rgba(255,51,102,0.12);display:flex;flex-direction:column;padding:22px 18px}
+
+/* BRAND */
+.brand-title{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:#ff3366;letter-spacing:1px}
+.brand-sub{font-size:9px;color:rgba(226,232,240,0.3);margin-top:2px}
+.brand-copy{font-size:8px;color:rgba(226,232,240,0.18);margin-top:1px}
+.tabs{display:flex;background:rgba(255,255,255,0.04);border-radius:20px;padding:3px;margin:12px 0 0;width:fit-content}
+.tab{padding:4px 14px;border-radius:16px;font-size:10px;font-weight:500;cursor:pointer;transition:all .2s;color:rgba(226,232,240,0.35);border:none;background:transparent;font-family:'Inter',sans-serif}
+.tab.active{background:#ff3366;color:#fff;box-shadow:0 0 12px rgba(255,51,102,0.45)}
+
+/* SCENE CANVAS */
+.scene{flex:1;position:relative;min-height:420px;margin-top:12px}
+.scene svg{position:absolute;inset:0;width:100%;height:100%}
+
+/* ── SWITCH ── */
+.sw-body{fill:#1a2030;stroke:rgba(255,255,255,0.07);stroke-width:1}
+.sw-top-face{fill:#232b3c;stroke:rgba(255,255,255,0.05);stroke-width:.5}
+.sw-side-face{fill:#0e1220;stroke:rgba(255,255,255,0.04);stroke-width:.5}
+.alert-rect{fill:rgba(255,51,102,0.18);stroke:#ff3366;stroke-width:1.5;rx:3}
+@keyframes alert-blink{0%,100%{opacity:1;stroke-opacity:1}50%{opacity:.5;stroke-opacity:.3}}
+.alert-rect{animation:alert-blink 1s ease-in-out infinite}
+
+/* ── AP MIKROTIK ── */
+.ap-body{fill:#d8dce6;stroke:rgba(255,255,255,0.15);stroke-width:1}
+.ap-top{fill:#c0c4ce;stroke:rgba(255,255,255,0.1);stroke-width:.5}
+
+/* ── CABLE ── */
+.cable{fill:none;stroke:#1a3a6a;stroke-width:5;stroke-linecap:round}
+.cable-glow{fill:none;stroke:rgba(30,80,160,0.25);stroke-width:9;stroke-linecap:round}
+.cable-data{fill:none;stroke:#06b6d4;stroke-width:1.5;stroke-dasharray:6 4;opacity:.6}
+@keyframes flow-r{to{stroke-dashoffset:-40}}
+@keyframes flow-l{to{stroke-dashoffset:40}}
+.cable-data.normal{animation:flow-r 1.2s linear infinite}
+.cable-data.intercepted{stroke:#ff3366;animation:flow-l .8s linear infinite}
+
+/* ── WIFI RINGS ── */
+@keyframes wifi-expand{0%{r:2;opacity:.9}100%{r:60;opacity:0}}
+.wifi-ring{fill:none;stroke-width:1.5}
+.wifi-ring.green{stroke:#00ff88}
+.wifi-ring.cyan{stroke:#06b6d4}
+.wifi-ring.red{stroke:#ff3366}
+
+/* ── LAPTOP ATACANTE ── */
+.laptop-base{fill:#1a1f2e;stroke:rgba(255,255,255,0.08);stroke-width:1}
+.laptop-screen{fill:#0d1a0d;stroke:rgba(0,255,136,0.2);stroke-width:1}
+.terminal-line{font-family:'Share Tech Mono',monospace;font-size:5.5px}
+@keyframes type-in{from{opacity:0}to{opacity:1}}
+
+/* ── DATOS FLOTANTES ── */
+@keyframes float-data{0%{transform:translate(0,0);opacity:0}10%{opacity:1}90%{opacity:.8}100%{transform:translate(var(--dx),var(--dy));opacity:0}}
+.data-packet{font-family:'Share Tech Mono',monospace;font-size:7px;animation:float-data 3s ease-in-out infinite}
+
+/* ── ALERT BANNER ── */
+.alert-banner{fill:#ff3366;rx:3}
+.alert-text{font-family:'Orbitron',monospace;font-size:6px;font-weight:700;fill:#fff;letter-spacing:.5px}
+
+/* ── ATTACKER GLOW ── */
+@keyframes atk-pulse{0%,100%{opacity:.3}50%{opacity:.7}}
+.atk-aura{fill:rgba(255,51,102,0.06);stroke:rgba(255,51,102,0.2);stroke-width:1;animation:atk-pulse 2s ease-in-out infinite}
+
+/* ── LABELS ── */
+.dev-label{font-family:'Orbitron',monospace;font-size:7px;font-weight:700;letter-spacing:1px}
+.dev-sub{font-family:'Share Tech Mono',monospace;font-size:5.5px;letter-spacing:.5px}
+
+/* ── BITS VOLANDO ── */
+@keyframes bit-fly{0%{opacity:0;transform:translate(0,0) scale(.5)}15%{opacity:1}85%{opacity:.6}100%{opacity:0;transform:translate(var(--bx),var(--by)) scale(1.2)}}
+.flying-bit{font-family:'Share Tech Mono',monospace;font-size:8px;animation:bit-fly var(--bd,2.5s) ease-out infinite;animation-delay:var(--bdelay,0s)}
+
+/* RIGHT PANEL */
+.step-badge{font-size:9px;font-weight:700;color:#ff3366;letter-spacing:2px;margin-bottom:8px;font-family:'Share Tech Mono',monospace}
+.step-title{font-size:17px;font-weight:700;color:#f1f5f9;margin-bottom:9px;line-height:1.2}
+.step-desc{font-size:12px;color:rgba(226,232,240,0.6);line-height:1.7;margin-bottom:14px}
+.concept-box{background:rgba(255,51,102,0.04);border:1px solid rgba(255,51,102,0.15);border-radius:8px;padding:12px;margin-bottom:16px}
+.concept-label{font-size:7px;font-weight:700;letter-spacing:2px;color:rgba(255,51,102,0.4);margin-bottom:6px;font-family:'Share Tech Mono',monospace}
+.concept-text{font-size:12px;color:#e2e8f0;line-height:1.6}
+.threat-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.ttag{padding:2px 8px;border-radius:20px;font-size:8.5px;font-weight:600;letter-spacing:.7px;font-family:'Share Tech Mono',monospace}
+.ttag.red{background:rgba(255,51,102,0.1);border:1px solid rgba(255,51,102,0.3);color:#ff3366}
+.ttag.amber{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b}
+.ttag.cyan{background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.3);color:#06b6d4}
+.ttag.green{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:#22c55e}
+.nav-row{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,51,102,0.08)}
+.nav-btn{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);color:rgba(226,232,240,0.4);font-size:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.nav-btn:hover{background:rgba(255,51,102,0.1);border-color:rgba(255,51,102,0.4);color:#ff3366}
+.auto-btn{flex:1;height:30px;border-radius:20px;background:#ff3366;border:none;color:#fff;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.auto-btn:hover{background:#e0284e;box-shadow:0 0 14px rgba(255,51,102,0.45)}
+.auto-btn.running{background:#b01d38}
+.restart-btn{font-size:8.5px;color:rgba(226,232,240,0.22);cursor:pointer;text-align:center;margin-top:8px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;transition:color .2s}
+.restart-btn:hover{color:rgba(255,51,102,0.6)}
+</style>
+
+<div class="app">
+<div class="left">
+  <div style="display:flex;align-items:center;gap:9px;margin-bottom:2px">
+    <div style="width:22px;height:22px;background:rgba(255,51,102,0.15);border:1px solid rgba(255,51,102,0.4);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px">⚠</div>
+    <div>
+      <div class="brand-title">ATAQUE MitM — AR SIMULATOR</div>
+      <div class="brand-sub">Man-in-the-Middle · Seguridad Informática · UPN</div>
+    </div>
+  </div>
+  <div class="brand-copy">© 2026 — José Espinoza · Fines educativos</div>
+  <div class="tabs">
+    <button class="tab active" onclick="setTab(this)">Simulación</button>
+    <button class="tab" onclick="setTab(this)">Exploración</button>
+  </div>
+
+  <div class="scene">
+    <svg id="main-svg" viewBox="0 0 660 420" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Glow filters -->
+        <filter id="glow-red"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-cyan"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-green"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-soft"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+
+        <!-- Gradiente cable -->
+        <linearGradient id="cable-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#1a3a6a"/>
+          <stop offset="100%" stop-color="#0d2040"/>
+        </linearGradient>
+      </defs>
+
+      <!-- ══════════════════════════════════════
+           SWITCH CISCO — perspectiva 3D CSS
+           ══════════════════════════════════════ -->
+      <!-- Cara superior (top) -->
+      <polygon points="30,55 250,55 265,40 45,40" class="sw-top-face"/>
+      <!-- Cara lateral izquierda -->
+      <polygon points="30,55 30,125 15,110 15,40" class="sw-side-face"/>
+      <!-- Logo cisco en top -->
+      <text x="130" y="51" text-anchor="middle" font-family="Orbitron,monospace" font-size="7" fill="rgba(6,182,212,0.3)" letter-spacing="3">cisco</text>
+      <!-- Cara frontal principal -->
+      <rect x="30" y="55" width="220" height="70" rx="3" class="sw-body"/>
+      <!-- Brushed texture lines -->
+      <line x1="30" y1="60" x2="250" y2="60" stroke="rgba(255,255,255,0.04)" stroke-width=".5"/>
+      <line x1="30" y1="65" x2="250" y2="65" stroke="rgba(255,255,255,0.03)" stroke-width=".5"/>
+      <line x1="30" y1="70" x2="250" y2="70" stroke="rgba(255,255,255,0.025)" stroke-width=".5"/>
+
+      <!-- Panel izquierdo con logo + LEDs -->
+      <text x="42" y="72" font-family="Orbitron,monospace" font-size="5.5" fill="rgba(6,182,212,0.6)" letter-spacing="1">cisco</text>
+      <!-- LEDs -->
+      <circle cx="37" cy="82" r="2.5" fill="#22c55e" filter="url(#glow-green)" id="led-syst"/>
+      <text x="44" y="85" font-family="Share Tech Mono" font-size="4" fill="rgba(255,255,255,0.25)">SYST</text>
+      <circle cx="37" cy="91" r="2.5" id="led-stat" fill="#f59e0b"/>
+      <text x="44" y="94" font-family="Share Tech Mono" font-size="4" fill="rgba(255,255,255,0.25)">STAT</text>
+      <!-- Puerto consola -->
+      <rect x="33" y="100" width="22" height="8" rx="1" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.25)" stroke-width=".5"/>
+      <text x="44" y="106" text-anchor="middle" font-family="Share Tech Mono" font-size="3.5" fill="rgba(245,158,11,0.5)">CONSOLE</text>
+
+      <!-- ALERTA ACCESS en el switch -->
+      <rect id="sw-alert" x="60" y="59" width="52" height="11" rx="2" fill="rgba(255,51,102,0.18)" stroke="#ff3366" stroke-width="1" opacity="0" style="transition:opacity .3s"/>
+      <text id="sw-alert-txt" x="86" y="67" text-anchor="middle" font-family="Orbitron,monospace" font-size="4.5" font-weight="700" fill="#ff3366" opacity="0" style="transition:opacity .3s">ACCESS ALERT</text>
+
+      <!-- Puertos RJ45 — 2 filas de 12 -->
+      <g id="sw-ports-g">
+        <!-- fila top -->
+        <g id="sw-row1"></g>
+        <!-- fila bottom -->
+        <g id="sw-row2"></g>
+      </g>
+
+      <!-- SFP slots -->
+      <rect x="228" y="65" width="14" height="10" rx="1.5" fill="#0a0d14" stroke="rgba(6,182,212,0.2)" stroke-width=".8" id="sfp-a"/>
+      <rect x="228" y="78" width="14" height="10" rx="1.5" fill="#0a0d14" stroke="rgba(6,182,212,0.2)" stroke-width=".8" id="sfp-b"/>
+      <text x="235" y="100" text-anchor="middle" font-family="Share Tech Mono" font-size="3.5" fill="rgba(6,182,212,0.3)">SFP+</text>
+
+      <!-- Label switch -->
+      <text x="140" y="138" text-anchor="middle" class="dev-label" fill="#94a3b8">CISCO CATALYST 2960-X</text>
+      <text x="140" y="148" text-anchor="middle" class="dev-sub" fill="rgba(148,163,184,0.5)">48 PUERTOS PoE+ · IOS 15.2</text>
+
+      <!-- ══════════════════════════════════════
+           CABLE SW → AP
+           ══════════════════════════════════════ -->
+      <!-- Cable físico -->
+      <path id="cable-sw-ap" d="M250,100 C310,100 320,120 350,130" class="cable-glow"/>
+      <path d="M250,100 C310,100 320,120 350,130" class="cable" stroke="url(#cable-grad)"/>
+      <!-- Data flow encima del cable -->
+      <path id="data-flow-sw-ap" d="M250,100 C310,100 320,120 350,130" class="cable-data normal" id="flow1"/>
+
+      <!-- ══════════════════════════════════════
+           ACCESS POINT MikroTik hAP lite
+           ══════════════════════════════════════ -->
+      <!-- Top face -->
+      <polygon points="335,108 415,108 425,100 345,100" fill="#c0c4ce" stroke="rgba(255,255,255,0.1)" stroke-width=".5"/>
+      <!-- Side left -->
+      <polygon points="335,108 335,148 325,140 325,100" fill="#9ca0a8" stroke="rgba(255,255,255,0.06)" stroke-width=".5"/>
+      <!-- Side right vents -->
+      <polygon points="415,108 415,148 425,140 425,100" fill="#b0b4bc" stroke="rgba(255,255,255,0.06)" stroke-width=".5"/>
+      <!-- Vent lines right side -->
+      <line x1="416" y1="110" x2="424" y2="104" stroke="rgba(0,0,0,0.2)" stroke-width="1.5"/>
+      <line x1="416" y1="116" x2="424" y2="110" stroke="rgba(0,0,0,0.2)" stroke-width="1.5"/>
+      <line x1="416" y1="122" x2="424" y2="116" stroke="rgba(0,0,0,0.2)" stroke-width="1.5"/>
+      <line x1="416" y1="128" x2="424" y2="122" stroke="rgba(0,0,0,0.2)" stroke-width="1.5"/>
+      <line x1="416" y1="134" x2="424" y2="128" stroke="rgba(0,0,0,0.2)" stroke-width="1.5"/>
+      <!-- Cara frontal AP -->
+      <rect x="335" y="108" width="80" height="40" rx="4" fill="#dce0ea" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+      <!-- Logo -->
+      <rect x="355" y="113" width="16" height="8" rx="1" fill="rgba(80,90,110,0.15)" stroke="rgba(80,90,110,0.2)" stroke-width=".5"/>
+      <text x="363" y="119" text-anchor="middle" font-family="Orbitron,monospace" font-size="4.5" font-weight="700" fill="#3a4050">map</text>
+      <text x="378" y="119" font-family="Share Tech Mono" font-size="4" fill="#8a909a">lite</text>
+      <!-- Puerto RJ45 del AP -->
+      <rect x="338" y="126" width="18" height="15" rx="2" fill="#1a1f2a" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      <rect x="340" y="128" width="14" height="8" rx="1" fill="rgba(0,0,0,0.6)"/>
+      <circle cx="347" cy="138" r="2" id="ap-rj-led" fill="#22c55e"/>
+      <!-- LEDs AP -->
+      <circle cx="362" cy="133" r="2" id="ap-led1" fill="#22c55e" filter="url(#glow-green)"/>
+      <circle cx="368" cy="133" r="2" id="ap-led2" fill="#06b6d4" filter="url(#glow-cyan)"/>
+      <circle cx="374" cy="133" r="2" id="ap-led3" fill="#1a2030"/>
+      <!-- USB -->
+      <rect x="338" y="113" width="10" height="11" rx="1" fill="#0d1018" stroke="rgba(255,255,255,0.08)" stroke-width=".5"/>
+
+      <!-- Label AP -->
+      <text x="375" y="162" text-anchor="middle" class="dev-label" fill="#94a3b8">MikroTik hAP lite</text>
+      <text x="375" y="172" text-anchor="middle" class="dev-sub" fill="rgba(148,163,184,0.5)">RouterOS · 2.4GHz 802.11n</text>
+
+      <!-- ══════════════════════════════════════
+           ONDAS WiFi ANIMADAS (desde el AP)
+           ══════════════════════════════════════ -->
+      <g id="wifi-group" transform="translate(415,128)">
+        <!-- Anillos que se expanden -->
+        <circle class="wifi-ring green" r="1" opacity="0" id="wr1">
+          <animate attributeName="r" from="2" to="55" dur="2s" repeatCount="indefinite" begin="0s"/>
+          <animate attributeName="opacity" values="0;0.8;0" dur="2s" repeatCount="indefinite" begin="0s"/>
+        </circle>
+        <circle class="wifi-ring cyan" r="1" opacity="0" id="wr2">
+          <animate attributeName="r" from="2" to="55" dur="2s" repeatCount="indefinite" begin=".5s"/>
+          <animate attributeName="opacity" values="0;0.7;0" dur="2s" repeatCount="indefinite" begin=".5s"/>
+        </circle>
+        <circle class="wifi-ring green" r="1" opacity="0" id="wr3">
+          <animate attributeName="r" from="2" to="55" dur="2s" repeatCount="indefinite" begin="1s"/>
+          <animate attributeName="opacity" values="0;0.6;0" dur="2s" repeatCount="indefinite" begin="1s"/>
+        </circle>
+        <circle class="wifi-ring cyan" r="1" opacity="0" id="wr4">
+          <animate attributeName="r" from="2" to="55" dur="2s" repeatCount="indefinite" begin="1.5s"/>
+          <animate attributeName="opacity" values="0;0.5;0" dur="2s" repeatCount="indefinite" begin="1.5s"/>
+        </circle>
+      </g>
+
+      <!-- ══════════════════════════════════════
+           BITS / DATOS VOLANDO EN EL AIRE
+           ══════════════════════════════════════ -->
+      <g id="bits-group">
+        <!-- bits normales -->
+        <text class="flying-bit" style="--bx:60px;--by:-30px;--bd:3s;--bdelay:0s" x="440" y="130" fill="rgba(0,255,136,0.7)" font-size="8">1</text>
+        <text class="flying-bit" style="--bx:80px;--by:10px;--bd:2.5s;--bdelay:.4s" x="450" y="145" fill="rgba(6,182,212,0.7)" font-size="7">0</text>
+        <text class="flying-bit" style="--bx:100px;--by:-50px;--bd:3.5s;--bdelay:.8s" x="435" y="120" fill="rgba(0,255,136,0.6)" font-size="7">1</text>
+        <text class="flying-bit" style="--bx:70px;--by:30px;--bd:2.8s;--bdelay:1.2s" x="455" y="155" fill="rgba(6,182,212,0.5)" font-size="8">0</text>
+        <text class="flying-bit" style="--bx:110px;--by:-20px;--bd:3.2s;--bdelay:.3s" x="445" y="138" fill="rgba(0,255,136,0.65)" font-size="6">1</text>
+        <!-- Íconos de archivos interceptados -->
+        <text id="file1" class="flying-bit" style="--bx:90px;--by:-40px;--bd:4s;--bdelay:.6s" x="460" y="125" fill="rgba(6,182,212,0.6)" font-size="12">📄</text>
+        <text id="file2" class="flying-bit" style="--bx:110px;--by:20px;--bd:3.8s;--bdelay:1.5s" x="470" y="150" fill="rgba(6,182,212,0.5)" font-size="10">🗂</text>
+      </g>
+
+      <!-- BITS ROJOS cuando hay intercepción -->
+      <g id="bits-intercept" opacity="0" style="transition:opacity .5s">
+        <text class="flying-bit" style="--bx:60px;--by:-30px;--bd:1.8s;--bdelay:0s" x="440" y="130" fill="rgba(255,51,102,0.8)" font-size="8">!</text>
+        <text class="flying-bit" style="--bx:80px;--by:10px;--bd:1.5s;--bdelay:.3s" x="450" y="145" fill="rgba(255,51,102,0.7)" font-size="7">✗</text>
+        <text class="flying-bit" style="--bx:100px;--by:-50px;--bd:2s;--bdelay:.6s" x="435" y="120" fill="rgba(255,51,102,0.6)" font-size="9">!</text>
+      </g>
+
+      <!-- ══════════════════════════════════════
+           LAPTOP ATACANTE
+           ══════════════════════════════════════ -->
+      <!-- Aura de amenaza -->
+      <ellipse cx="560" cy="310" rx="80" ry="50" class="atk-aura" id="atk-aura" opacity="0" style="transition:opacity .4s"/>
+      <!-- Base laptop -->
+      <rect x="490" y="280" width="140" height="90" rx="4" class="laptop-base" id="laptop-base"/>
+      <!-- Screen laptop -->
+      <rect x="495" y="245" width="130" height="85" rx="3" fill="#0d120d" stroke="rgba(0,255,136,0.15)" stroke-width="1" id="laptop-screen"/>
+      <!-- Contenido terminal en pantalla -->
+      <rect x="496" y="246" width="128" height="83" rx="2" fill="#080e08"/>
+      <g id="terminal-content">
+        <text x="500" y="257" class="terminal-line" fill="#22c55e">[root@kali]# ettercap -T -M arp</text>
+        <text x="500" y="265" class="terminal-line" fill="#22c55e" id="tl2">Scanning for hosts...</text>
+        <text x="500" y="273" class="terminal-line" fill="#f59e0b" id="tl3" opacity="0">Host 192.168.1.1 found</text>
+        <text x="500" y="281" class="terminal-line" fill="#f59e0b" id="tl4" opacity="0">Host 192.168.1.50 found</text>
+        <text x="500" y="289" class="terminal-line" fill="#ff3366" id="tl5" opacity="0">ARP SPOOFING ACTIVE</text>
+        <text x="500" y="297" class="terminal-line" fill="#ff3366" id="tl6" opacity="0">Intercepting traffic...</text>
+        <text x="500" y="305" class="terminal-line" fill="#06b6d4" id="tl7" opacity="0">Packets captured: 0</text>
+        <!-- Alert popup en pantalla -->
+        <rect id="popup" x="498" y="298" width="125" height="24" rx="2" fill="#ff3366" opacity="0" style="transition:opacity .4s"/>
+        <text id="popup-txt" x="560" y="308" text-anchor="middle" font-family="Orbitron,monospace" font-size="5" font-weight="700" fill="#fff" opacity="0" style="transition:opacity .4s">⚠ ARP SPOOFING DETECTED</text>
+        <text id="popup-txt2" x="560" y="318" text-anchor="middle" font-family="Share Tech Mono" font-size="4.5" fill="rgba(255,255,255,0.8)" opacity="0" style="transition:opacity .4s">DAI DROP · PORT SECURITY ACT</text>
+      </g>
+      <!-- Bisagra laptop -->
+      <rect x="500" y="328" width="120" height="3" rx="1" fill="#0a0d14"/>
+      <!-- Teclado laptop (tactil) -->
+      <rect x="500" y="332" width="120" height="32" rx="2" fill="#111824" stroke="rgba(255,255,255,0.05)" stroke-width=".5"/>
+      <rect x="520" y="356" width="80" height="6" rx="3" fill="#0d1018"/>
+
+      <!-- Label atacante -->
+      <text x="560" y="380" text-anchor="middle" class="dev-label" fill="#ff3366" id="atk-label" filter="url(#glow-red)">ATACANTE</text>
+      <text x="560" y="390" text-anchor="middle" class="dev-sub" fill="rgba(255,51,102,0.5)">Kali Linux · Ettercap · ARP Spoof</text>
+
+      <!-- ══════════════════════════════════════
+           CABLE SW → LAPTOP (ruta MitM)
+           ══════════════════════════════════════ -->
+      <!-- Cable curvado como en la imagen original -->
+      <path id="cable-mitm-glow" d="M80,125 C80,200 100,260 200,310 C300,360 400,380 490,315" fill="none" stroke="rgba(30,80,160,0.15)" stroke-width="10" stroke-linecap="round" opacity="0" style="transition:opacity .4s"/>
+      <path id="cable-mitm" d="M80,125 C80,200 100,260 200,310 C300,360 400,380 490,315" fill="none" stroke="#1a3a6a" stroke-width="4" stroke-linecap="round" opacity="0" style="transition:opacity .4s"/>
+      <path id="cable-mitm-data" d="M80,125 C80,200 100,260 200,310 C300,360 400,380 490,315" fill="none" stroke="#ff3366" stroke-width="1.5" stroke-dasharray="5 4" opacity="0" style="transition:opacity .4s"/>
+
+      <!-- ══════════════════════════════════════
+           SWEEP GLOW
+           ══════════════════════════════════════ -->
+      <rect id="scene-sweep" x="-120" y="0" width="80" height="420" fill="url(#sweep-grad)" opacity=".4">
+        <animate attributeName="x" from="-120" to="700" dur="4s" repeatCount="indefinite"/>
+      </rect>
+      <defs>
+        <linearGradient id="sweep-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="rgba(6,182,212,0)" />
+          <stop offset="50%" stop-color="rgba(6,182,212,0.04)"/>
+          <stop offset="100%" stop-color="rgba(6,182,212,0)"/>
+        </linearGradient>
+      </defs>
+
+      <!-- STRIP inferior -->
+      <rect x="0" y="415" width="660" height="2" fill="url(#strip-grad)" opacity=".6"/>
+      <defs>
+        <linearGradient id="strip-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="transparent"/>
+          <stop offset="30%" stop-color="rgba(255,51,102,0.5)"/>
+          <stop offset="70%" stop-color="rgba(255,51,102,0.5)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </linearGradient>
+      </defs>
+      <text id="bottom-info" x="330" y="412" text-anchor="middle" font-family="Share Tech Mono" font-size="6" fill="rgba(255,51,102,0.4)" letter-spacing="2">MODO EXPLORACIÓN · HAZ CLIC EN CUALQUIER DISPOSITIVO</text>
+    </svg>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right">
+  <div class="step-badge" id="r-badge">PASO 1 DE 7</div>
+  <div class="threat-tags" id="r-tags">
+    <span class="ttag cyan">RED NORMAL</span>
+  </div>
+  <div class="step-title" id="r-title">Topología inicial</div>
+  <div class="step-desc" id="r-desc">Switch Cisco conectado al AP MikroTik. La red opera normalmente: los datos fluyen cifrados entre dispositivos. El atacante observa desde afuera sin acceso a la red.</div>
+  <div class="concept-box">
+    <div class="concept-label">CONCEPTO CLAVE</div>
+    <div class="concept-text" id="r-concept">En una red conmutada normal, el switch envía cada frame solo al puerto de destino gracias a su tabla MAC. Un dispositivo externo no puede ver el tráfico de otros.</div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn" onclick="prev()">‹</button>
+    <button class="auto-btn" id="auto-btn" onclick="toggleAuto()">▶ Auto</button>
+    <button class="nav-btn" onclick="next()">›</button>
+  </div>
+  <div class="restart-btn" onclick="restart()">↺ &nbsp;Reiniciar Simulación</div>
+</div>
+</div>
+
+<script>
+const steps=[
+  {
+    badge:'PASO 1 DE 7',title:'Topología inicial',
+    tags:[{c:'cyan',t:'RED NORMAL'}],
+    desc:'Switch Cisco conectado al AP MikroTik. La red opera normalmente: los datos fluyen entre dispositivos. El atacante observa desde afuera sin acceso a la red.',
+    concept:'En una red conmutada, el switch envía cada frame solo al puerto de destino usando su tabla MAC. Un dispositivo externo no puede interceptar tráfico ajeno.',
+    swAlert:false,mitmCable:false,interceptBits:false,atkAura:false,
+    wifiColor:'green',popup:false,
+    termLines:[true,true,false,false,false,false,false],
+    info:'RED OPERATIVA · TRÁFICO NORMAL · SIN AMENAZAS DETECTADAS',
+    portMode:'normal',sfpOn:false
+  },
+  {
+    badge:'PASO 2 DE 7',title:'Atacante se conecta al switch',
+    tags:[{c:'amber',t:'ACCESO NO AUTORIZADO'},{c:'red',t:'AMENAZA'}],
+    desc:'El atacante conecta su laptop Kali Linux al puerto Fa0/1 del switch con un cable Cat5e. Comienza el reconocimiento de la red con nmap para descubrir hosts activos.',
+    concept:'El acceso físico a un puerto de switch no seguro es el primer vector. Sin Port Security activo, cualquier dispositivo puede conectarse y empezar a escanear la red.',
+    swAlert:true,mitmCable:true,interceptBits:false,atkAura:false,
+    wifiColor:'green',popup:false,
+    termLines:[true,true,true,true,false,false,false],
+    info:'ACCESO DETECTADO · Puerto Fa0/1 · MAC: 00:0C:29:FF:AB:CD',
+    portMode:'alert',sfpOn:false
+  },
+  {
+    badge:'PASO 3 DE 7',title:'ARP Spoofing — envenenamiento',
+    tags:[{c:'red',t:'ARP SPOOFING'},{c:'red',t:'ACTIVO'}],
+    desc:'Ettercap envía respuestas ARP falsas: dice ser el gateway (192.168.1.1) al AP y ser el AP al switch. Ambos actualizan sus tablas ARP con la MAC falsa del atacante.',
+    concept:'ARP no tiene autenticación. Cualquier dispositivo puede enviar gratuitous ARP replies falsos. La víctima actualiza su caché ARP sin verificar si la respuesta es legítima.',
+    swAlert:true,mitmCable:true,interceptBits:false,atkAura:true,
+    wifiColor:'red',popup:false,
+    termLines:[true,true,true,true,true,true,false],
+    info:'ARP SPOOFING · TABLA ARP ENVENENADA · MitM EN PROGRESO',
+    portMode:'attack',sfpOn:false
+  },
+  {
+    badge:'PASO 4 DE 7',title:'Intercepción de tráfico activa',
+    tags:[{c:'red',t:'MitM ACTIVO'},{c:'amber',t:'DATOS EXPUESTOS'}],
+    desc:'Todo el tráfico SW↔AP pasa ahora por la laptop del atacante. Wireshark captura credenciales, cookies de sesión y datos en texto claro transmitidos por WiFi.',
+    concept:'El ataque MitM (Man-in-the-Middle) posiciona al atacante entre dos partes que creen comunicarse directamente. El atacante puede leer, modificar o inyectar tráfico.',
+    swAlert:true,mitmCable:true,interceptBits:true,atkAura:true,
+    wifiColor:'red',popup:false,
+    termLines:[true,true,true,true,true,true,true],
+    info:'INTERCEPTANDO · Paquetes capturados: 1,847 · CREDENCIALES EXPUESTAS',
+    portMode:'attack',sfpOn:false
+  },
+  {
+    badge:'PASO 5 DE 7',title:'Detección: Dynamic ARP Inspection',
+    tags:[{c:'green',t:'DAI ACTIVO'},{c:'cyan',t:'CONTRAMEDIDA'}],
+    desc:'El switch detecta respuestas ARP inconsistentes con la DHCP Snooping Binding Table. DAI descarta los paquetes ARP falsos del atacante automáticamente.',
+    concept:'Dynamic ARP Inspection (DAI) valida paquetes ARP contra la tabla de DHCP Snooping. Solo permite ARP replies con IP-MAC registradas legítimamente. Disponible en IOS 12.2+.',
+    swAlert:true,mitmCable:true,interceptBits:false,atkAura:true,
+    wifiColor:'cyan',popup:true,
+    termLines:[true,true,true,true,true,true,true],
+    info:'DAI DROP · ARP inválido · Puerto Fa0/1 · ATAQUE BLOQUEADO',
+    portMode:'block',sfpOn:false
+  },
+  {
+    badge:'PASO 6 DE 7',title:'Port Security activa',
+    tags:[{c:'green',t:'PORT SECURITY'},{c:'green',t:'SHUTDOWN'}],
+    desc:'El switch aplica Port Security: el puerto Fa0/1 entra en err-disabled al detectar una MAC no autorizada. El cable del atacante queda sin conectividad.',
+    concept:'Port Security limita qué MACs pueden usar cada puerto. Al detectar una MAC violatoria, el puerto hace shutdown automático. Requiere "switchport port-security" + "violation shutdown".',
+    swAlert:true,mitmCable:true,interceptBits:false,atkAura:false,
+    wifiColor:'green',popup:false,
+    termLines:[true,true,false,false,false,false,false],
+    info:'ERR-DISABLED · Fa0/1 · VIOLATION: MAC 00:0C:29:FF:AB:CD · SHUTDOWN',
+    portMode:'shutdown',sfpOn:false
+  },
+  {
+    badge:'PASO 7 DE 7',title:'Red restaurada y protegida',
+    tags:[{c:'green',t:'RED SEGURA'},{c:'cyan',t:'MITIGADO'}],
+    desc:'Con DAI + Port Security + DHCP Snooping la red queda protegida. El flujo normal SW↔AP se restablece. Las contramedidas están activas de forma permanente.',
+    concept:'Triada de defensa L2: DHCP Snooping (tabla de confianza IP-MAC) + DAI (valida ARP) + Port Security (limita MACs por puerto). Estas 3 capas mitigan ARP Spoofing y MitM en redes conmutadas.',
+    swAlert:false,mitmCable:false,interceptBits:false,atkAura:false,
+    wifiColor:'green',popup:false,
+    termLines:[true,true,false,false,false,false,false],
+    info:'RED PROTEGIDA · DAI + PORT SECURITY + DHCP SNOOPING ACTIVOS',
+    portMode:'secure',sfpOn:true
+  }
+];
+
+let cur=0,autoT=null,isAuto=false;
+
+function buildSwPorts(){
+  const r1=document.getElementById('sw-row1');
+  const r2=document.getElementById('sw-row2');
+  for(let i=0;i<12;i++){
+    const x=60+i*14;
+    const p1=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    p1.setAttribute('x',x);p1.setAttribute('y',72);p1.setAttribute('width',11);p1.setAttribute('height',11);
+    p1.setAttribute('rx','1.5');p1.setAttribute('fill','#0d1218');p1.setAttribute('stroke','rgba(255,255,255,0.1)');p1.setAttribute('stroke-width','.7');
+    p1.setAttribute('class','sw-rj');p1.setAttribute('data-r','1');p1.setAttribute('data-i',i);
+    r1.appendChild(p1);
+    const l1=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    l1.setAttribute('cx',x+5.5);l1.setAttribute('cy',74);l1.setAttribute('r','1.5');l1.setAttribute('fill','#0d1218');l1.setAttribute('class','sw-led-p r1-'+i);
+    r1.appendChild(l1);
+
+    const p2=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    p2.setAttribute('x',x);p2.setAttribute('y',85);p2.setAttribute('width',11);p2.setAttribute('height',11);
+    p2.setAttribute('rx','1.5');p2.setAttribute('fill','#0d1218');p2.setAttribute('stroke','rgba(255,255,255,0.1)');p2.setAttribute('stroke-width','.7');
+    p2.setAttribute('class','sw-rj');p2.setAttribute('data-r','2');p2.setAttribute('data-i',i);
+    r2.appendChild(p2);
+    const l2=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    l2.setAttribute('cx',x+5.5);l2.setAttribute('cy',87);l2.setAttribute('r','1.5');l2.setAttribute('fill','#0d1218');l2.setAttribute('class','sw-led-p r2-'+i);
+    r2.appendChild(l2);
+  }
+}
+
+function setPortMode(mode){
+  const leds=document.querySelectorAll('.sw-led-p');
+  leds.forEach((l,idx)=>{
+    const i=idx%12;
+    if(mode==='normal'){l.setAttribute('fill',idx<4?'#22c55e':'#0d1218');}
+    else if(mode==='alert'){l.setAttribute('fill',i===0?'#ff3366':idx<4?'#22c55e':'#0d1218');}
+    else if(mode==='attack'){
+      const c=i===0?'#ff3366':idx%3===0?'#f59e0b':'#22c55e';
+      l.setAttribute('fill',c);
+    }
+    else if(mode==='block'){l.setAttribute('fill',i===0?'#ff3366':i<6?'#22c55e':'#0d1218');}
+    else if(mode==='shutdown'){l.setAttribute('fill',i===0?'#1a1a1a':'#22c55e');}
+    else if(mode==='secure'){l.setAttribute('fill',idx<8?'#22c55e':'#0d1218');}
+  });
+}
+
+function setWifiColor(color){
+  const rings=document.querySelectorAll('.wifi-ring');
+  rings.forEach((r,i)=>{
+    r.setAttribute('stroke',color==='red'?'#ff3366':color==='cyan'?'#06b6d4':'#00ff88');
+  });
+}
+
+function applyStep(i){
+  const s=steps[i];
+  document.getElementById('r-badge').textContent=s.badge;
+  document.getElementById('r-title').textContent=s.title;
+  document.getElementById('r-desc').textContent=s.desc;
+  document.getElementById('r-concept').textContent=s.concept;
+  document.getElementById('bottom-info').textContent=s.info;
+
+  const tagsEl=document.getElementById('r-tags');
+  tagsEl.innerHTML='';
+  s.tags.forEach(t=>{const d=document.createElement('span');d.className='ttag '+t.c;d.textContent=t.t;tagsEl.appendChild(d);});
+
+  const swA=document.getElementById('sw-alert');
+  const swAt=document.getElementById('sw-alert-txt');
+  const v=s.swAlert?'1':'0';
+  if(swA){swA.style.opacity=v;swAt.style.opacity=v;}
+
+  const mitm=['cable-mitm','cable-mitm-glow','cable-mitm-data'];
+  mitm.forEach(id=>{const el=document.getElementById(id);if(el)el.style.opacity=s.mitmCable?'1':'0';});
+
+  const bi=document.getElementById('bits-intercept');
+  if(bi)bi.style.opacity=s.interceptBits?'1':'0';
+
+  const aa=document.getElementById('atk-aura');
+  if(aa)aa.style.opacity=s.atkAura?'1':'0';
+
+  const al=document.getElementById('atk-label');
+  if(al)al.setAttribute('fill',s.atkAura?'#ff3366':'#64748b');
+
+  setWifiColor(s.wifiColor);
+
+  const pop=document.getElementById('popup');
+  const pt=document.getElementById('popup-txt');
+  const pt2=document.getElementById('popup-txt2');
+  const pv=s.popup?'1':'0';
+  if(pop)pop.style.opacity=pv;if(pt)pt.style.opacity=pv;if(pt2)pt2.style.opacity=pv;
+
+  const termIds=['tl2','tl3','tl4','tl5','tl6','tl7'];
+  termIds.forEach((id,idx)=>{
+    const el=document.getElementById(id);
+    if(el)el.setAttribute('opacity',s.termLines[idx+1]?'1':'0');
+  });
+
+  setPortMode(s.portMode);
+
+  const sfps=['sfp-a','sfp-b'];
+  sfps.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.setAttribute('stroke',s.sfpOn?'rgba(6,182,212,0.7)':'rgba(6,182,212,0.2)');
+    if(el&&s.sfpOn)el.setAttribute('filter','url(#glow-cyan)');
+    else if(el)el.removeAttribute('filter');
+  });
+
+  const fc=document.getElementById('flow1');
+  if(fc){
+    if(s.interceptBits){fc.setAttribute('stroke','#ff3366');fc.classList.remove('normal');fc.classList.add('intercepted');}
+    else{fc.setAttribute('stroke','#06b6d4');fc.classList.add('normal');fc.classList.remove('intercepted');}
+  }
+}
+
+function next(){if(cur<steps.length-1){cur++;applyStep(cur);}}
+function prev(){if(cur>0){cur--;applyStep(cur);}}
+function restart(){clearInterval(autoT);isAuto=false;document.getElementById('auto-btn').textContent='▶ Auto';document.getElementById('auto-btn').classList.remove('running');cur=0;applyStep(0);}
+function toggleAuto(){
+  if(isAuto){clearInterval(autoT);isAuto=false;document.getElementById('auto-btn').textContent='▶ Auto';document.getElementById('auto-btn').classList.remove('running');}
+  else{isAuto=true;document.getElementById('auto-btn').textContent='⏸ Pausar';document.getElementById('auto-btn').classList.add('running');
+    autoT=setInterval(()=>{if(cur<steps.length-1){cur++;applyStep(cur);}else{clearInterval(autoT);isAuto=false;document.getElementById('auto-btn').textContent='▶ Auto';document.getElementById('auto-btn').classList.remove('running');}},2600);}
+}
+function setTab(el){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');}
+
+buildSwPorts();
+applyStep(0);
+</script>
