@@ -1,7 +1,7 @@
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-#app{background:#000;min-height:100vh;font-family:'Courier New',monospace;color:#fff;position:relative;overflow:hidden}
+#app{background:#000;min-height:100vh;font-family:Arial,Helvetica,sans-serif;color:#fff;position:relative;overflow:hidden}
 .scan{position:absolute;left:0;top:0;width:100%;height:2px;background:linear-gradient(transparent,rgba(0,255,200,.18),transparent);animation:sc 3.5s linear infinite;pointer-events:none;z-index:10}
 @keyframes sc{0%{top:-2px}100%{top:100vh}}
 .arc{position:absolute;width:14px;height:14px;z-index:11}
@@ -9,52 +9,46 @@
 .arc.tr{top:4px;right:4px;border-top:1px solid #00ffcc;border-right:1px solid #00ffcc}
 .arc.bl{bottom:4px;left:4px;border-bottom:1px solid #00ffcc;border-left:1px solid #00ffcc}
 .arc.br{bottom:4px;right:4px;border-bottom:1px solid #00ffcc;border-right:1px solid #00ffcc}
-
 /* PORTADA */
 #cover{padding:0 14px 20px}
 #cover-hero{background:rgba(0,255,200,.05);border:1px solid rgba(0,255,200,.35);border-radius:10px;padding:22px 16px 18px;margin:14px 0 14px;text-align:center}
-#cover-badge{display:inline-block;background:rgba(0,255,200,.12);border:1px solid rgba(0,255,200,.5);border-radius:20px;padding:4px 14px;font-size:9px;color:#00ffcc;letter-spacing:3px;margin-bottom:12px}
-#cover-title{font-size:19px;font-weight:bold;color:#00ffcc;text-shadow:0 0 16px #00ffcc;letter-spacing:2px;line-height:1.25;margin-bottom:6px}
-#cover-sub{font-size:10px;color:#446655;letter-spacing:2px;margin-bottom:16px}
+#cover-badge{display:inline-block;background:rgba(0,255,200,.12);border:1px solid rgba(0,255,200,.5);border-radius:20px;padding:4px 14px;font-size:9px;color:#00ffcc;letter-spacing:3px;margin-bottom:12px;font-family:Arial,sans-serif}
+#cover-title{font-size:20px;font-weight:bold;color:#00ffcc;text-shadow:0 0 16px #00ffcc;letter-spacing:1px;line-height:1.25;margin-bottom:6px}
+#cover-sub{font-size:10px;color:#446655;letter-spacing:1px;margin-bottom:16px}
 #cover-line{height:1px;background:rgba(0,255,200,.2);margin:14px 0}
-#cover-curso{font-size:10px;color:#ffcc00;letter-spacing:2px;text-shadow:0 0 8px #ffcc00;text-align:center;margin-bottom:14px}
-
+#cover-curso{font-size:10px;color:#ffcc00;letter-spacing:1px;text-shadow:0 0 8px #ffcc00;text-align:center;margin-bottom:14px}
 .info-block{background:rgba(0,255,200,.04);border:1px solid rgba(0,255,200,.2);border-radius:8px;padding:12px 14px;margin-bottom:10px}
-.info-title{font-size:9px;color:#00ffcc;letter-spacing:2px;margin-bottom:8px;text-transform:uppercase}
-.info-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:7px;font-size:11px;color:#aaa;line-height:1.45}
+.info-title{font-size:10px;font-weight:bold;color:#00ffcc;letter-spacing:2px;margin-bottom:8px;text-transform:uppercase}
+.info-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:7px;font-size:12px;color:#aaa;line-height:1.45}
 .info-row:last-child{margin-bottom:0}
 .info-icon{font-size:14px;min-width:18px;margin-top:1px}
-.info-val{color:#fff}
-
-.step-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:9px;font-size:11px;color:#aaa;line-height:1.45}
-.step-num{min-width:22px;height:22px;border-radius:50%;border:1px solid;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:bold;flex-shrink:0;margin-top:1px}
+.info-val{color:#fff;font-weight:bold}
+.step-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:9px;font-size:12px;color:#aaa;line-height:1.45}
+.step-num{min-width:22px;height:22px;border-radius:50%;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;flex-shrink:0;margin-top:1px}
 .step-num.c{border-color:#00ffcc;color:#00ffcc}
 .step-num.y{border-color:#ffcc00;color:#ffcc00}
 .step-num.p{border-color:#bf5fff;color:#bf5fff}
 .step-num.g{border-color:#39ff14;color:#39ff14}
-
-.aviso{background:rgba(255,204,0,.07);border:1px solid rgba(255,204,0,.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#ffcc00;line-height:1.5;text-align:center}
-
-#start-btn{width:100%;padding:15px;background:transparent;border:2px solid #00ffcc;border-radius:10px;color:#00ffcc;font-family:'Courier New',monospace;font-size:14px;font-weight:bold;letter-spacing:3px;cursor:pointer;text-shadow:0 0 10px #00ffcc;box-shadow:0 0 18px rgba(0,255,200,.15)}
+.aviso{background:rgba(255,204,0,.07);border:1px solid rgba(255,204,0,.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#ffcc00;line-height:1.55;text-align:center}
+#start-btn{width:100%;padding:15px;background:transparent;border:2px solid #00ffcc;border-radius:10px;color:#00ffcc;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;letter-spacing:2px;cursor:pointer;text-shadow:0 0 10px #00ffcc;box-shadow:0 0 18px rgba(0,255,200,.15)}
 #start-btn:active{transform:scale(.98)}
-
 /* QUIZ */
 #quiz{display:none}
 #header{background:rgba(0,255,200,.07);border-bottom:1px solid rgba(0,255,200,.3);padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
-#logo{font-size:10px;font-weight:bold;color:#00ffcc;letter-spacing:2px}
-#score-box{font-size:10px;color:#ffcc00;letter-spacing:1px;text-shadow:0 0 6px #ffcc00}
+#logo{font-size:11px;font-weight:bold;color:#00ffcc;letter-spacing:2px}
+#score-box{font-size:11px;color:#ffcc00;letter-spacing:1px;text-shadow:0 0 6px #ffcc00}
 #progress-bar{height:3px;background:rgba(0,255,200,.12)}
 #progress-fill{height:100%;background:#00ffcc;transition:width .5s;box-shadow:0 0 8px #00ffcc}
 #question-area{padding:12px 12px 10px}
 #q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
-#q-num{font-size:9px;color:#00ffcc;letter-spacing:2px}
-#q-topic{font-size:8px;color:#444;letter-spacing:1px;text-align:right;max-width:55%;line-height:1.3}
-#timer-wrap{background:rgba(255,255,255,.06);height:5px;border-radius:3px;margin-bottom:10px;overflow:hidden}
+#q-num{font-size:10px;font-weight:bold;color:#00ffcc;letter-spacing:1px}
+#q-topic{font-size:9px;color:#444;text-align:right;max-width:55%;line-height:1.3}
+#timer-wrap{background:rgba(255,255,255,.06);height:5px;border-radius:3px;margin-bottom:6px;overflow:hidden}
 #timer-bar{height:100%;width:100%;transition:width 1s linear;border-radius:3px}
-#timer-text{text-align:center;font-size:10px;color:#666;margin-bottom:8px;letter-spacing:1px}
-#q-text{font-size:13px;font-weight:bold;color:#fff;line-height:1.45;padding:12px 13px;border:1px solid rgba(0,255,200,.3);border-radius:8px;background:rgba(0,255,200,.04);margin-bottom:10px;min-height:68px;text-shadow:0 0 5px rgba(0,255,200,.15)}
+#timer-text{text-align:center;font-size:11px;color:#555;margin-bottom:9px}
+#q-text{font-size:14px;font-weight:bold;color:#fff;line-height:1.5;padding:13px 14px;border:1px solid rgba(0,255,200,.3);border-radius:8px;background:rgba(0,255,200,.04);margin-bottom:10px;min-height:70px;text-shadow:0 0 5px rgba(0,255,200,.15)}
 #options{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
-.opt{padding:11px 7px;border-radius:8px;border:1.5px solid;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;cursor:pointer;text-align:center;line-height:1.3;transition:all .15s;min-height:54px;display:flex;align-items:center;justify-content:center}
+.opt{padding:11px 8px;border-radius:8px;border:1.5px solid;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;cursor:pointer;text-align:center;line-height:1.35;transition:all .15s;min-height:56px;display:flex;align-items:center;justify-content:center}
 .opt:active{transform:scale(.96)}
 .opt.A{border-color:#ff4466;color:#ff4466;background:rgba(255,68,102,.07)}
 .opt.B{border-color:#4488ff;color:#4488ff;background:rgba(68,136,255,.07)}
@@ -63,30 +57,29 @@
 .opt.correct{background:rgba(57,255,20,.2);border-color:#39ff14;color:#39ff14;box-shadow:0 0 12px rgba(57,255,20,.35)}
 .opt.wrong{background:rgba(255,68,102,.2);border-color:#ff4466;color:#ff4466;box-shadow:0 0 12px rgba(255,68,102,.3)}
 .opt.disabled{cursor:default;opacity:.5}
-#feedback-box{padding:11px 13px;border-radius:8px;font-size:11px;line-height:1.55;display:none;border:1px solid;margin-bottom:9px}
+#feedback-box{padding:11px 13px;border-radius:8px;font-size:12px;line-height:1.6;display:none;border:1px solid;margin-bottom:9px}
 #feedback-box.ok{background:rgba(57,255,20,.07);border-color:rgba(57,255,20,.45);color:#39ff14}
 #feedback-box.fail{background:rgba(255,68,102,.07);border-color:rgba(255,68,102,.45);color:#ff7799}
-#next-btn{display:none;width:100%;padding:12px;background:transparent;border:1.5px solid #00ffcc;border-radius:8px;color:#00ffcc;font-family:'Courier New',monospace;font-size:12px;font-weight:bold;letter-spacing:2px;cursor:pointer;text-shadow:0 0 8px #00ffcc}
+#next-btn{display:none;width:100%;padding:13px;background:transparent;border:1.5px solid #00ffcc;border-radius:8px;color:#00ffcc;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;letter-spacing:1px;cursor:pointer;text-shadow:0 0 8px #00ffcc}
 #next-btn:active{transform:scale(.98)}
-
 /* RESULTADO */
 #result{display:none;padding:18px 14px}
 #res-hero{background:rgba(0,255,200,.05);border:1px solid rgba(0,255,200,.3);border-radius:10px;padding:20px 14px;text-align:center;margin-bottom:14px}
-#res-title{font-size:13px;color:#00ffcc;letter-spacing:3px;text-shadow:0 0 12px #00ffcc;margin-bottom:14px}
-#res-nota{font-size:54px;font-weight:bold;margin-bottom:2px}
-#res-escala{font-size:9px;color:#446655;letter-spacing:2px;margin-bottom:10px}
+#res-title{font-size:12px;font-weight:bold;color:#00ffcc;letter-spacing:3px;text-shadow:0 0 12px #00ffcc;margin-bottom:14px}
+#res-nota{font-size:56px;font-weight:bold;margin-bottom:2px}
+#res-escala{font-size:10px;color:#446655;letter-spacing:2px;margin-bottom:10px}
 #res-nivel{font-size:13px;font-weight:bold;letter-spacing:2px;padding:6px 18px;border-radius:20px;display:inline-block;border:1px solid;margin-bottom:8px}
-#res-frase{font-size:11px;color:#666;line-height:1.5;margin-top:8px}
+#res-frase{font-size:12px;color:#666;line-height:1.55;margin-top:8px}
 #res-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
 .rcard{background:rgba(0,255,200,.05);border:1px solid rgba(0,255,200,.2);border-radius:8px;padding:10px 8px;text-align:center}
 .rval{font-size:24px;font-weight:bold}
-.rlbl{font-size:9px;color:#446655;letter-spacing:1px;margin-top:3px}
+.rlbl{font-size:10px;color:#446655;letter-spacing:1px;margin-top:3px}
 #res-detalle{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 13px;margin-bottom:14px}
-.drow{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.drow{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)}
 .drow:last-child{border:none}
-.dkey{color:#666}
+.dkey{color:#555}
 .dval{font-weight:bold}
-#restart-btn{width:100%;padding:13px;background:transparent;border:1.5px solid #ffcc00;border-radius:8px;color:#ffcc00;font-family:'Courier New',monospace;font-size:12px;font-weight:bold;letter-spacing:2px;cursor:pointer;text-shadow:0 0 8px #ffcc00}
+#restart-btn{width:100%;padding:13px;background:transparent;border:1.5px solid #ffcc00;border-radius:8px;color:#ffcc00;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;letter-spacing:1px;cursor:pointer;text-shadow:0 0 8px #ffcc00}
 #restart-btn:active{transform:scale(.98)}
 </style>
 
@@ -94,7 +87,7 @@
 <div class="scan"></div>
 <div class="arc tl"></div><div class="arc tr"></div><div class="arc bl"></div><div class="arc br"></div>
 
-<!-- ═══ PORTADA ═══ -->
+<!-- PORTADA -->
 <div id="cover">
   <div id="cover-hero">
     <div id="cover-badge">◈ AUTOEVALUACIÓN FORMATIVA ◈</div>
@@ -105,39 +98,39 @@
   </div>
 
   <div class="aviso">
-    ⚠ Esta actividad es <strong>SIN PUNTAJE</strong>.<br>
-    Es un espacio de práctica para identificar tus fortalezas y reforzar los temas que necesitas repasar.
+    ⚠ Esta actividad es <strong>SIN PUNTAJE OFICIAL</strong>.<br>
+    Es un espacio de práctica para identificar fortalezas y reforzar los temas que necesitas repasar.
   </div>
 
   <div class="info-block">
     <div class="info-title">◈ Información del quiz</div>
-    <div class="info-row"><span class="info-icon">❓</span><span>Preguntas: <span class="info-val">10 de opción múltiple</span></span></div>
+    <div class="info-row"><span class="info-icon">❓</span><span>Preguntas: <span class="info-val">10 de opción múltiple (A, B, C, D)</span></span></div>
     <div class="info-row"><span class="info-icon">⏱</span><span>Tiempo por pregunta: <span class="info-val">30 segundos</span></span></div>
     <div class="info-row"><span class="info-icon">📋</span><span>Temas: <span class="info-val">1.1 Definición · 1.2 Beneficios · 1.3 Zachman/TOGAF · 1.4 FEA</span></span></div>
-    <div class="info-row"><span class="info-icon">🎯</span><span>Calificación: <span class="info-val">Escala vigesimal (0 – 20)</span></span></div>
-    <div class="info-row"><span class="info-icon">🔄</span><span>Intentos: <span class="info-val">Ilimitados — puedes reiniciar cuantas veces quieras</span></span></div>
+    <div class="info-row"><span class="info-icon">🎯</span><span>Calificación referencial: <span class="info-val">Escala vigesimal (0 – 20)</span></span></div>
+    <div class="info-row"><span class="info-icon">🔄</span><span>Intentos: <span class="info-val">Ilimitados — puedes reiniciar cuantas veces desees</span></span></div>
   </div>
 
   <div class="info-block">
     <div class="info-title">◈ ¿Cómo se realiza?</div>
-    <div class="step-row"><div class="step-num c">1</div><span>Lee cada pregunta con atención. Tendrás <span class="info-val">30 segundos</span> para responder antes de que el tiempo expire.</span></div>
-    <div class="step-row"><div class="step-num y">2</div><span>Selecciona <span class="info-val">una de las 4 alternativas</span> (A, B, C, D) tocando la caja correspondiente.</span></div>
-    <div class="step-row"><div class="step-num p">3</div><span>Recibirás <span class="info-val">retroalimentación inmediata</span>: si acertaste o fallaste, y por qué. Léela con cuidado.</span></div>
-    <div class="step-row"><div class="step-num g">4</div><span>Al terminar verás tu <span class="info-val">nota final y nivel de desempeño</span>. Usa el resultado para identificar qué temas repasar.</span></div>
+    <div class="step-row"><div class="step-num c">1</div><span>Lee cada pregunta con atención. Tienes <span class="info-val">30 segundos</span> para responder antes de que el tiempo expire automáticamente.</span></div>
+    <div class="step-row"><div class="step-num y">2</div><span>Toca <span class="info-val">una de las 4 alternativas</span>. La respuesta correcta se iluminará en verde y la incorrecta en rojo.</span></div>
+    <div class="step-row"><div class="step-num p">3</div><span>Lee la <span class="info-val">retroalimentación inmediata</span> que aparece tras cada respuesta: explica por qué es correcta o incorrecta.</span></div>
+    <div class="step-row"><div class="step-num g">4</div><span>Al finalizar verás tu <span class="info-val">nota referencial y nivel de desempeño</span>. Úsalo para saber qué temas reforzar.</span></div>
   </div>
 
   <div class="info-block" style="margin-bottom:14px">
     <div class="info-title">◈ Escala de desempeño</div>
-    <div class="info-row"><span style="color:#39ff14;min-width:18px">●</span><span><span class="info-val">18 – 20 · Excelente</span> — Dominio sólido del tema</span></div>
-    <div class="info-row"><span style="color:#ffcc00;min-width:18px">●</span><span><span class="info-val">14 – 17 · Aprobado</span> — Comprensión adecuada</span></div>
-    <div class="info-row"><span style="color:#ff9900;min-width:18px">●</span><span><span class="info-val">11 – 13 · En proceso</span> — Requiere repaso</span></div>
-    <div class="info-row"><span style="color:#ff4466;min-width:18px">●</span><span><span class="info-val">0 – 10 · Reforzar</span> — Revisa los materiales del Tema 1</span></div>
+    <div class="info-row"><span style="color:#39ff14;min-width:18px;font-size:16px">●</span><span><span class="info-val" style="color:#39ff14">18 – 20 · Excelente</span> — Dominio sólido del tema</span></div>
+    <div class="info-row"><span style="color:#ffcc00;min-width:18px;font-size:16px">●</span><span><span class="info-val" style="color:#ffcc00">14 – 17 · Aprobado</span> — Comprensión adecuada</span></div>
+    <div class="info-row"><span style="color:#ff9900;min-width:18px;font-size:16px">●</span><span><span class="info-val" style="color:#ff9900">11 – 13 · En proceso</span> — Requiere repaso</span></div>
+    <div class="info-row"><span style="color:#ff4466;min-width:18px;font-size:16px">●</span><span><span class="info-val" style="color:#ff4466">0 – 10 · Reforzar</span> — Revisa los materiales del Tema 1</span></div>
   </div>
 
   <button id="start-btn" onclick="startQuiz()">▶ INICIAR AUTOEVALUACIÓN</button>
 </div>
 
-<!-- ═══ QUIZ ═══ -->
+<!-- QUIZ -->
 <div id="quiz">
   <div id="header">
     <div id="logo">◈ AETI QUIZ</div>
@@ -150,7 +143,7 @@
       <span id="q-topic">TEMA 1.1</span>
     </div>
     <div id="timer-wrap"><div id="timer-bar"></div></div>
-    <div id="timer-text">⏱ <span id="timer-sec">30</span>s</div>
+    <div id="timer-text">⏱ <span id="timer-sec">30</span>s restantes</div>
     <div id="q-text"></div>
     <div id="options">
       <div class="opt A" id="o0" onclick="pick(0)"></div>
@@ -163,7 +156,7 @@
   </div>
 </div>
 
-<!-- ═══ RESULTADO ═══ -->
+<!-- RESULTADO -->
 <div id="result">
   <div id="res-hero">
     <div id="res-title">◈ RESULTADO FINAL ◈</div>
@@ -182,25 +175,24 @@
     <div class="drow"><span class="dkey">Temas evaluados</span><span class="dval" style="color:#fff">1.1 · 1.2 · 1.3 · 1.4</span></div>
     <div class="drow"><span class="dkey">Total preguntas</span><span class="dval" style="color:#fff">10</span></div>
     <div class="drow"><span class="dkey">Valor por pregunta</span><span class="dval" style="color:#ffcc00">2.0 puntos</span></div>
-    <div class="drow"><span class="dkey">Sin puntaje oficial</span><span class="dval" style="color:#39ff14">Autoevaluación</span></div>
+    <div class="drow"><span class="dkey">Sin puntaje oficial</span><span class="dval" style="color:#39ff14">Autoevaluación formativa</span></div>
   </div>
   <button id="restart-btn" onclick="restart()">⟳ VOLVER A INTENTAR</button>
 </div>
-
 </div>
 
 <script>
 const QS=[
   {tema:"TEMA 1.1 — Definición",q:"¿Qué es la Arquitectura Empresarial (AE)?",opts:["Un software para gestionar proyectos de TI","Un marco que alinea estrategia, procesos, información y tecnología de una organización","Un lenguaje de programación para empresas","Un estándar ISO exclusivo para manufactura"],ans:1,fb:"✔ La AE es un marco integral que conecta la estrategia del negocio con sus procesos, datos y tecnología. No es un software ni un estándar aislado, sino una disciplina de gestión organizacional.",fbw:"✘ La AE no es un software ni un lenguaje. Es un marco holístico que alinea estrategia, procesos, información y tecnología de forma coherente para lograr los objetivos de la organización."},
   {tema:"TEMA 1.1 — Alcance",q:"¿Cuál es el propósito principal del alcance en una Arquitectura Empresarial?",opts:["Definir los límites del sistema de información","Determinar qué aspectos de la organización serán analizados y alineados","Controlar el presupuesto de TI","Establecer los roles del área de sistemas"],ans:1,fb:"✔ El alcance delimita qué dominios, áreas y niveles de la organización serán abordados por la AE. Sin un alcance claro, el proyecto pierde foco y se vuelve inmanejable.",fbw:"✘ El alcance no se limita a presupuesto ni a roles de sistemas. Su función es delimitar qué partes de la organización serán analizadas, evitando proyectos demasiado amplios o poco representativos."},
-  {tema:"TEMA 1.1 — Beneficios iniciales",q:"¿Cuál de estas afirmaciones describe mejor un beneficio directo de implementar AE?",opts:["Elimina todos los sistemas legacy de forma inmediata","Mejora la toma de decisiones al proporcionar visibilidad integral de la organización","Reduce el número de empleados en TI","Automatiza el 100% de procesos sin intervención humana"],ans:1,fb:"✔ La AE otorga visibilidad integral de procesos, datos, aplicaciones e infraestructura, lo que mejora la calidad de las decisiones estratégicas y reduce redundancias costosas.",fbw:"✘ La AE no elimina sistemas legacy de inmediato ni reduce personal. Su principal beneficio es dar visibilidad integral para tomar mejores decisiones y alinear inversiones de TI con la estrategia."},
-  {tema:"TEMA 1.2 — Necesidad de la AE",q:"¿Por qué las organizaciones necesitan una Arquitectura Empresarial?",opts:["Para cumplir requisitos de auditoría contable","Para gestionar la complejidad y alinear TI con la estrategia del negocio","Para reemplazar los métodos ágiles de desarrollo","Para contratar más personal de TI"],ans:1,fb:"✔ La necesidad de AE surge porque la complejidad tecnológica y la brecha entre TI y negocio exigen un marco estructurado que garantice coherencia y alineación estratégica en toda la organización.",fbw:"✘ La AE no nace de la contabilidad ni reemplaza metodologías ágiles. Se necesita para gestionar la creciente complejidad tecnológica y cerrar la brecha entre las decisiones de negocio y los sistemas de TI."},
+  {tema:"TEMA 1.1 — Beneficios iniciales",q:"¿Cuál describe mejor un beneficio directo de implementar AE?",opts:["Elimina todos los sistemas legacy de forma inmediata","Mejora la toma de decisiones al proporcionar visibilidad integral de la organización","Reduce el número de empleados en TI","Automatiza el 100% de procesos sin intervención humana"],ans:1,fb:"✔ La AE otorga visibilidad integral de procesos, datos, aplicaciones e infraestructura, lo que mejora la calidad de las decisiones estratégicas y reduce redundancias costosas.",fbw:"✘ La AE no elimina sistemas legacy de inmediato ni reduce personal. Su principal beneficio es dar visibilidad integral para tomar mejores decisiones y alinear inversiones de TI con la estrategia."},
+  {tema:"TEMA 1.2 — Necesidad de la AE",q:"¿Por qué las organizaciones necesitan una Arquitectura Empresarial?",opts:["Para cumplir requisitos de auditoría contable","Para gestionar la complejidad y alinear TI con la estrategia del negocio","Para reemplazar los métodos ágiles de desarrollo","Para contratar más personal de TI"],ans:1,fb:"✔ La necesidad de AE surge porque la complejidad tecnológica y la brecha entre TI y negocio exigen un marco estructurado que garantice coherencia y alineación estratégica en toda la organización.",fbw:"✘ La AE no nace de la contabilidad ni reemplaza metodologías ágiles. Se necesita para gestionar la creciente complejidad tecnológica y cerrar la brecha entre decisiones de negocio y sistemas de TI."},
   {tema:"TEMA 1.2 — Beneficios en proyectos TI",q:"¿Qué beneficio ofrece la AE en relación con los proyectos de TI?",opts:["Aumenta el tiempo de implementación","Facilita la priorización de proyectos alineándolos con los objetivos estratégicos","Elimina la necesidad de gestión de proyectos","Garantiza que todos los proyectos sean de código abierto"],ans:1,fb:"✔ La AE permite priorizar los proyectos de TI según su aporte real a la estrategia, reduciendo inversiones redundantes y asegurando que cada proyecto tenga un propósito organizacional claro.",fbw:"✘ La AE no aumenta tiempos ni elimina la gestión de proyectos. Su aporte clave es alinear y priorizar proyectos tecnológicos con la estrategia, optimizando el uso del presupuesto de TI."},
   {tema:"TEMA 1.2 — Transformación digital",q:"¿Cómo contribuye la AE a la transformación digital de una organización?",opts:["Imponiendo una arquitectura monolítica centralizada","Proporcionando un mapa integral que guía el cambio tecnológico y organizacional","Eliminando procesos manuales sin análisis previo","Reemplazando TOGAF por metodologías ágiles"],ans:1,fb:"✔ La AE actúa como hoja de ruta de la transformación digital: define el estado actual (AS-IS), el estado deseado (TO-BE) y el plan de transición ordenado hacia la madurez digital.",fbw:"✘ La AE no impone arquitecturas monolíticas ni reemplaza marcos. En la transformación digital, su valor es proporcionar el mapa que guía el cambio desde el estado actual hacia el futuro deseado."},
-  {tema:"TEMA 1.3 — Marco Zachman",q:"¿Cuántas columnas y filas tiene la Matriz de Zachman?",opts:["4 columnas y 4 filas","5 columnas y 5 filas","6 columnas y 6 filas","3 columnas y 7 filas"],ans:2,fb:"✔ La Matriz Zachman es una estructura 6×6: 6 columnas con preguntas clave (¿Qué?, ¿Cómo?, ¿Dónde?, ¿Quién?, ¿Cuándo?, ¿Por qué?) y 6 filas con niveles de abstracción del planificador al operador.",fbw:"✘ La Matriz Zachman tiene exactamente 6 columnas (preguntas clave del negocio) y 6 filas (niveles de abstracción desde el planificador estratégico hasta el sistema operativo), formando 36 celdas únicas."},
+  {tema:"TEMA 1.3 — Marco Zachman",q:"¿Cuántas columnas y filas tiene la Matriz de Zachman?",opts:["4 columnas y 4 filas","5 columnas y 5 filas","6 columnas y 6 filas","3 columnas y 7 filas"],ans:2,fb:"✔ La Matriz Zachman es una estructura 6×6: 6 columnas con preguntas clave (¿Qué?, ¿Cómo?, ¿Dónde?, ¿Quién?, ¿Cuándo?, ¿Por qué?) y 6 filas con niveles de abstracción del planificador al operador.",fbw:"✘ La Matriz Zachman tiene exactamente 6 columnas (preguntas clave del negocio) y 6 filas (niveles de abstracción), formando 36 celdas únicas que cubren toda la arquitectura empresarial."},
   {tema:"TEMA 1.3 — TOGAF ADM",q:"¿Qué es el ciclo ADM en TOGAF?",opts:["Un modelo de gestión de riesgos de TI","El método iterativo de desarrollo de arquitecturas empresariales de TOGAF","Un estándar de seguridad para aplicaciones web","Un lenguaje de modelado de datos empresariales"],ans:1,fb:"✔ ADM (Architecture Development Method) es el ciclo central de TOGAF. Guía el proceso iterativo de creación de arquitecturas en fases: desde la Preliminar hasta la Gobernanza, pasando por negocio, sistemas y tecnología.",fbw:"✘ ADM significa Architecture Development Method. Es el núcleo metodológico de TOGAF: un ciclo iterativo de 8 fases que guía el desarrollo completo de una arquitectura empresarial."},
   {tema:"TEMA 1.4 — Dominios FEA",q:"¿Cuáles son los 4 dominios principales de la FEA?",opts:["Estrategia, Cultura, Finanzas, RRHH","Negocios, Datos, Aplicaciones, Tecnología","Clientes, Procesos, Sistemas, Redes","Planificación, Diseño, Implementación, Operación"],ans:1,fb:"✔ La FEA se estructura en 4 dominios: Negocios (procesos y objetivos), Datos (información y flujos), Aplicaciones (sistemas y software) y Tecnología (infraestructura). Juntos ofrecen una visión 360° de la organización.",fbw:"✘ Los dominios de la FEA son Negocios, Datos, Aplicaciones y Tecnología. Estos cubren todas las dimensiones organizacionales de forma integrada y permiten gestionar el cambio de manera ordenada."},
-  {tema:"TEMA 1.4 — Aplicación FEA",q:"¿En qué tipo de organizaciones se utiliza principalmente la FEA?",opts:["Startups tecnológicas con equipos pequeños","Gobiernos y grandes corporaciones con múltiples unidades autónomas","Empresas familiares de manufactura local","Instituciones educativas privadas de tamaño medio"],ans:1,fb:"✔ La FEA fue diseñada para entornos federados: gobiernos con múltiples ministerios o corporaciones con divisiones autónomas que necesitan interoperar bajo estándares comunes sin perder su autonomía operativa.",fbw:"✘ La FEA es ideal para organizaciones federadas complejas: gobiernos con ministerios independientes o corporaciones con divisiones autónomas que deben compartir datos y servicios bajo un marco común."}
+  {tema:"TEMA 1.4 — Aplicación FEA",q:"¿En qué tipo de organizaciones se utiliza principalmente la FEA?",opts:["Startups tecnológicas con equipos pequeños","Gobiernos y grandes corporaciones con múltiples unidades autónomas","Empresas familiares de manufactura local","Instituciones educativas privadas de tamaño medio"],ans:1,fb:"✔ La FEA fue diseñada para entornos federados: gobiernos con múltiples ministerios o corporaciones con divisiones autónomas que necesitan interoperar bajo estándares comunes sin perder su autonomía operativa.",fbw:"✘ La FEA es ideal para organizaciones federadas complejas: gobiernos con ministerios independientes o corporaciones con divisiones autónomas que deben compartir datos bajo un marco común."}
 ];
 
 const TOTAL=QS.length, TSEC=30;
@@ -214,7 +206,7 @@ function startQuiz(){
 
 function loadQ(){
   const d=QS[cur];
-  document.getElementById('q-num').textContent='P '+(cur+1)+'/'+TOTAL;
+  document.getElementById('q-num').textContent='P '+(cur+1)+' / '+TOTAL;
   document.getElementById('q-topic').textContent=d.tema;
   document.getElementById('q-text').textContent=d.q;
   document.getElementById('progress-fill').style.width=((cur/TOTAL)*100)+'%';
@@ -240,9 +232,7 @@ function runTimer(){
   bar.style.width='100%';
   bar.style.background='#00ffcc';
   document.getElementById('timer-sec').textContent=TSEC;
-  setTimeout(()=>{
-    bar.style.transition='width 1s linear';
-  },50);
+  setTimeout(()=>{ bar.style.transition='width 1s linear'; },50);
   timer=setInterval(()=>{
     timeLeft--;
     document.getElementById('timer-sec').textContent=Math.max(0,timeLeft);
@@ -291,7 +281,7 @@ function showResult(){
   document.getElementById('result').style.display='block';
   const nota=Math.round((score/TOTAL)*20*10)/10;
   const pct=Math.round((score/TOTAL)*100);
-  const avgT=Math.round(totalTime/TOTAL);
+  const avgT=totalTime>0?Math.round(totalTime/TOTAL):0;
   document.getElementById('res-nota').textContent=nota.toFixed(1);
   let nivel,color,frase;
   if(nota>=18){nivel='EXCELENTE';color='#39ff14';frase='Dominio sólido de la Unidad 1. ¡Muy bien logrado!';}
@@ -301,7 +291,10 @@ function showResult(){
   document.getElementById('res-nota').style.color=color;
   document.getElementById('res-nota').style.textShadow='0 0 22px '+color;
   const nv=document.getElementById('res-nivel');
-  nv.textContent=nivel;nv.style.color=color;nv.style.borderColor=color;nv.style.boxShadow='0 0 12px '+color+'44';
+  nv.textContent=nivel;
+  nv.style.color=color;
+  nv.style.borderColor=color;
+  nv.style.boxShadow='0 0 12px '+color+'44';
   document.getElementById('res-frase').textContent=frase;
   document.getElementById('rv-ok').textContent=score;
   document.getElementById('rv-fail').textContent=TOTAL-score;
@@ -317,4 +310,3 @@ function restart(){
   loadQ();
 }
 </script>
-
