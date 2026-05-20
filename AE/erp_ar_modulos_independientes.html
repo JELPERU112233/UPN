@@ -1,0 +1,377 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+#erp-root { background: #000; font-family: 'Courier New', monospace; position: relative; overflow: hidden; }
+#canvas-wrap { position: relative; width: 100%; height: 680px; }
+svg#erp-svg { display: block; width: 100%; height: 100%; cursor: default; }
+#info-panel { background: rgba(0,255,180,0.06); border: 1px solid #00ffb4; border-radius: 10px; padding: 14px 18px; margin: 0 12px 10px; min-height: 90px; transition: all 0.3s; }
+#info-title { font-size: 13px; font-weight: bold; color: #00ffb4; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; text-shadow: 0 0 8px #00ffb4; }
+#info-desc { font-size: 12px; color: #a0ffd8; line-height: 1.6; }
+#btn-all { display: block; margin: 0 12px 10px; padding: 9px 20px; background: transparent; border: 1px solid #00ffb4; border-radius: 8px; color: #00ffb4; font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; transition: all 0.3s; }
+#btn-all:hover { background: rgba(0,255,180,0.1); }
+#btn-all:disabled { opacity: 0.35; cursor: not-allowed; }
+#hint { font-family: 'Courier New', monospace; font-size: 10px; color: #336655; text-align: center; padding: 4px 0 8px; letter-spacing: 1px; }
+.scan { position: absolute; left:0; width:100%; height:2px; background: linear-gradient(transparent, rgba(0,255,180,0.15), transparent); animation: scanline 4s linear infinite; pointer-events: none; }
+@keyframes scanline { 0%{top:-2px} 100%{top:100%} }
+.ar-c { position: absolute; width:16px; height:16px; }
+.ar-c.tl{top:5px;left:5px;border-top:1px solid #00ffb4;border-left:1px solid #00ffb4;}
+.ar-c.tr{top:5px;right:5px;border-top:1px solid #00ffb4;border-right:1px solid #00ffb4;}
+.ar-c.bl{bottom:5px;left:5px;border-bottom:1px solid #00ffb4;border-left:1px solid #00ffb4;}
+.ar-c.br{bottom:5px;right:5px;border-bottom:1px solid #00ffb4;border-right:1px solid #00ffb4;}
+@keyframes rspin { from{transform-origin:450px 340px;transform:rotate(0deg)} to{transform-origin:450px 340px;transform:rotate(360deg)} }
+@keyframes rspin2 { from{transform-origin:450px 340px;transform:rotate(0deg)} to{transform-origin:450px 340px;transform:rotate(-360deg)} }
+#ring1{animation:rspin 9s linear infinite;}
+#ring2{animation:rspin2 13s linear infinite;}
+@keyframes gspin { from{transform-origin:425px 356px;transform:rotate(0deg)} to{transform-origin:425px 356px;transform:rotate(360deg)} }
+#gear-icon{animation:gspin 6s linear infinite;}
+</style>
+
+<div id="erp-root">
+  <div class="scan"></div>
+  <div class="ar-c tl"></div><div class="ar-c tr"></div><div class="ar-c bl"></div><div class="ar-c br"></div>
+
+  <div id="canvas-wrap">
+  <svg id="erp-svg" viewBox="0 0 900 680" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="#00ffb4" stroke-width="1.5"/>
+      </marker>
+      <filter id="gs"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="gc"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <clipPath id="nc"><circle cx="450" cy="340" r="52"/></clipPath>
+    </defs>
+
+    <rect width="900" height="680" fill="#000"/>
+    <g opacity="0.05" stroke="#00ffb4" stroke-width="0.5">
+      <line x1="0" y1="85" x2="900" y2="85"/><line x1="0" y1="170" x2="900" y2="170"/><line x1="0" y1="255" x2="900" y2="255"/><line x1="0" y1="340" x2="900" y2="340"/><line x1="0" y1="425" x2="900" y2="425"/><line x1="0" y1="510" x2="900" y2="510"/><line x1="0" y1="595" x2="900" y2="595"/>
+      <line x1="90" y1="0" x2="90" y2="680"/><line x1="180" y1="0" x2="180" y2="680"/><line x1="270" y1="0" x2="270" y2="680"/><line x1="360" y1="0" x2="360" y2="680"/><line x1="450" y1="0" x2="450" y2="680"/><line x1="540" y1="0" x2="540" y2="680"/><line x1="630" y1="0" x2="630" y2="680"/><line x1="720" y1="0" x2="720" y2="680"/><line x1="810" y1="0" x2="810" y2="680"/>
+    </g>
+
+    <text x="450" y="26" text-anchor="middle" font-family="Courier New" font-size="13" fill="#00ffb4" font-weight="bold" letter-spacing="4" filter="url(#gc)">◈ SISTEMA ERP — ARQUITECTURA INTEGRADA ◈</text>
+    <text x="450" y="42" text-anchor="middle" font-family="Courier New" font-size="9" fill="#336655" letter-spacing="3">ENTERPRISE RESOURCE PLANNING v2.0 | BASE DE DATOS UNIFICADA</text>
+
+    <!-- Rings -->
+    <g id="ring1"><circle cx="450" cy="340" r="68" fill="none" stroke="#00ffb4" stroke-width="0.8" stroke-dasharray="4 6" opacity="0.5"/><circle cx="450" cy="272" r="4" fill="#00ffb4" opacity="0.8"/></g>
+    <g id="ring2"><circle cx="450" cy="340" r="82" fill="none" stroke="#00c8ff" stroke-width="0.5" stroke-dasharray="2 8" opacity="0.4"/><circle cx="532" cy="340" r="3" fill="#00c8ff" opacity="0.7"/></g>
+    <circle cx="450" cy="340" r="55" fill="rgba(0,255,180,0.05)" stroke="#00ffb4" stroke-width="1.5" filter="url(#gs)"/>
+    <circle cx="450" cy="340" r="52" fill="#04101a"/>
+    <circle cx="450" cy="340" r="52" fill="none" stroke="#00ffb4" stroke-width="1.5"/>
+
+    <!-- Servidor SVG -->
+    <g clip-path="url(#nc)">
+      <ellipse cx="455" cy="298" rx="12" ry="7" fill="#aec6d8"/>
+      <ellipse cx="466" cy="300" rx="9" ry="6" fill="#b8d0e0"/>
+      <ellipse cx="444" cy="302" rx="8" ry="5.5" fill="#b0c8d8"/>
+      <ellipse cx="455" cy="303" rx="14" ry="6" fill="#c0d8e8"/>
+      <path d="M455 309 Q455 316 458 318" fill="none" stroke="#8899aa" stroke-width="2" stroke-linecap="round"/>
+      <path d="M455 309 Q451 315 450 318" fill="none" stroke="#8899aa" stroke-width="1.5" stroke-linecap="round"/>
+      <rect x="438" y="318" width="30" height="4" rx="1" fill="#3a7ab8"/>
+      <rect x="436" y="322" width="34" height="9" rx="1" fill="#2e6aa8"/>
+      <rect x="436" y="322" width="34" height="3" rx="1" fill="#3a7ab8"/>
+      <rect x="460" y="324" width="2" height="2" rx="0.5" fill="#88ccff" opacity="0.9"/>
+      <rect x="457" y="324" width="2" height="2" rx="0.5" fill="#88ccff" opacity="0.7"/>
+      <rect x="454" y="324" width="2" height="2" rx="0.5" fill="#88ccff" opacity="0.5"/>
+      <rect x="436" y="331" width="34" height="9" rx="1" fill="#2660a0"/>
+      <rect x="436" y="331" width="34" height="3" rx="1" fill="#3272b0"/>
+      <rect x="460" y="333" width="2" height="2" rx="0.5" fill="#66bbff" opacity="0.9"/>
+      <rect x="457" y="333" width="2" height="2" rx="0.5" fill="#66bbff" opacity="0.7"/>
+      <rect x="454" y="333" width="2" height="2" rx="0.5" fill="#66bbff" opacity="0.5"/>
+      <rect x="436" y="340" width="34" height="9" rx="1" fill="#1e5898"/>
+      <rect x="436" y="340" width="34" height="3" rx="1" fill="#2a6aaa"/>
+      <rect x="460" y="342" width="2" height="2" rx="0.5" fill="#55aaff" opacity="0.9"/>
+      <rect x="457" y="342" width="2" height="2" rx="0.5" fill="#55aaff" opacity="0.7"/>
+      <rect x="454" y="342" width="2" height="2" rx="0.5" fill="#55aaff" opacity="0.5"/>
+      <rect x="438" y="349" width="30" height="4" rx="1" fill="#1a4e88"/>
+      <rect x="440" y="353" width="6" height="3" rx="1" fill="#163e6e"/>
+      <rect x="460" y="353" width="6" height="3" rx="1" fill="#163e6e"/>
+      <polygon points="436,318 432,322 432,356 436,353" fill="#1a5080" opacity="0.7"/>
+      <g id="gear-icon">
+        <circle cx="425" cy="356" r="10" fill="none" stroke="#4a8fcc" stroke-width="2.5"/>
+        <circle cx="425" cy="356" r="5.5" fill="#0a2a4a" stroke="#4a8fcc" stroke-width="1.5"/>
+        <rect x="423.5" y="343.5" width="3" height="4" rx="0.5" fill="#4a8fcc"/>
+        <rect x="423.5" y="364.5" width="3" height="4" rx="0.5" fill="#4a8fcc"/>
+        <rect x="412.5" y="354" width="4" height="3" rx="0.5" fill="#4a8fcc"/>
+        <rect x="433.5" y="354" width="4" height="3" rx="0.5" fill="#4a8fcc"/>
+        <rect x="416.5" y="346.5" width="3" height="4" rx="0.5" transform="rotate(45,418,348.5)" fill="#4a8fcc"/>
+        <rect x="430.5" y="363" width="3" height="4" rx="0.5" transform="rotate(45,432,365)" fill="#4a8fcc"/>
+        <rect x="416.5" y="362" width="3" height="4" rx="0.5" transform="rotate(-45,418,364)" fill="#4a8fcc"/>
+        <rect x="430.5" y="346" width="3" height="4" rx="0.5" transform="rotate(-45,432,348)" fill="#4a8fcc"/>
+      </g>
+      <path d="M434 352 Q435 345 436 340" fill="none" stroke="#4a8fcc" stroke-width="1.2" opacity="0.7"/>
+      <text x="450" y="369" text-anchor="middle" font-family="Courier New" font-size="5.5" fill="#00ffb4" font-weight="bold" letter-spacing="1">BASE DE DATOS</text>
+    </g>
+
+    <!-- Connection lines -->
+    <line id="line-0" x1="155" y1="200" x2="400" y2="310" stroke="#1a4433" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+    <line id="line-1" x1="155" y1="340" x2="398" y2="340" stroke="#1a4433" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+    <line id="line-2" x1="155" y1="480" x2="400" y2="370" stroke="#1a4433" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+    <line id="line-3" x1="310" y1="120" x2="430" y2="290" stroke="#1a4433" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+    <line id="line-4" x1="310" y1="570" x2="430" y2="390" stroke="#1a4433" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+    <line id="line-5" x1="590" y1="120" x2="470" y2="290" stroke="#1a4433" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+    <line id="line-6" x1="590" y1="570" x2="470" y2="390" stroke="#1a4433" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+    <line id="line-7" x1="745" y1="200" x2="502" y2="310" stroke="#1a4433" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+    <line id="line-8" x1="745" y1="340" x2="502" y2="340" stroke="#1a4433" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+    <line id="line-9" x1="745" y1="480" x2="502" y2="370" stroke="#1a4433" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+    <line id="line-10" x1="450" y1="620" x2="450" y2="392" stroke="#1a4433" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+
+    <!-- MODULES — cada uno con botón ▶ RUN interno -->
+    <!-- 0: VENTAS -->
+    <g id="mod-0" class="erp-mod" data-idx="0">
+      <rect id="rect-0" x="60" y="152" width="120" height="96" rx="6" fill="rgba(0,255,100,0.06)" stroke="#00ff64" stroke-width="1.5"/>
+      <text x="120" y="172" text-anchor="middle" font-family="Courier New" font-size="8" fill="#00ff64" font-weight="bold">VENTAS Y</text>
+      <text x="120" y="183" text-anchor="middle" font-family="Courier New" font-size="8" fill="#00ff64" font-weight="bold">MARKETING</text>
+      <text x="120" y="196" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#336633">◉ PEDIDO CLIENTE</text>
+      <text x="120" y="207" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#336633">◉ COTIZACIONES</text>
+      <text x="120" y="218" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#336633">◉ CRM VENTAS</text>
+      <rect id="btn-0" x="75" y="224" width="90" height="16" rx="3" fill="rgba(0,255,100,0.12)" stroke="#00ff64" stroke-width="0.8" style="cursor:pointer"/>
+      <text id="btxt-0" x="120" y="235" text-anchor="middle" font-family="Courier New" font-size="7" fill="#00ff64" style="cursor:pointer;pointer-events:none">▶ EJECUTAR</text>
+    </g>
+    <!-- 1: FINANZAS -->
+    <g id="mod-1" class="erp-mod" data-idx="1">
+      <rect id="rect-1" x="60" y="292" width="120" height="96" rx="6" fill="rgba(0,200,255,0.04)" stroke="#00c8ff" stroke-width="1"/>
+      <text x="120" y="312" text-anchor="middle" font-family="Courier New" font-size="8" fill="#00c8ff" font-weight="bold">FINANZAS Y</text>
+      <text x="120" y="323" text-anchor="middle" font-family="Courier New" font-size="8" fill="#00c8ff" font-weight="bold">CONTABILIDAD</text>
+      <text x="120" y="336" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#224455">◉ FACTURACIÓN</text>
+      <text x="120" y="347" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#224455">◉ COSTOS</text>
+      <text x="120" y="358" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#224455">◉ TESORERÍA</text>
+      <rect id="btn-1" x="75" y="364" width="90" height="16" rx="3" fill="rgba(0,200,255,0.1)" stroke="#00c8ff" stroke-width="0.8" style="cursor:pointer"/>
+      <text id="btxt-1" x="120" y="375" text-anchor="middle" font-family="Courier New" font-size="7" fill="#00c8ff" style="cursor:pointer;pointer-events:none">▶ EJECUTAR</text>
+    </g>
+    <!-- 2: RRHH -->
+    <g id="mod-2" class="erp-mod" data-idx="2">
+      <rect id="rect-2" x="60" y="432" width="120" height="96" rx="6" fill="rgba(180,0,255,0.04)" stroke="#b400ff" stroke-width="1"/>
+      <text x="120" y="452" text-anchor="middle" font-family="Courier New" font-size="8" fill="#b400ff" font-weight="bold">RECURSOS</text>
+      <text x="120" y="463" text-anchor="middle" font-family="Courier New" font-size="8" fill="#b400ff" font-weight="bold">HUMANOS</text>
+      <text x="120" y="476" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#442255">◉ NÓMINA</text>
+      <text x="120" y="487" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#442255">◉ CAPACITACIÓN</text>
+      <text x="120" y="498" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#442255">◉ ASISTENCIA</text>
+      <rect id="btn-2" x="75" y="504" width="90" height="16" rx="3" fill="rgba(180,0,255,0.1)" stroke="#b400ff" stroke-width="0.8" style="cursor:pointer"/>
+      <text id="btxt-2" x="120" y="515" text-anchor="middle" font-family="Courier New" font-size="7" fill="#b400ff" style="cursor:pointer;pointer-events:none">▶ EJECUTAR</text>
+    </g>
+    <!-- 3: COMPRAS -->
+    <g id="mod-3" class="erp-mod" data-idx="3">
+      <rect id="rect-3" x="250" y="68" width="120" height="96" rx="6" fill="rgba(255,200,0,0.04)" stroke="#ffc800" stroke-width="1"/>
+      <text x="310" y="88" text-anchor="middle" font-family="Courier New" font-size="8" fill="#ffc800" font-weight="bold">COMPRAS Y</text>
+      <text x="310" y="99" text-anchor="middle" font-family="Courier New" font-size="8" fill="#ffc800" font-weight="bold">ABASTECIMIENTO</text>
+      <text x="310" y="112" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#445522">◉ ÓRDENES COMPRA</text>
+      <text x="310" y="123" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#445522">◉ PROVEEDORES</text>
+      <text x="310" y="134" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#445522">◉ LICITACIONES</text>
+      <rect id="btn-3" x="265" y="140" width="90" height="16" rx="3" fill="rgba(255,200,0,0.1)" stroke="#ffc800" stroke-width="0.8" style="cursor:pointer"/>
+      <text id="btxt-3" x="310" y="151" text-anchor="middle" font-family="Courier New" font-size="7" fill="#ffc800" style="cursor:pointer;pointer-events:none">▶ EJECUTAR</text>
+    </g>
+    <!-- 4: PRODUCCION -->
+    <g id="mod-4" class="erp-mod" data-idx="4">
+      <rect id="rect-4" x="250" y="522" width="120" height="96" rx="6" fill="rgba(255,100,0,0.04)" stroke="#ff6400" stroke-width="1"/>
+      <text x="310" y="542" text-anchor="middle" font-family="Courier New" font-size="8" fill="#ff6400" font-weight="bold">PRODUCCIÓN</text>
+      <text x="310" y="553" text-anchor="middle" font-family="Courier New" font-size="8" fill="#ff6400" font-weight="bold">Y MANUFACTURA</text>
+      <text x="310" y="566" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#442200">◉ PLANEACIÓN MRP</text>
+      <text x="310" y="577" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#442200">◉ ÓRDENES TRABAJO</text>
+      <text x="310" y="588" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#442200">◉ CONTROL CALIDAD</text>
+      <rect id="btn-4" x="265" y="594" width="90" height="16" rx="3" fill="rgba(255,100,0,0.1)" stroke="#ff6400" stroke-width="0.8" style="cursor:pointer"/>
+      <text id="btxt-4" x="310" y="605" text-anchor="middle" font-family="Courier New" font-size="7" fill="#ff6400" style="cursor:pointer;pointer-events:none">▶ EJECUTAR</text>
+    </g>
+    <!-- 5: LOGISTICA -->
+    <g id="mod-5" class="erp-mod" data-idx="5">
+      <rect id="rect-5" x="530" y="68" width="120" height="96" rx="6" fill="rgba(0,255,255,0.04)" stroke="#00ffff" stroke-width="1"/>
+      <text x="590" y="88" text-anchor="middle" font-family="Courier New" font-size="8" fill="#00ffff" font-weight="bold">LOGÍSTICA Y</text>
+      <text x="590" y="99" text-anchor="middle" font-family="Courier New" font-size="8" fill="#00ffff" font-weight="bold">DISTRIBUCIÓN</text>
+      <text x="590" y="112" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#224444">◉ DESPACHO</text>
+      <text x="590" y="123" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#224444">◉ RUTAS</text>
+      <text x="590" y="134" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#224444">◉ FLOTA</text>
+      <rect id="btn-5" x="545" y="140" width="90" height="16" rx="3" fill="rgba(0,255,255,0.1)" stroke="#00ffff" stroke-width="0.8" style="cursor:pointer"/>
+      <text id="btxt-5" x="590" y="151" text-anchor="middle" font-family="Courier New" font-size="7" fill="#00ffff" style="cursor:pointer;pointer-events:none">▶ EJECUTAR</text>
+    </g>
+    <!-- 6: CRM -->
+    <g id="mod-6" class="erp-mod" data-idx="6">
+      <rect id="rect-6" x="530" y="522" width="120" height="96" rx="6" fill="rgba(255,50,180,0.04)" stroke="#ff32b4" stroke-width="1"/>
+      <text x="590" y="542" text-anchor="middle" font-family="Courier New" font-size="8" fill="#ff32b4" font-weight="bold">CRM /</text>
+      <text x="590" y="553" text-anchor="middle" font-family="Courier New" font-size="8" fill="#ff32b4" font-weight="bold">POST-VENTA</text>
+      <text x="590" y="566" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#441133">◉ SOPORTE</text>
+      <text x="590" y="577" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#441133">◉ FIDELIZACIÓN</text>
+      <text x="590" y="588" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#441133">◉ GARANTÍAS</text>
+      <rect id="btn-6" x="545" y="594" width="90" height="16" rx="3" fill="rgba(255,50,180,0.1)" stroke="#ff32b4" stroke-width="0.8" style="cursor:pointer"/>
+      <text id="btxt-6" x="590" y="605" text-anchor="middle" font-family="Courier New" font-size="7" fill="#ff32b4" style="cursor:pointer;pointer-events:none">▶ EJECUTAR</text>
+    </g>
+    <!-- 7: INVENTARIO -->
+    <g id="mod-7" class="erp-mod" data-idx="7">
+      <rect id="rect-7" x="720" y="152" width="120" height="96" rx="6" fill="rgba(255,255,0,0.04)" stroke="#ffff00" stroke-width="1"/>
+      <text x="780" y="172" text-anchor="middle" font-family="Courier New" font-size="8" fill="#ffff00" font-weight="bold">INVENTARIO</text>
+      <text x="780" y="183" text-anchor="middle" font-family="Courier New" font-size="8" fill="#ffff00" font-weight="bold">Y ALMACÉN</text>
+      <text x="780" y="196" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#444400">◉ STOCK</text>
+      <text x="780" y="207" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#444400">◉ LOTES / SERIES</text>
+      <text x="780" y="218" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#444400">◉ UBICACIONES</text>
+      <rect id="btn-7" x="735" y="224" width="90" height="16" rx="3" fill="rgba(255,255,0,0.1)" stroke="#ffff00" stroke-width="0.8" style="cursor:pointer"/>
+      <text id="btxt-7" x="780" y="235" text-anchor="middle" font-family="Courier New" font-size="7" fill="#ffff00" style="cursor:pointer;pointer-events:none">▶ EJECUTAR</text>
+    </g>
+    <!-- 8: PROYECTOS -->
+    <g id="mod-8" class="erp-mod" data-idx="8">
+      <rect id="rect-8" x="720" y="292" width="120" height="96" rx="6" fill="rgba(150,255,50,0.04)" stroke="#96ff32" stroke-width="1"/>
+      <text x="780" y="312" text-anchor="middle" font-family="Courier New" font-size="8" fill="#96ff32" font-weight="bold">GESTIÓN DE</text>
+      <text x="780" y="323" text-anchor="middle" font-family="Courier New" font-size="8" fill="#96ff32" font-weight="bold">PROYECTOS</text>
+      <text x="780" y="336" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#334400">◉ CRONOGRAMAS</text>
+      <text x="780" y="347" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#334400">◉ PRESUPUESTO</text>
+      <text x="780" y="358" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#334400">◉ RECURSOS</text>
+      <rect id="btn-8" x="735" y="364" width="90" height="16" rx="3" fill="rgba(150,255,50,0.1)" stroke="#96ff32" stroke-width="0.8" style="cursor:pointer"/>
+      <text id="btxt-8" x="780" y="375" text-anchor="middle" font-family="Courier New" font-size="7" fill="#96ff32" style="cursor:pointer;pointer-events:none">▶ EJECUTAR</text>
+    </g>
+    <!-- 9: BI -->
+    <g id="mod-9" class="erp-mod" data-idx="9">
+      <rect id="rect-9" x="720" y="432" width="120" height="96" rx="6" fill="rgba(255,150,0,0.04)" stroke="#ff9600" stroke-width="1"/>
+      <text x="780" y="452" text-anchor="middle" font-family="Courier New" font-size="8" fill="#ff9600" font-weight="bold">BI Y</text>
+      <text x="780" y="463" text-anchor="middle" font-family="Courier New" font-size="8" fill="#ff9600" font-weight="bold">BIG DATA</text>
+      <text x="780" y="476" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#443300">◉ DASHBOARDS</text>
+      <text x="780" y="487" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#443300">◉ KPI / ALERTAS</text>
+      <text x="780" y="498" text-anchor="middle" font-family="Courier New" font-size="6.5" fill="#443300">◉ PREDICTIVO</text>
+      <rect id="btn-9" x="735" y="504" width="90" height="16" rx="3" fill="rgba(255,150,0,0.1)" stroke="#ff9600" stroke-width="0.8" style="cursor:pointer"/>
+      <text id="btxt-9" x="780" y="515" text-anchor="middle" font-family="Courier New" font-size="7" fill="#ff9600" style="cursor:pointer;pointer-events:none">▶ EJECUTAR</text>
+    </g>
+    <!-- 10: SCM -->
+    <g id="mod-10" class="erp-mod" data-idx="10">
+      <rect id="rect-10" x="355" y="622" width="190" height="48" rx="6" fill="rgba(0,255,150,0.04)" stroke="#00ff96" stroke-width="1"/>
+      <text x="450" y="640" text-anchor="middle" font-family="Courier New" font-size="8" fill="#00ff96" font-weight="bold">CADENA DE SUMINISTRO</text>
+      <rect id="btn-10" x="385" y="646" width="130" height="16" rx="3" fill="rgba(0,255,150,0.1)" stroke="#00ff96" stroke-width="0.8" style="cursor:pointer"/>
+      <text id="btxt-10" x="450" y="657" text-anchor="middle" font-family="Courier New" font-size="7" fill="#00ff96" style="cursor:pointer;pointer-events:none">▶ EJECUTAR</text>
+    </g>
+
+    <g id="particles"></g>
+  </svg>
+  </div>
+
+  <button id="btn-all">⚡ EJECUTAR TODOS — SIMULAR CICLO COMPLETO ERP</button>
+  <div id="hint">↑ O haz clic en ▶ EJECUTAR dentro de cualquier módulo para activarlo individualmente</div>
+
+  <div id="info-panel">
+    <div id="info-title">SISTEMA ERP — LISTO</div>
+    <div id="info-desc">Haz clic en ▶ EJECUTAR dentro de cualquier módulo para ver su función e integración, o presiona EJECUTAR TODOS para simular el ciclo completo del ERP.</div>
+  </div>
+</div>
+
+<script>
+const modData = [
+  { name:"VENTAS Y MARKETING", color:"#00ff64",
+    desc:"El cliente realiza un PEDIDO → el ERP registra cliente, producto, cantidad, precio, fecha entrega → dispara validación de crédito en Finanzas y verificación de stock en Inventario. Sin ERP: llamadas en cadena, datos desactualizados, errores manuales." },
+  { name:"FINANZAS Y CONTABILIDAD", color:"#00c8ff",
+    desc:"Recibe el pedido de Ventas → verifica límite de crédito → aprueba o rechaza automáticamente → genera factura proforma → actualiza cuentas por cobrar en tiempo real. Sin ERP: el contador recibe la factura 3 días después por correo." },
+  { name:"RECURSOS HUMANOS", color:"#b400ff",
+    desc:"Producción detecta necesidad de 5 operadores extra → RRHH verifica disponibilidad → programa horas extra → actualiza nómina → registra en control de asistencia. Integración bidireccional con el módulo de Producción." },
+  { name:"COMPRAS Y ABASTECIMIENTO", color:"#ffc800",
+    desc:"Inventario detecta stock bajo → genera automáticamente Orden de Compra al proveedor → Compras negocia precio → Finanzas aprueba el gasto → el proveedor recibe la OC electrónicamente. Sin ERP: 2 semanas de coordinación manual." },
+  { name:"PRODUCCIÓN Y MANUFACTURA", color:"#ff6400",
+    desc:"Se genera automáticamente la Orden de Trabajo: materiales necesarios (MRP), máquinas disponibles, operadores asignados (RRHH), fecha compromiso. Controla el avance en tiempo real y actualiza el estado del pedido del cliente." },
+  { name:"LOGÍSTICA Y DISTRIBUCIÓN", color:"#00ffff",
+    desc:"Producción termina el pedido → Logística recibe aviso automático → asigna transportista → genera guía de remisión → actualiza tracking en tiempo real → el cliente recibe notificación automática. Trazabilidad completa." },
+  { name:"CRM / POST-VENTA", color:"#ff32b4",
+    desc:"El pedido se entregó → CRM registra satisfacción → activa encuesta automática → si hay reclamo, genera ticket de soporte → vincula con garantía del producto → alimenta el historial del cliente para futuras ofertas personalizadas." },
+  { name:"INVENTARIO Y ALMACÉN", color:"#ffff00",
+    desc:"Monitorea stock en tiempo real por ubicación, lote y número de serie → actualiza al recibir mercadería o despachar pedidos → alerta puntos de reorden → genera movimientos contables automáticos en Finanzas." },
+  { name:"GESTIÓN DE PROYECTOS", color:"#96ff32",
+    desc:"Pedidos especiales generan automáticamente un proyecto con presupuesto (Finanzas), recursos humanos (RRHH), materiales (Compras) y cronograma integrado. El avance del proyecto actualiza el estado del pedido en tiempo real." },
+  { name:"BI Y BIG DATA", color:"#ff9600",
+    desc:"Todos los eventos del ERP se almacenan y analizan → dashboards en tiempo real: margen por producto, rentabilidad por cliente, proyección de demanda → detecta tendencias → emite alertas predictivas antes de que ocurran los problemas." },
+  { name:"CADENA DE SUMINISTRO", color:"#00ff96",
+    desc:"Visión end-to-end desde el proveedor hasta el cliente final. Optimiza: punto de reorden, lote económico, lead times de proveedores y niveles de seguridad. Anticipa quiebres de stock usando historial de ventas y demanda proyectada." }
+];
+
+let globalRunning = false;
+
+function hexToRgb(h) {
+  return parseInt(h.slice(1,3),16)+','+parseInt(h.slice(3,5),16)+','+parseInt(h.slice(5,7),16);
+}
+
+function resetRect(idx) {
+  const r = document.getElementById('rect-'+idx);
+  const mod = modData[idx];
+  if (r) { r.setAttribute('fill','rgba(0,0,0,0.02)'); r.setAttribute('stroke-width','1'); r.setAttribute('stroke', mod.color); }
+  const btn = document.getElementById('btn-'+idx);
+  const btxt = document.getElementById('btxt-'+idx);
+  if (btn) { btn.setAttribute('fill','rgba('+hexToRgb(mod.color)+',0.1)'); }
+  if (btxt) btxt.textContent = '▶ EJECUTAR';
+}
+
+function highlightRect(idx) {
+  const r = document.getElementById('rect-'+idx);
+  const mod = modData[idx];
+  if (r) { r.setAttribute('fill','rgba('+hexToRgb(mod.color)+',0.18)'); r.setAttribute('stroke-width','2.5'); }
+  const btn = document.getElementById('btn-'+idx);
+  if (btn) btn.setAttribute('fill','rgba('+hexToRgb(mod.color)+',0.28)');
+}
+
+function showInfo(idx) {
+  const mod = modData[idx];
+  document.getElementById('info-title').style.color = mod.color;
+  document.getElementById('info-title').style.textShadow = '0 0 8px '+mod.color;
+  document.getElementById('info-title').textContent = '[ '+mod.name+' ]';
+  document.getElementById('info-desc').textContent = mod.desc;
+}
+
+function animateLine(idx, onDone) {
+  const line = document.getElementById('line-'+idx);
+  if (!line) { if(onDone) onDone(); return; }
+  const x1=parseFloat(line.getAttribute('x1')), y1=parseFloat(line.getAttribute('y1'));
+  const x2=parseFloat(line.getAttribute('x2')), y2=parseFloat(line.getAttribute('y2'));
+  const color = modData[idx].color;
+  line.setAttribute('stroke', color); line.setAttribute('stroke-width','2');
+  const ns='http://www.w3.org/2000/svg', steps=18; let s=0;
+  const iv = setInterval(()=>{
+    const t=s/steps, cx=x1+(x2-x1)*t, cy=y1+(y2-y1)*t;
+    const dot=document.createElementNS(ns,'circle');
+    dot.setAttribute('cx',cx); dot.setAttribute('cy',cy);
+    dot.setAttribute('r','3'); dot.setAttribute('fill',color); dot.setAttribute('opacity','0.9');
+    document.getElementById('particles').appendChild(dot);
+    setTimeout(()=>dot.remove(), 700);
+    s++; if(s>steps){ clearInterval(iv); setTimeout(()=>{ line.setAttribute('stroke','#1a4433'); line.setAttribute('stroke-width','1'); if(onDone) onDone(); },600); }
+  }, 60);
+}
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+async function runSingle(idx) {
+  if (globalRunning) return;
+  const btxt = document.getElementById('btxt-'+idx);
+  // reset todos
+  for(let i=0;i<11;i++) resetRect(i);
+  highlightRect(idx);
+  showInfo(idx);
+  if (btxt) btxt.textContent = '⏳ PROCESANDO';
+  animateLine(idx, ()=>{
+    if (btxt) btxt.textContent = '✔ LISTO';
+    setTimeout(()=>{ if(btxt) btxt.textContent='▶ EJECUTAR'; }, 2000);
+  });
+}
+
+async function runERP() {
+  if (globalRunning) return;
+  globalRunning = true;
+  document.getElementById('btn-all').disabled = true;
+  for(let i=0;i<11;i++) resetRect(i);
+  const seq=[0,1,7,3,4,2,5,6,9,8,10];
+  for(let si=0;si<seq.length;si++){
+    const idx=seq[si];
+    for(let i=0;i<11;i++) resetRect(i);
+    highlightRect(idx);
+    showInfo(idx);
+    const btxt=document.getElementById('btxt-'+idx);
+    if(btxt) btxt.textContent='⏳ PROCESANDO';
+    animateLine(idx, ()=>{ if(btxt) btxt.textContent='✔ LISTO'; });
+    await sleep(1500);
+  }
+  document.getElementById('info-title').style.color='#00ffb4';
+  document.getElementById('info-title').style.textShadow='0 0 8px #00ffb4';
+  document.getElementById('info-title').textContent='✅ CICLO ERP COMPLETO';
+  document.getElementById('info-desc').textContent='El pedido del cliente disparó 11 módulos integrados automáticamente. Una sola base de datos central fue consultada y actualizada por todos los módulos en tiempo real — sin llamadas, sin emails, sin Excel duplicados.';
+  for(let i=0;i<11;i++) { const b=document.getElementById('btxt-'+i); if(b) b.textContent='▶ EJECUTAR'; }
+  globalRunning=false;
+  document.getElementById('btn-all').disabled=false;
+}
+
+// Attach click handlers to each ▶ btn rect
+for(let i=0;i<11;i++){
+  (function(idx){
+    const btn=document.getElementById('btn-'+idx);
+    if(btn) btn.addEventListener('click', ()=>runSingle(idx));
+    const btxt=document.getElementById('btxt-'+idx);
+    if(btxt) btxt.addEventListener('click', ()=>runSingle(idx));
+  })(i);
+}
+document.getElementById('btn-all').addEventListener('click', runERP);
+</script>
