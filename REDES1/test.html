@@ -1,1 +1,497 @@
 
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+.qwrap{padding:4px}
+.qz{background:#050510;border-radius:14px;padding:18px;font-family:'Share Tech Mono',monospace;color:#c8d8ff}
+.qz-title{font-family:'Orbitron',sans-serif;color:#00f5ff;text-shadow:0 0 12px #00f5ff,0 0 28px rgba(0,245,255,.35);text-align:center;font-size:15px;letter-spacing:4px;padding:10px 0 14px;border-bottom:1px solid rgba(0,245,255,.12);margin-bottom:12px}
+.qz-hdr{display:flex;justify-content:space-between;align-items:center;font-size:10px;margin-bottom:5px}
+.nc{color:#00f5ff;text-shadow:0 0 7px #00f5ff}.ng{color:#00ff88;text-shadow:0 0 7px #00ff88}.np{color:#bf00ff;text-shadow:0 0 7px #bf00ff}.nr{color:#ff2050;text-shadow:0 0 7px #ff2050}.ny{color:#ffdd00;text-shadow:0 0 7px #ffdd00}
+.qz-bar{height:3px;background:#0d0d22;border-radius:2px;margin-bottom:12px;overflow:hidden}
+.qz-fill{height:3px;background:#00f5ff;box-shadow:0 0 7px #00f5ff;border-radius:2px;transition:width .7s cubic-bezier(.4,0,.2,1);width:0%}
+.qz-visual{background:#070718;border:1px solid rgba(0,245,255,.18);border-radius:10px;margin-bottom:10px;overflow:hidden;height:138px;position:relative;display:flex;align-items:center;justify-content:center}
+.qz-visual::before{content:'';position:absolute;top:7px;left:7px;width:14px;height:14px;border-top:1.5px solid #00f5ff;border-left:1.5px solid #00f5ff;z-index:3;pointer-events:none;box-shadow:inset 3px 3px 0 rgba(0,245,255,.08)}
+.qz-visual::after{content:'';position:absolute;bottom:7px;right:7px;width:14px;height:14px;border-bottom:1.5px solid #00f5ff;border-right:1.5px solid #00f5ff;z-index:3;pointer-events:none}
+.hud-tr{position:absolute;top:7px;right:7px;width:14px;height:14px;border-top:1.5px solid rgba(0,245,255,.5);border-right:1.5px solid rgba(0,245,255,.5);z-index:3;pointer-events:none}
+.hud-bl{position:absolute;bottom:7px;left:7px;width:14px;height:14px;border-bottom:1.5px solid rgba(0,245,255,.5);border-left:1.5px solid rgba(0,245,255,.5);z-index:3;pointer-events:none}
+.vtag{position:absolute;top:4px;right:26px;font-size:8px;color:rgba(0,245,255,.45);font-family:'Share Tech Mono',monospace;letter-spacing:1px;z-index:3}
+.qz-phase{font-size:9px;letter-spacing:3px;margin-bottom:6px;min-height:16px}
+.qz-card{background:#080818;border:1px solid rgba(0,245,255,.28);border-radius:9px;padding:13px;margin-bottom:9px;box-shadow:0 0 14px rgba(0,245,255,.05),inset 0 0 10px rgba(0,245,255,.015)}
+.qz-q{font-size:13px;line-height:1.65;color:#dce8ff}
+.qz-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:7px;margin-bottom:9px}
+.qz-o{background:#07071a;border:1px solid rgba(0,245,255,.16);border-radius:8px;padding:10px 11px;color:#aabcd0;font-family:'Share Tech Mono',monospace;font-size:11px;cursor:pointer;text-align:left;transition:border-color .15s,color .15s,box-shadow .15s;line-height:1.45}
+.qz-o:hover:not([disabled]){border-color:#00f5ff;box-shadow:0 0 9px rgba(0,245,255,.28);color:#00f5ff}
+.qz-o.ok{border-color:#00ff88;background:rgba(0,255,136,.055);color:#00ff88;box-shadow:0 0 12px rgba(0,255,136,.25)}
+.qz-o.wrong{border-color:#ff2050;background:rgba(255,32,80,.055);color:#ff6680;box-shadow:0 0 8px rgba(255,32,80,.18)}
+.qz-o.reveal{border-color:rgba(0,255,136,.38);color:rgba(0,255,136,.5)}
+.qz-o[disabled]{cursor:default}
+.qz-fb{border-radius:8px;padding:11px 13px;font-size:11px;line-height:1.7;margin-bottom:9px;display:none}
+.qz-fb.show{display:block}
+.qz-fb.ok{border:1px solid #00ff88;color:#00ff88;background:rgba(0,255,136,.035)}
+.qz-fb.fail{border:1px solid #ff2050;color:#ff9999;background:rgba(255,32,80,.035)}
+.fb-lbl{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;margin-bottom:4px}
+.qz-btn{width:100%;background:transparent;border:1px solid #00f5ff;border-radius:8px;padding:10px;color:#00f5ff;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;cursor:pointer;transition:background .18s,box-shadow .18s;box-shadow:0 0 8px rgba(0,245,255,.1);display:none}
+.qz-btn.show{display:block}
+.qz-btn:hover{background:rgba(0,245,255,.08);box-shadow:0 0 16px rgba(0,245,255,.32)}
+.sep{height:1px;background:rgba(0,245,255,.07);margin:8px 0}
+.qz-end{text-align:center;padding:20px 12px;display:none}
+.qz-end.show{display:block}
+.qz-circ{width:84px;height:84px;border-radius:50%;border:2px solid #00f5ff;box-shadow:0 0 18px #00f5ff,inset 0 0 16px rgba(0,245,255,.07);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-family:'Orbitron',sans-serif;font-size:19px;font-weight:900;color:#00f5ff;text-shadow:0 0 10px #00f5ff}
+.qz-grade{font-family:'Orbitron',sans-serif;font-size:36px;font-weight:900;margin-bottom:5px}
+.gAD{color:#00ff88;text-shadow:0 0 16px #00ff88}.gA{color:#00f5ff;text-shadow:0 0 16px #00f5ff}.gB{color:#ffdd00;text-shadow:0 0 12px #ffdd00}.gC{color:#ff9900;text-shadow:0 0 10px #ff9900}.gD{color:#ff2050;text-shadow:0 0 10px #ff2050}
+.qz-sub{font-size:11px;color:#6688aa;margin-bottom:12px}
+.qz-emsg{font-size:11px;color:#8898bb;line-height:1.7;margin-bottom:16px;background:#080818;border:1px solid rgba(0,245,255,.12);border-radius:8px;padding:12px;text-align:left}
+.qz-restart{background:transparent;border:1px solid #bf00ff;border-radius:8px;padding:9px 22px;color:#bf00ff;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;cursor:pointer;box-shadow:0 0 8px rgba(191,0,255,.12);transition:background .18s,box-shadow .18s}
+.qz-restart:hover{background:rgba(191,0,255,.09);box-shadow:0 0 16px rgba(191,0,255,.38)}
+.score-row{display:flex;justify-content:center;gap:24px;margin-bottom:14px}
+.scard{background:#0a0a1c;border:1px solid rgba(0,245,255,.15);border-radius:7px;padding:8px 14px;text-align:center}
+.scard-v{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900}
+.scard-l{font-size:9px;color:#445566;letter-spacing:1px;margin-top:2px}
+@keyframes svgflow{0%{stroke-dashoffset:20}100%{stroke-dashoffset:0}}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes scan{0%{transform:translateY(-10px)}100%{transform:translateY(148px)}}
+.sf{stroke-dasharray:5 4;animation:svgflow .85s linear infinite}
+.sp{animation:pulse 2s ease-in-out infinite}
+.sc{animation:scan 3.5s linear infinite}
+</style>
+
+<div class="qwrap">
+<div class="qz" id="qz">
+  <h2 class="sr-only">Quiz adaptativo: Capa de Transporte TCP/UDP — Redes 1 Semana 13</h2>
+  <div class="qz-title">◈ CAPA DE TRANSPORTE ◈</div>
+
+  <div id="qz-main">
+    <div class="qz-hdr">
+      <span class="np" id="ql">Q1/10 · MODELO OSI</span>
+      <span class="ng" id="qs">SCORE: 0</span>
+      <span class="nc" id="qc">⬡ 0/0</span>
+    </div>
+    <div class="qz-bar"><div class="qz-fill" id="qp"></div></div>
+    <div class="qz-visual" id="qv">
+      <div class="hud-tr"></div><div class="hud-bl"></div>
+      <div class="vtag" id="vtag">AR·SIM</div>
+    </div>
+    <div class="qz-phase" id="qph"></div>
+    <div class="qz-card"><div class="qz-q" id="qt"></div></div>
+    <div class="qz-opts" id="qo"></div>
+    <div class="qz-fb" id="qf"><div class="fb-lbl" id="fl"></div><span id="ft"></span></div>
+    <button class="qz-btn" id="qn" onclick="adv()">CONTINUAR →</button>
+  </div>
+
+  <div class="qz-end" id="qe">
+    <div class="qz-circ" id="epct"></div>
+    <div class="qz-grade" id="eg"></div>
+    <div class="qz-sub" id="es"></div>
+    <div class="score-row">
+      <div class="scard"><div class="scard-v nc" id="ec1">0</div><div class="scard-l">CORRECTAS</div></div>
+      <div class="scard"><div class="scard-v np" id="ec2">0</div><div class="scard-l">PUNTAJE</div></div>
+      <div class="scard"><div class="scard-v ng" id="ec3">0%</div><div class="scard-l">PRECISIÓN</div></div>
+    </div>
+    <div class="qz-emsg" id="em"></div>
+    <button class="qz-restart" onclick="restart()">↺ REINICIAR</button>
+  </div>
+</div>
+</div>
+
+<script>
+const QS=[
+  {topic:"Modelo OSI",vis:"osi",
+   q:"¿En qué capa del modelo OSI se ubica la capa de transporte?",
+   o:["Capa 2 – Enlace de datos","Capa 3 – Red","Capa 4 – Transporte","Capa 5 – Sesión"],c:2,
+   fok:"¡Correcto! La capa 4 (Transporte) gestiona la comunicación extremo a extremo entre hosts. Los routers intermedios solo procesan hasta la capa 3. Prepárate para profundizar en multiplexación.",
+   fno:"La capa de transporte es la Capa 4 del modelo OSI. Orden: Física(1)→Enlace(2)→Red(3)→Transporte(4)→Sesión(5)→Presentación(6)→Aplicación(7). Reforcemos el concepto de extremo a extremo.",
+   hu:{q:"La capa de transporte permite multiplexación. ¿Qué elemento identifica procesos de aplicación distintos en el mismo host IP?",
+      o:["Direcciones MAC","Números de puerto","Direcciones IP adicionales","Identificadores de proceso del SO"],c:1,
+      fok:"¡Exacto! Los puertos permiten que una IP aloje HTTP(:80), SMTP(:25) y FTP(:21) simultáneamente. La combinación IP:puerto se llama socket.",
+      fno:"Los números de puerto identifican los procesos de aplicación. Una IP:puerto forma un socket, que es lo que diferencia servicios en el mismo host."},
+   eu:{q:"La capa de transporte opera 'extremo a extremo'. ¿Qué dispositivos la procesan?",
+      o:["Solo los routers intermedios","Solo los switches de la red","Los hosts origen y destino únicamente","Todos los dispositivos de la ruta"],c:2,
+      fok:"Correcto. Solo los hosts extremos (H1 y H2) procesan la capa de transporte. Los routers trabajan hasta la capa 3 (Red).",
+      fno:"La capa de transporte solo existe en los hosts extremos (origen y destino). Los routers solo procesan capas 1 a 3."}},
+
+  {topic:"TCP – Descripción",vis:"tcp",
+   q:"¿Qué significa la sigla TCP?",
+   o:["Transfer Control Protocol","Transmission Control Protocol","Transport Communication Protocol","Terminal Connection Protocol"],c:1,
+   fok:"¡Correcto! Transmission Control Protocol. Creado por Vint Cerf y Robert Kahn entre 1973-1974. Definido en RFC 793, 1122, 1323, 2018 y 2581. ¿Sabes cuántos extremos tiene?",
+   fno:"TCP = Transmission Control Protocol. Lo diseñaron Vint Cerf y Robert Kahn (1973-74). Es uno de los protocolos fundamentales de Internet. Revisemos su topología de conexión.",
+   hu:{q:"TCP es punto a punto (punto-a-punto). ¿Cuántos extremos tiene exactamente una conexión TCP?",
+      o:["Uno (solo emisor)","Dos (un Tx y un Rx)","Múltiples (soporta multicast)","Ilimitados (broadcast)"],c:1,
+      fok:"¡Exacto! Punto a punto = 1 Tx y 1 Rx. TCP no hace multicast nativo. La aplicación escribe en el socket; TCP gestiona el buffer y forma segmentos.",
+      fno:"Punto a punto = exactamente 2 extremos: Tx y Rx. TCP no hace multicast. La aplicación usa la puerta del socket para escribir/leer datos."},
+   eu:{q:"¿Cuál de estos investigadores co-diseñó TCP en los años 70?",
+      o:["Tim Berners-Lee","Linus Torvalds","Vint Cerf","Bill Gates"],c:2,
+      fok:"¡Bien! Vint Cerf y Robert Kahn crearon TCP (1973-74). Cerf es conocido como uno de los 'padres del Internet'.",
+      fno:"TCP fue creado por Vint Cerf y Robert Kahn (1973-74). Tim Berners-Lee inventó la World Wide Web (HTTP/HTML) en 1989, mucho después."}},
+
+  {topic:"Encabezado TCP",vis:"header",
+   q:"¿Cuántos bytes tiene como mínimo el encabezado de un segmento TCP?",
+   o:["8 bytes","16 bytes","20 bytes","32 bytes"],c:2,
+   fok:"¡Correcto! Header TCP mínimo: 20 bytes (Offset=5). Campos: Src/Dst Port, Seq Num, ACK Num, Flags, Window, Checksum, Urgent Ptr. Profundicemos en los flags.",
+   fno:"El header TCP mínimo es 20 bytes. El campo Offset = 5 palabras × 4 bytes = 20 bytes. Contiene: puertos, números de secuencia, flags, window, checksum. Revisemos un campo clave.",
+   hu:{q:"¿Qué flag TCP activa el receptor para señalar que ha procesado los datos y la conexión puede cerrarse?",
+      o:["SYN — abre conexión","ACK — confirma datos","RST — reset forzado","FIN — terminar envío"],c:3,
+      fok:"¡Exacto! FIN (0x01) señala fin de transmisión. El cierre completo usa 4 pasos: FIN→ACK→FIN→ACK (TCP half-close).",
+      fno:"FIN es el flag de cierre. SYN abre, FIN cierra, RST aborta. El cierre ordenado necesita 4 mensajes porque ambos extremos deben cerrar su dirección."},
+   eu:{q:"El campo 'Window' en el header TCP implementa control de flujo. ¿Qué indica su valor?",
+      o:["La velocidad de transmisión en Mbps","Cuántos bytes puede aceptar el receptor en su buffer ahora mismo","La dirección IP del destino","El número de retransmisiones restantes"],c:1,
+      fok:"Correcto. Window = espacio disponible en el buffer del receptor. Si Window=0, el emisor detiene el envío hasta recibir un ACK con Window>0.",
+      fno:"Window controla el flujo: indica cuántos bytes puede recibir el receptor sin desbordarse. Si su buffer está lleno, envía Window=0 para detener al emisor."}},
+
+  {topic:"Aplicaciones TCP",vis:"apptcp",
+   q:"¿Cuál de estas aplicaciones utiliza TCP como protocolo de transporte?",
+   o:["DNS (resolución de nombres)","VoIP (voz sobre IP)","SMTP (correo electrónico)","TFTP (transferencia trivial)"],c:2,
+   fok:"¡Exacto! SMTP usa TCP porque cada byte del correo debe llegar. También usan TCP: HTTP, FTP y Telnet. ¿En qué puerto opera HTTP?",
+   fno:"SMTP usa TCP por su necesidad de confiabilidad total. DNS, VoIP y TFTP usan UDP (priorizan velocidad). Revisemos qué aplicaciones van con TCP.",
+   hu:{q:"Un cliente hace una petición HTTP. ¿Cuál es el puerto DESTINO del segmento TCP que envía el cliente al servidor web?",
+      o:["Puerto 21 (FTP)","Puerto 25 (SMTP)","Puerto 80 (HTTP)","Puerto 53 (DNS)"],c:2,
+      fok:"¡Perfecto! Cliente → Destination Port: 80. Usa un puerto efímero propio (ej: 49152) como origen. El servidor responde invirtiendo origen y destino.",
+      fno:"HTTP opera en el puerto 80. El cliente envía src:49152 → dst:80. La respuesta del servidor usa src:80 → dst:49152 (destino original como origen)."},
+   eu:{q:"¿Cuál de estas aplicaciones NO usa TCP?",
+      o:["HTTP (navegación web)","FTP (transferencia de archivos)","DHCP (asignación de IPs)","Telnet (terminal remota)"],c:2,
+      fok:"Correcto. DHCP usa UDP porque funciona por broadcast/discovery sin conexión previa. HTTP, FTP y Telnet requieren confiabilidad → TCP.",
+      fno:"DHCP usa UDP (no TCP). El proceso DORA (Discover-Offer-Request-Ack) usa broadcast y no necesita la confiabilidad de TCP."}},
+
+  {topic:"UDP – Características",vis:"udp",
+   q:"UDP es protocolo de 'mejor esfuerzo' (best effort). ¿Qué implica esta característica?",
+   o:["Garantiza entrega con máxima velocidad","Retransmite automáticamente si detecta errores","No garantiza entrega ni orden, reduciendo overhead","Establece conexión segura antes de enviar"],c:2,
+   fok:"¡Correcto! Mejor esfuerzo = sin ACK, sin retransmisión, sin orden garantizado. Overhead mínimo = latencia mínima. ¿Conoces el RFC de UDP?",
+   fno:"Mejor esfuerzo: UDP intenta entregar pero sin garantías. Los segmentos pueden perderse o llegar desordenados. A cambio tiene muy bajo overhead. Veamos qué más caracteriza a UDP.",
+   hu:{q:"¿En qué RFC está definido el protocolo UDP?",
+      o:["RFC 793","RFC 1122","RFC 768","RFC 2581"],c:2,
+      fok:"¡Excelente! UDP está en RFC 768 (1980, solo 3 páginas). TCP necesita RFC 793, 1122, 1323, 2018 y 2581. La simplicidad de UDP cabe en 3 páginas.",
+      fno:"UDP está en RFC 768. Es tan simple que cabe en 3 páginas. TCP requiere múltiples RFCs (793, 1122, 1323, 2018, 2581) porque tiene muchas más características."},
+   eu:{q:"UDP no tiene 'handshaking'. ¿Qué significa esto en términos prácticos?",
+      o:["No puede enviar más de 512 bytes","No establece conexión previa antes de enviar","Solo funciona en redes locales (LAN)","Requiere autenticación obligatoria"],c:1,
+      fok:"Correcto. Sin handshaking = UDP simplemente envía el datagrama directo, sin negociar nada con el receptor. Cero overhead de establecimiento.",
+      fno:"Sin handshaking = UDP no realiza el proceso SYN-SYN/ACK-ACK de TCP. Envía el datagrama directamente. Cada segmento UDP es independiente de los demás."}},
+
+  {topic:"Aplicaciones UDP",vis:"appudp",
+   q:"¿Cuál de estas aplicaciones usa UDP como protocolo de transporte?",
+   o:["Telnet (terminal remota)","FTP (transferencia de archivos)","VoIP (voz sobre IP)","HTTP (navegación web)"],c:2,
+   fok:"¡Correcto! VoIP usa UDP: en tiempo real es mejor perder un paquete que esperar retransmisión. También usan UDP: DNS, DHCP, SNMP, TFTP, IPTV. Profundicemos.",
+   fno:"VoIP usa UDP. La voz en tiempo real prefiere velocidad sobre confiabilidad. Un paquete perdido = un clic; el delay de retransmisión TCP arruinaría la llamada. Reforcemos.",
+   hu:{q:"¿Por qué DNS prefiere UDP sobre TCP para sus consultas habituales?",
+      o:["UDP soporta caracteres especiales en nombres de dominio","Las consultas son pequeñas y la velocidad prima sobre confiabilidad","UDP tiene mejor seguridad para nombres de dominio","TCP no puede transportar el formato de paquete DNS"],c:1,
+      fok:"¡Exacto! Consultas DNS < 512 bytes. El overhead del 3-way handshake TCP costaría más que la propia consulta. Si se pierde, la app simplemente reintenta.",
+      fno:"DNS usa UDP porque las consultas son muy pequeñas. El overhead de establecer conexión TCP superaría el tamaño del mensaje. Si se pierde, se reintenta directamente."},
+   eu:{q:"¿Cuál de estas afirmaciones sobre UDP es VERDADERA?",
+      o:["UDP garantiza que los datos lleguen en orden","UDP establece conexión antes de enviar datos","Cada datagrama UDP se maneja de forma independiente","UDP usa números de secuencia para ordenar paquetes"],c:2,
+      fok:"Correcto. En UDP no hay estado de conexión: cada datagrama es independiente. Sin orden garantizado, sin ACK, sin reenvíos automáticos.",
+      fno:"En UDP cada datagrama es tratado de forma independiente. No hay conexión, no hay secuencia garantizada, no hay ACK. Cada paquete viaja solo."}},
+
+  {topic:"Puertos y Números",vis:"ports",
+   q:"¿En qué rango se encuentran los 'puertos bien conocidos' (well-known ports) reservados para servicios del sistema?",
+   o:["0 – 255","0 – 1023","1024 – 49151","49152 – 65535"],c:1,
+   fok:"¡Correcto! Well-known: 0-1023 (IANA). Registered: 1024-49151. Dynamic/ephemeral: 49152-65535 (clientes). HTTP:80, DNS:53, FTP:21. ¿Y cómo responde el servidor?",
+   fno:"Well-known ports: 0-1023. Registered: 1024-49151. Dynamic (clientes): 49152-65535. HTTP:80, SMTP:25, DNS:53, FTP:21. Revisemos cómo se asignan en práctica.",
+   hu:{q:"Un servidor HTTP recibe solicitud con puerto origen 52300 del cliente. ¿Cuál será el puerto ORIGEN de la respuesta del servidor?",
+      o:["Puerto 52300 (el del cliente)","Puerto 80 (su servicio HTTP)","Puerto 443 (HTTPS)","Puerto 1024 (registered)"],c:1,
+      fok:"¡Perfecto! El servidor responde siempre con Source Port: 80 (su servicio) y Destination Port: 52300 (puerto efímero del cliente). El cliente reconoce la respuesta por el destino.",
+      fno:"La respuesta usa Source Port: 80 y Destination Port: 52300. El servidor siempre usa su puerto de servicio como origen en la respuesta."},
+   eu:{q:"¿En qué puerto opera el protocolo SMTP (correo electrónico saliente)?",
+      o:["Puerto 21","Puerto 22","Puerto 25","Puerto 53"],c:2,
+      fok:"Correcto. SMTP usa puerto 25. Tabla clave: FTP:21, SSH:22, SMTP:25, DNS:53, HTTP:80, HTTPS:443.",
+      fno:"SMTP opera en el puerto 25. La tabla esencial: FTP:21, SSH:22, SMTP:25, DNS:53, HTTP:80, HTTPS:443."}},
+
+  {topic:"3-Way Handshake",vis:"handshake",
+   q:"¿Cuántos pasos tiene el establecimiento de conexión TCP (three-way handshake)?",
+   o:["1 paso — SYN directo","2 pasos — SYN → SYN/ACK","3 pasos — SYN → SYN/ACK → ACK","4 pasos — SYN → ACK → SYN → ACK"],c:2,
+   fok:"¡Exacto! 3 pasos: Cliente-SYN → Servidor-SYN/ACK → Cliente-ACK. Esto sincroniza los ISN de ambos extremos. ¿Qué establece el SYN inicial?",
+   fno:"TCP usa 3 pasos: SYN (cliente) → SYN+ACK (servidor) → ACK (cliente). Se llama three-way handshake. Después de esto los datos pueden fluir. Reforcemos con un paso concreto.",
+   hu:{q:"En el 3-way handshake, ¿qué establece el campo Sequence Number del SYN inicial del cliente?",
+      o:["El número total de bytes que enviará","El ISN (Initial Sequence Number) del cliente","La velocidad de transmisión acordada","El tamaño del segmento máximo (MSS)"],c:1,
+      fok:"¡Excelente! El SYN lleva el ISN (Initial Sequence Number) del cliente. El servidor también envía su ISN en el SYN/ACK. Ambos quedan sincronizados para rastrear bytes.",
+      fno:"El Sequence Number en el SYN inicial es el ISN (Initial Sequence Number). Sincroniza los contadores de bytes para que ambos extremos sepan qué llegó y qué falta."},
+   eu:{q:"En el three-way handshake, ¿qué flag envía el CLIENTE en el PRIMER paso?",
+      o:["ACK","FIN","RST","SYN"],c:3,
+      fok:"¡Correcto! El cliente inicia con SYN. Servidor responde SYN+ACK. Cliente confirma con ACK. ¡3 pasos y la conexión está establecida!",
+      fno:"El primer paso es el cliente enviando SYN. Recuerda: Cliente-SYN → Servidor-SYN/ACK → Cliente-ACK. Solo después de esto fluyen los datos."}},
+
+  {topic:"Confiabilidad TCP",vis:"reliability",
+   q:"¿Qué mecanismo usa TCP para garantizar entrega correcta y ordenada de los datos?",
+   o:["Solo checksums para detectar errores","Números de secuencia y acuses de recibo (ACK)","Retransmisión aleatoria periódica cada 30 s","Duplicación automática de todos los paquetes"],c:1,
+   fok:"¡Perfecto! Sequence Numbers + ACK: si no llega ACK en el timeout → retransmisión. Esto garantiza confiabilidad. ¿Cómo mejora TCP el rendimiento con múltiples segmentos?",
+   fno:"TCP usa Sequence Numbers (para ordenar) + ACK (para confirmar). Sin ACK en el timeout → retransmite. Sin estos mecanismos, TCP sería como UDP. Reforcemos con un caso concreto.",
+   hu:{q:"¿Qué técnica permite a TCP enviar múltiples segmentos sin esperar ACK de cada uno, mejorando el throughput?",
+      o:["Stop-and-Wait — uno por vez","Ventana deslizante (Sliding Window)","Token Ring — con token","CSMA/CD — con detección"],c:1,
+      fok:"¡Excelente! La ventana deslizante envía W bytes sin esperar ACK. El campo Window del header define W. Stop-and-Wait enviaría 1 segmento y esperaría (muy ineficiente).",
+      fno:"La ventana deslizante (Sliding Window) permite enviar varios segmentos sin esperar ACK de cada uno. El tamaño está en el campo Window del header TCP."},
+   eu:{q:"Si TCP envía el segmento N y no recibe ACK dentro del timeout, ¿qué hace?",
+      o:["Descarta el segmento y envía el siguiente","Cierra la conexión inmediatamente","Retransmite el segmento N","Notifica al usuario con un mensaje de error"],c:2,
+      fok:"Correcto. Sin ACK → retransmisión. Es la base de la confiabilidad TCP: enviar → esperar ACK → si no llega → retransmitir el mismo segmento.",
+      fno:"TCP retransmite si no recibe ACK. Este mecanismo garantiza que ningún segmento se pierda permanentemente."}},
+
+  {topic:"TCP vs UDP",vis:"comparison",
+   q:"¿Cuál es la diferencia fundamental entre TCP y UDP?",
+   o:["TCP es más rápido; UDP es más seguro","TCP garantiza entrega confiable y ordenada; UDP ofrece baja latencia sin garantías","TCP solo funciona en LAN; UDP en WAN e Internet","Son equivalentes e intercambiables según preferencia"],c:1,
+   fok:"¡Excelente! TCP: confiable, ordenado, control de flujo, overhead alto. UDP: rápido, liviano, sin garantías. La aplicación elige según su necesidad. Cerremos con un caso real.",
+   fno:"TCP = confiabilidad (ACK+secuencia+retransmisión). UDP = velocidad (sin handshake, sin ACK). No son intercambiables. Repasemos el criterio de elección con un caso práctico.",
+   hu:{q:"¿Por qué IPTV (streaming de video en vivo) prefiere UDP sobre TCP?",
+      o:["UDP tiene mayor ancho de banda disponible","La retransmisión TCP causaría congelamiento/delay inaceptable en tiempo real","TCP no puede manejar datos multimedia de video","UDP tiene mejor compresión de video incorporada"],c:1,
+      fok:"¡Perfecto! En tiempo real, el delay de retransmisión TCP congela el video. Con UDP, un frame perdido se omite y el flujo continúa. El usuario nota un glitch menor, no congelamiento.",
+      fno:"En streaming en tiempo real, esperar retransmisión TCP congela la imagen. UDP permite flujo continuo; si se pierde un frame, se salta al siguiente."},
+   eu:{q:"Para transferencia de archivo (FTP) donde CADA BYTE debe llegar correctamente, ¿qué protocolo se usa?",
+      o:["UDP — es más rápido","ICMP — para diagnóstico","TCP — garantiza integridad","ARP — para resolución"],c:2,
+      fok:"¡Correcto! FTP usa TCP porque la integridad del archivo es crítica. Un archivo con bytes faltantes quedaría corrupto e inutilizable.",
+      fno:"FTP necesita TCP para garantizar que todos los bytes lleguen correctamente. Con UDP, podrían perderse bytes y el archivo quedaría corrupto."}}
+];
+
+const svgs={
+  osi:`<svg viewBox="0 0 390 128" style="width:100%;height:128px">
+    <text x="12" y="11" font-family="Share Tech Mono" font-size="7" fill="rgba(0,245,255,.4)" letter-spacing="1">MODELO OSI — CAPA 4 ACTIVA</text>
+    ${[["7","APLICACIÓN","#001828","rgba(0,245,255,.18)"],["6","PRESENTACIÓN","#001828","rgba(0,245,255,.18)"],["5","SESIÓN","#001828","rgba(0,245,255,.18)"],["4","TRANSPORTE","#001a0a","#00ff88"],["3","RED","#001828","rgba(0,245,255,.18)"],["2","ENLACE","#001828","rgba(0,245,255,.18)"],["1","FÍSICA","#001828","rgba(0,245,255,.18)"]].map(([n,l,bg,c],i)=>{
+      const y=16+i*15.5,isT=i===3;
+      return`<rect x="12" y="${y}" width="145" height="13" rx="2" fill="${bg}" stroke="${c}" stroke-width="${isT?1:.4}"/>
+      <text x="19" y="${y+9}" font-family="Share Tech Mono" font-size="7.5" fill="${isT?"#00ff88":"#557799"}">${n} · ${l}</text>
+      ${isT?`<rect x="165" y="${y}" width="155" height="13" rx="2" fill="#001a0a" stroke="#00ff88" stroke-width="1"/>
+      <text x="172" y="${y+9}" font-family="Share Tech Mono" font-size="7" fill="#00ff88">EXTREMO A EXTREMO ◀▶</text>
+      <line x1="320" y1="${y+6}" x2="375" y2="${y+6}" stroke="#00ff88" stroke-width="1.5" class="sf" stroke-dasharray="5 3"/>`:""}`}).join("")}
+    <text x="165" y="125" font-family="Share Tech Mono" font-size="7" fill="rgba(0,255,136,.5)">Sin routers en L4 · solo hosts extremos</text>
+  </svg>`,
+
+  tcp:`<svg viewBox="0 0 390 128" style="width:100%;height:128px">
+    <rect x="8" y="16" width="108" height="92" rx="5" fill="#060e1a" stroke="rgba(0,245,255,.25)" stroke-width=".7"/>
+    <text x="62" y="31" font-family="Share Tech Mono" font-size="8" fill="#00f5ff" text-anchor="middle">HOST ORIGEN</text>
+    <rect x="16" y="36" width="92" height="16" rx="2" fill="#0a0a1e" stroke="rgba(0,245,255,.18)" stroke-width=".4"/>
+    <text x="62" y="46.5" font-family="Share Tech Mono" font-size="7.5" fill="#7788aa" text-anchor="middle">APLICACIÓN</text>
+    <rect x="16" y="56" width="92" height="16" rx="2" fill="#001a0a" stroke="#00ff88" stroke-width=".7"/>
+    <text x="62" y="66.5" font-family="Share Tech Mono" font-size="7.5" fill="#00ff88" text-anchor="middle">TCP BUFFER (Tx)</text>
+    <rect x="16" y="76" width="92" height="14" rx="2" fill="#001208" stroke="rgba(0,255,136,.25)" stroke-width=".4"/>
+    <text x="62" y="85.5" font-family="Share Tech Mono" font-size="6.5" fill="#557755" text-anchor="middle">SOCKET :49152</text>
+    <rect x="16" y="93" width="92" height="12" rx="2" fill="#050510" stroke="rgba(0,245,255,.12)" stroke-width=".4"/>
+    <text x="62" y="102" font-family="Share Tech Mono" font-size="6.5" fill="#334455" text-anchor="middle">IP · ENLACE · FÍSICA</text>
+
+    <rect x="272" y="16" width="108" height="92" rx="5" fill="#060e1a" stroke="rgba(0,245,255,.25)" stroke-width=".7"/>
+    <text x="326" y="31" font-family="Share Tech Mono" font-size="8" fill="#00f5ff" text-anchor="middle">HOST DESTINO</text>
+    <rect x="280" y="36" width="92" height="16" rx="2" fill="#0a0a1e" stroke="rgba(0,245,255,.18)" stroke-width=".4"/>
+    <text x="326" y="46.5" font-family="Share Tech Mono" font-size="7.5" fill="#7788aa" text-anchor="middle">APLICACIÓN</text>
+    <rect x="280" y="56" width="92" height="16" rx="2" fill="#001a0a" stroke="#00ff88" stroke-width=".7"/>
+    <text x="326" y="66.5" font-family="Share Tech Mono" font-size="7.5" fill="#00ff88" text-anchor="middle">TCP BUFFER (Rx)</text>
+    <rect x="280" y="76" width="92" height="14" rx="2" fill="#001208" stroke="rgba(0,255,136,.25)" stroke-width=".4"/>
+    <text x="326" y="85.5" font-family="Share Tech Mono" font-size="6.5" fill="#557755" text-anchor="middle">SOCKET :80</text>
+    <rect x="280" y="93" width="92" height="12" rx="2" fill="#050510" stroke="rgba(0,245,255,.12)" stroke-width=".4"/>
+    <text x="326" y="102" font-family="Share Tech Mono" font-size="6.5" fill="#334455" text-anchor="middle">IP · ENLACE · FÍSICA</text>
+
+    <path d="M116 67 Q195 50 272 67" fill="none" stroke="#00f5ff" stroke-width="1.5" class="sf" stroke-dasharray="7 4"/>
+    <path d="M272 78 Q195 96 116 78" fill="none" stroke="#00ff88" stroke-width="1" class="sf" stroke-dasharray="5 3"/>
+    <text x="195" y="51" font-family="Share Tech Mono" font-size="8" fill="#00f5ff" text-anchor="middle">▶ SEGMENTO TCP</text>
+    <text x="195" y="100" font-family="Share Tech Mono" font-size="7" fill="#00ff88" text-anchor="middle">◀ ACK</text>
+  </svg>`,
+
+  header:`<svg viewBox="0 0 390 128" style="width:100%;height:128px">
+    <text x="195" y="11" font-family="Orbitron" font-size="8" fill="#00f5ff" text-anchor="middle" letter-spacing="2">ENCABEZADO TCP · MÍNIMO 20 BYTES</text>
+    ${[["SOURCE PORT (16 bits)","DEST PORT (16 bits)","#001828","#00f5ff"],
+       ["SEQUENCE NUMBER (32 bits)","","#001020","#6699ff"],
+       ["ACKNOWLEDGMENT NUMBER (32 bits)","","#001020","#5577ff"],
+       ["FLAGS: CEUAPRSF  |  OFFSET","WINDOW (16 bits)","#071408","#00ff88"],
+       ["CHECKSUM (16 bits)","URGENT POINTER (16 bits)","#100818","#bf00ff"]].map(([l,r,bg,c],i)=>{
+      const y=18+i*21,h=17;
+      return`<rect x="8" y="${y}" width="${r?185:375}" height="${h}" rx="2" fill="${bg}" stroke="${c}" stroke-width=".6"/>
+      <text x="${r?100:192}" y="${y+11}" font-family="Share Tech Mono" font-size="7.5" fill="${c}" text-anchor="middle">${l}</text>
+      ${r?`<rect x="198" y="${y}" width="185" height="${h}" rx="2" fill="${bg}" stroke="${c}" stroke-width=".6"/>
+      <text x="290" y="${y+11}" font-family="Share Tech Mono" font-size="7.5" fill="${c}" text-anchor="middle">${r}</text>`:""}`}).join("")}
+    <rect x="8" y="123" width="375" height="4" rx="2" fill="#0a0a1e" stroke="rgba(0,245,255,.1)" stroke-width=".4"/>
+    <text x="192" y="127" font-family="Share Tech Mono" font-size="6" fill="rgba(0,245,255,.4)" text-anchor="middle">TCP OPTIONS (variable length, optional)</text>
+  </svg>`,
+
+  apptcp:`<svg viewBox="0 0 390 128" style="width:100%;height:128px">
+    ${[["HTTP","#001828","#00f5ff",52],["FTP","#001828","#00f5ff",128],["SMTP","#001828","#00f5ff",204],["Telnet","#001828","#00f5ff",280]].map(([n,bg,c,x])=>
+      `<rect x="${x-32}" y="8" width="62" height="20" rx="4" fill="${bg}" stroke="${c}" stroke-width=".8"/>
+       <text x="${x-1}" y="21" font-family="Share Tech Mono" font-size="9" fill="${c}" text-anchor="middle">${n}</text>
+       <line x1="${x-1}" y1="28" x2="${x-1}" y2="54" stroke="${c}" stroke-width="1.1" class="sf" stroke-dasharray="4 3"/>`).join("")}
+    <rect x="70" y="54" width="250" height="26" rx="5" fill="#001a10" stroke="#00ff88" stroke-width="1.2"/>
+    <text x="195" y="70" font-family="Orbitron" font-size="11" fill="#00ff88" text-anchor="middle" letter-spacing="3">TCP</text>
+    <line x1="195" y1="80" x2="195" y2="102" stroke="#00ff88" stroke-width="1.5" class="sf" stroke-dasharray="5 3"/>
+    <rect x="70" y="102" width="250" height="20" rx="5" fill="#001020" stroke="rgba(0,245,255,.3)" stroke-width=".7"/>
+    <text x="195" y="115" font-family="Orbitron" font-size="9" fill="#3366aa" text-anchor="middle" letter-spacing="3">IP</text>
+  </svg>`,
+
+  udp:`<svg viewBox="0 0 390 128" style="width:100%;height:128px">
+    <rect x="10" y="12" width="100" height="56" rx="5" fill="#07101a" stroke="rgba(0,245,255,.2)" stroke-width=".6"/>
+    <text x="60" y="29" font-family="Share Tech Mono" font-size="8" fill="#5588aa" text-anchor="middle">EMISOR UDP</text>
+    <rect x="18" y="34" width="84" height="27" rx="3" fill="#001020" stroke="rgba(0,245,255,.2)" stroke-width=".4"/>
+    <text x="60" y="46" font-family="Share Tech Mono" font-size="7" fill="#446688" text-anchor="middle">DATAGRAMA</text>
+    <text x="60" y="56" font-family="Share Tech Mono" font-size="6.5" fill="#334455" text-anchor="middle">8 bytes header</text>
+
+    <rect x="280" y="12" width="100" height="56" rx="5" fill="#07101a" stroke="rgba(0,245,255,.2)" stroke-width=".6"/>
+    <text x="330" y="29" font-family="Share Tech Mono" font-size="8" fill="#5588aa" text-anchor="middle">RECEPTOR UDP</text>
+    <rect x="288" y="34" width="84" height="27" rx="3" fill="#001020" stroke="rgba(0,245,255,.2)" stroke-width=".4"/>
+    <text x="330" y="46" font-family="Share Tech Mono" font-size="7" fill="#446688" text-anchor="middle">RECIBE</text>
+    <text x="330" y="56" font-family="Share Tech Mono" font-size="6.5" fill="#334455" text-anchor="middle">sin ACK</text>
+
+    <path d="M110 38 L175 38" stroke="#00f5ff" stroke-width="1.5" class="sf" stroke-dasharray="7 4"/>
+    <text x="195" y="30" font-family="Share Tech Mono" font-size="8.5" fill="#ff2050" text-anchor="middle">✗</text>
+    <text x="195" y="43" font-family="Share Tech Mono" font-size="6.5" fill="#882233" text-anchor="middle">PERDIDO</text>
+    <path d="M215 52 L280 52" stroke="rgba(0,245,255,.4)" stroke-width="1" stroke-dasharray="5 4"/>
+
+    <rect x="10" y="82" width="370" height="38" rx="5" fill="#0f0510" stroke="rgba(255,32,80,.2)" stroke-width=".7"/>
+    <text x="195" y="97" font-family="Orbitron" font-size="8" fill="#cc3355" text-anchor="middle" letter-spacing="1">"MEJOR ESFUERZO"</text>
+    <text x="195" y="112" font-family="Share Tech Mono" font-size="7.5" fill="#773344" text-anchor="middle">Sin ACK · Sin retransmisión · Sin orden garantizado</text>
+  </svg>`,
+
+  appudp:`<svg viewBox="0 0 390 128" style="width:100%;height:128px">
+    ${[["DNS","#001828","#00f5ff",42],["DHCP","#001828","#5599ff",112],["VoIP","#001828","#bf00ff",182],["SNMP","#001828","#7799ff",252],["IPTV","#001828","#9955ff",322]].map(([n,bg,c,x])=>
+      `<rect x="${x-32}" y="8" width="58" height="20" rx="4" fill="${bg}" stroke="${c}" stroke-width=".7"/>
+       <text x="${x-3}" y="21" font-family="Share Tech Mono" font-size="8.5" fill="${c}" text-anchor="middle">${n}</text>
+       <line x1="${x-3}" y1="28" x2="${x-3}" y2="54" stroke="${c}" stroke-width="1" class="sf" stroke-dasharray="4 3"/>`).join("")}
+    <rect x="70" y="54" width="250" height="26" rx="5" fill="#0f0820" stroke="#bf00ff" stroke-width="1.2"/>
+    <text x="195" y="70" font-family="Orbitron" font-size="11" fill="#bf00ff" text-anchor="middle" letter-spacing="3">UDP</text>
+    <line x1="195" y1="80" x2="195" y2="102" stroke="#bf00ff" stroke-width="1.5" class="sf" stroke-dasharray="5 3"/>
+    <rect x="70" y="102" width="250" height="20" rx="5" fill="#080515" stroke="rgba(191,0,255,.25)" stroke-width=".7"/>
+    <text x="195" y="115" font-family="Orbitron" font-size="9" fill="#553388" text-anchor="middle" letter-spacing="3">IP</text>
+  </svg>`,
+
+  ports:`<svg viewBox="0 0 390 128" style="width:100%;height:128px">
+    <text x="195" y="11" font-family="Orbitron" font-size="8" fill="#00f5ff" text-anchor="middle" letter-spacing="2">RANGOS DE PUERTOS TCP / UDP</text>
+    ${[{s:0,e:1023,lbl:"WELL-KNOWN",sub:"HTTP:80 · FTP:21 · SMTP:25 · SSH:22 · DNS:53",c:"#00f5ff",bg:"#001828",fw:120},
+       {s:1024,e:49151,lbl:"REGISTERED (IANA)",sub:"1024–49151 · servicios registrados",c:"#7799ff",bg:"#080820",fw:250},
+       {s:49152,e:65535,lbl:"DYNAMIC / EPHEMERAL",sub:"Clientes · asignación automática · efímeros",c:"#bf00ff",bg:"#0f0820",fw:140}].map(({s,e,lbl,sub,c,bg,fw},i)=>{
+      const y=22+i*33;
+      return`<rect x="8" y="${y}" width="${fw}" height="26" rx="3" fill="${bg}" stroke="${c}" stroke-width=".8"/>
+      <text x="${14}" y="${y+11}" font-family="Share Tech Mono" font-size="7" fill="${c}">${s}–${e}</text>
+      <text x="${14}" y="${y+21}" font-family="Share Tech Mono" font-size="6.5" fill="${c}" opacity=".7">${lbl}</text>
+      <rect x="${fw+12}" y="${y}" width="${374-fw-12}" height="26" rx="3" fill="${bg}" stroke="${c}" stroke-width=".35" opacity=".5"/>
+      <text x="${fw+18}" y="${y+18}" font-family="Share Tech Mono" font-size="6.5" fill="${c}" opacity=".75">${sub}</text>`}).join("")}
+  </svg>`,
+
+  handshake:`<svg viewBox="0 0 390 128" style="width:100%;height:128px">
+    <text x="68" y="13" font-family="Share Tech Mono" font-size="8" fill="#00f5ff" text-anchor="middle">CLIENTE</text>
+    <text x="322" y="13" font-family="Share Tech Mono" font-size="8" fill="#00f5ff" text-anchor="middle">SERVIDOR</text>
+    <line x1="68" y1="17" x2="68" y2="124" stroke="rgba(0,245,255,.25)" stroke-width="1"/>
+    <line x1="322" y1="17" x2="322" y2="124" stroke="rgba(0,245,255,.25)" stroke-width="1"/>
+
+    <line x1="68" y1="36" x2="322" y2="56" stroke="#00ff88" stroke-width="1.5" class="sf" stroke-dasharray="8 4"/>
+    <polygon points="318,54 326,59 318,64" fill="#00ff88"/>
+    <text x="190" y="41" font-family="Share Tech Mono" font-size="8" fill="#00ff88" text-anchor="middle">① SYN  seq=x</text>
+
+    <line x1="322" y1="70" x2="68" y2="90" stroke="#00f5ff" stroke-width="1.5" class="sf" stroke-dasharray="8 4"/>
+    <polygon points="72,88 64,93 72,98" fill="#00f5ff"/>
+    <text x="190" y="75" font-family="Share Tech Mono" font-size="8" fill="#00f5ff" text-anchor="middle">② SYN+ACK  seq=y  ack=x+1</text>
+
+    <line x1="68" y1="103" x2="322" y2="118" stroke="#bf00ff" stroke-width="1.5" class="sf" stroke-dasharray="8 4"/>
+    <polygon points="318,116 326,121 318,126" fill="#bf00ff"/>
+    <text x="190" y="108" font-family="Share Tech Mono" font-size="8" fill="#bf00ff" text-anchor="middle">③ ACK  ack=y+1</text>
+
+    <text x="195" y="128" font-family="Share Tech Mono" font-size="6.5" fill="#339933" text-anchor="middle">◈ CONEXIÓN ESTABLECIDA — DATOS PUEDEN FLUIR ◈</text>
+  </svg>`,
+
+  reliability:`<svg viewBox="0 0 390 128" style="width:100%;height:128px">
+    <text x="68" y="13" font-family="Share Tech Mono" font-size="8" fill="#00f5ff" text-anchor="middle">EMISOR</text>
+    <text x="322" y="13" font-family="Share Tech Mono" font-size="8" fill="#00f5ff" text-anchor="middle">RECEPTOR</text>
+    <line x1="68" y1="17" x2="68" y2="124" stroke="rgba(0,245,255,.2)" stroke-width="1"/>
+    <line x1="322" y1="17" x2="322" y2="124" stroke="rgba(0,245,255,.2)" stroke-width="1"/>
+
+    <line x1="68" y1="28" x2="322" y2="42" stroke="#00f5ff" stroke-width="1.2" class="sf" stroke-dasharray="6 3"/>
+    <text x="180" y="28" font-family="Share Tech Mono" font-size="7.5" fill="#00f5ff" text-anchor="middle">SEG 1  seq=1</text>
+    <line x1="322" y1="48" x2="68" y2="58" stroke="#00ff88" stroke-width="1" stroke-dasharray="4 2"/>
+    <text x="210" y="52" font-family="Share Tech Mono" font-size="6.5" fill="#00ff88" text-anchor="middle">ACK=2</text>
+
+    <line x1="68" y1="62" x2="322" y2="72" stroke="#00f5ff" stroke-width="1.2" class="sf" stroke-dasharray="6 3"/>
+    <text x="180" y="62" font-family="Share Tech Mono" font-size="7.5" fill="#00f5ff" text-anchor="middle">SEG 2  seq=2</text>
+    <line x1="322" y1="78" x2="68" y2="86" stroke="#00ff88" stroke-width="1" stroke-dasharray="4 2"/>
+    <text x="210" y="81" font-family="Share Tech Mono" font-size="6.5" fill="#00ff88" text-anchor="middle">ACK=3</text>
+
+    <line x1="68" y1="90" x2="195" y2="96" stroke="#ff2050" stroke-width="1.3" stroke-dasharray="5 3"/>
+    <text x="135" y="100" font-family="Share Tech Mono" font-size="8" fill="#ff2050">✗ PERDIDO</text>
+    <text x="68" y="108" font-family="Share Tech Mono" font-size="6.5" fill="#ff9900">TIMEOUT →</text>
+    <line x1="68" y1="112" x2="322" y2="122" stroke="#ffdd00" stroke-width="1.5" class="sf" stroke-dasharray="6 3"/>
+    <text x="185" y="111" font-family="Share Tech Mono" font-size="7.5" fill="#ffdd00" text-anchor="middle">SEG 2 RETX</text>
+  </svg>`,
+
+  comparison:`<svg viewBox="0 0 390 128" style="width:100%;height:128px">
+    <rect x="4" y="4" width="186" height="120" rx="6" fill="#001828" stroke="#00f5ff" stroke-width="1"/>
+    <rect x="200" y="4" width="186" height="120" rx="6" fill="#0f0820" stroke="#bf00ff" stroke-width="1"/>
+    <text x="97" y="21" font-family="Orbitron" font-size="10" fill="#00f5ff" text-anchor="middle" letter-spacing="2">TCP</text>
+    <text x="293" y="21" font-family="Orbitron" font-size="10" fill="#bf00ff" text-anchor="middle" letter-spacing="2">UDP</text>
+    ${[["Orientado a conexión","Sin conexión",30],["Confiable (ACK+retx)","Mejor esfuerzo",43],["Ordenado","Sin orden garantizado",56],["Control de flujo","Sin control de flujo",69],["Header ≥ 20 bytes","Header = 8 bytes fijos",82],["HTTP · FTP · SMTP","DNS · VoIP · DHCP",95],["Telnet · SSH · HTTPS","SNMP · TFTP · IPTV",107]].map(([t,u,y])=>
+      `<text x="97" y="${y}" font-family="Share Tech Mono" font-size="7.5" fill="#5588bb" text-anchor="middle">${t}</text>
+       <text x="293" y="${y}" font-family="Share Tech Mono" font-size="7.5" fill="#9966bb" text-anchor="middle">${u}</text>
+       <line x1="4" y1="${y+3}" x2="190" y2="${y+3}" stroke="rgba(0,245,255,.07)" stroke-width=".5"/>
+       <line x1="200" y1="${y+3}" x2="386" y2="${y+3}" stroke="rgba(191,0,255,.07)" stroke-width=".5"/>`).join("")}
+  </svg>`
+};
+
+const S={q:0,phase:'main',mainOk:false,score:0,total:0,answered:false,correct:0};
+
+function getQ(){const d=QS[S.q];return S.phase==='main'?d:(S.mainOk?d.hu:d.eu);}
+
+function render(){
+  const d=QS[S.q],q=getQ();
+  const prog=((S.q*2+(S.phase==='followup'?1:0))/(QS.length*2))*100;
+  document.getElementById('qp').style.width=prog+'%';
+  document.getElementById('ql').textContent=`Q${S.q+1}/10 · ${d.topic.toUpperCase()}`;
+  document.getElementById('qs').textContent=`SCORE: ${S.score}`;
+  document.getElementById('qc').textContent=`⬡ ${S.correct}/${S.total}`;
+
+  const isMain=S.phase==='main',isHard=S.mainOk;
+  const [phlbl,phc]=isMain?['◈ PREGUNTA PRINCIPAL','#00f5ff']:isHard?['▲ PROFUNDIZACIÓN','#00ff88']:['▼ REFUERZO','#ff9900'];
+  document.getElementById('qph').innerHTML=`<span style="color:${phc};text-shadow:0 0 6px ${phc};font-size:9px;letter-spacing:3px">${phlbl}</span>`;
+  document.getElementById('vtag').textContent=`AR·${d.vis.toUpperCase()}`;
+
+  const vEl=document.getElementById('qv');
+  vEl.innerHTML=`<div class="hud-tr"></div><div class="hud-bl"></div><div class="vtag" id="vtag">AR·${d.vis.toUpperCase()}</div>`+(svgs[d.vis]||svgs.osi);
+
+  document.getElementById('qt').textContent=q.q;
+  document.getElementById('qo').innerHTML=q.o.map((o,i)=>`<button class="qz-o" onclick="answer(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('');
+  document.getElementById('qf').className='qz-fb';
+  document.getElementById('ft').textContent='';
+  document.getElementById('qn').className='qz-btn';
+  S.answered=false;
+}
+
+function answer(i){
+  if(S.answered)return;
+  S.answered=true;S.total++;
+  const q=getQ(),isOk=i===q.c;
+  if(isOk){S.score+=S.phase==='main'?10:5;S.correct++;}
+  if(S.phase==='main')S.mainOk=isOk;
+  document.querySelectorAll('.qz-o').forEach((b,idx)=>{
+    b.disabled=true;
+    if(idx===q.c)b.className='qz-o ok';
+    else if(idx===i&&!isOk)b.className='qz-o wrong';
+  });
+  const fb=document.getElementById('qf');
+  fb.className=`qz-fb show ${isOk?'ok':'fail'}`;
+  document.getElementById('fl').textContent=isOk?'✓ CORRECTO':'✗ INCORRECTO';
+  document.getElementById('ft').textContent=isOk?q.fok:q.fno;
+  const isLast=S.q===QS.length-1&&S.phase==='followup';
+  const btn=document.getElementById('qn');
+  btn.className='qz-btn show';
+  btn.textContent=isLast?'VER RESULTADOS →':(S.phase==='main'?'PREGUNTA DE SEGUIMIENTO →':'SIGUIENTE PREGUNTA →');
+}
+
+function adv(){
+  if(S.phase==='main'){S.phase='followup';render();}
+  else{S.q++;if(S.q>=QS.length)showEnd();else{S.phase='main';render();}}
+}
+
+function showEnd(){
+  document.getElementById('qz-main').style.display='none';
+  document.getElementById('qe').className='qz-end show';
+  const pct=Math.round((S.correct/S.total)*100);
+  document.getElementById('epct').textContent=pct+'%';
+  document.getElementById('ec1').textContent=S.correct+'/'+S.total;
+  document.getElementById('ec2').textContent=S.score+' pts';
+  document.getElementById('ec3').textContent=pct+'%';
+  let g,gc,msg;
+  if(pct>=90){g='AD';gc='gAD';msg='Dominio excepcional de la capa de transporte. Comprendes en profundidad TCP, UDP, el 3-way handshake, control de flujo y la selección de protocolo según el tipo de aplicación. Estás listo para el Módulo 14 del examen.';}
+  else if(pct>=80){g='A';gc='gA';msg='Excelente desempeño. Conoces bien los protocolos de transporte. Repasa los detalles del header TCP (flags, campo Window) y la diferencia entre puertos efímeros y well-known.';}
+  else if(pct>=65){g='B';gc='gB';msg='Buen trabajo. Tienes las bases, pero conviene reforzar: (1) diferencias TCP vs UDP con ejemplos, (2) números de puerto de servicios comunes, (3) el flujo del 3-way handshake.';}
+  else if(pct>=51){g='C';gc='gC';msg='En proceso. Revisa el Módulo 14 de CCNAv7 en Netacad. Enfócate en comparar TCP/UDP y memoriza los puertos well-known. Practica identificando qué protocolo usa cada aplicación.';}
+  else{g='D';gc='gD';msg='Necesitas repasar los fundamentos. Estudia nuevamente las diapositivas de la Semana 13 (S13) y los conceptos de la capa de transporte antes del examen. ¡Vuelve a intentarlo!';}
+  document.getElementById('eg').className='qz-grade '+gc;
+  document.getElementById('eg').textContent=g;
+  document.getElementById('es').textContent=`Semana 13 — Capa de Transporte · UPN Redes 1`;
+  document.getElementById('em').textContent=msg;
+}
+
+function restart(){
+  S.q=0;S.phase='main';S.mainOk=false;S.score=0;S.total=0;S.answered=false;S.correct=0;
+  document.getElementById('qz-main').style.display='';
+  document.getElementById('qe').className='qz-end';
+  render();
+}
+
+render();
+</script>
+
