@@ -1,1 +1,367 @@
+import { useState, useEffect, useRef } from "react";
+
+const C = {
+  bg: "#030303", card: "#0a0a0a", border: "#00e5ff33",
+  cyan: "#00e5ff", mag: "#ff00dd", grn: "#00ff88",
+  red: "#ff1744", yel: "#ffe500", ora: "#ff9100",
+  txt: "#e0f7fa", sub: "#80deea",
+};
+
+const rng = (arr) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+const shSec = (section) => {
+  const si = section.opts.indexOf(section.ans);
+  const opts = rng(section.opts);
+  return { ...section, opts, ansIdx: opts.indexOf(section.ans) };
+};
+
+const RAW = [
+  {
+    m: { q: "¿Cuál es el límite máximo de saltos (hops) que RIP permite en una ruta activa?", opts: ["15 saltos", "16 saltos", "255 saltos", "30 saltos"], ans: "15 saltos", exp: "RIP define 15 como el máximo útil. Un valor de 16 saltos indica que la ruta es inalcanzable (infinity metric)." },
+    s: { q: "Si una ruta supera el límite máximo de saltos en RIP, ¿qué valor de métrica se le asigna para indicar que es inalcanzable?", opts: ["16", "15", "0", "255"], ans: "16", exp: "El valor 16 equivale al infinito en RIP. Cuando el número de saltos llega a 16, la ruta se considera inalcanzable y se elimina eventualmente de la tabla." }
+  },
+  {
+    m: { q: "¿Cuánto tiempo dura el Update Timer (temporizador periódico) de RIP por defecto?", opts: ["30 segundos", "180 segundos", "240 segundos", "60 segundos"], ans: "30 segundos", exp: "El Update Timer controla la publicación periódica de actualizaciones RIP. Cada router envía su tabla de enrutamiento completa cada 30 s (con variación aleatoria de 25 a 35 s para evitar sincronización)." },
+    s: { q: "¿Cuánto tiempo debe transcurrir sin recibir actualizaciones para que el Invalid Timer marque una ruta como caducada?", opts: ["180 segundos", "30 segundos", "240 segundos", "90 segundos"], ans: "180 segundos", exp: "El Invalid Timer (180 s) establece cuánto tiempo puede permanecer una ruta en la tabla sin ser actualizada. Al cumplirse, la métrica se eleva a 16 (inalcanzable)." }
+  },
+  {
+    m: { q: "¿Qué característica diferencia a RIPv2 de RIPv1 en cuanto a soporte de subredes?", opts: ["Soporte de VLSM y CIDR", "Uso de broadcast para actualizaciones", "Algoritmo de estado de enlace", "Soporte de hasta 255 saltos"], ans: "Soporte de VLSM y CIDR", exp: "RIPv2 es classless: incluye la máscara de subred en sus actualizaciones, permitiendo VLSM y CIDR. RIPv1 es classful y no envía información de máscara." },
+    s: { q: "¿Qué mecanismo de seguridad incorpora RIPv2 que RIPv1 no tenía?", opts: ["Autenticación de mensajes", "Cifrado AES de rutas", "Soporte de IPv6", "Métricas compuestas"], ans: "Autenticación de mensajes", exp: "RIPv2 permite autenticación (texto plano o MD5) en sus mensajes de actualización, reduciendo la vulnerabilidad a ataques de inyección de rutas falsas que afectaba a RIPv1." }
+  },
+  {
+    m: { q: "¿Cómo se denomina la versión de RIP diseñada para funcionar sobre IPv6?", opts: ["RIPng", "RIPv3", "OSPFv3", "EIGRPv6"], ans: "RIPng", exp: "RIPng (Next Generation) es la versión de RIP para IPv6, definida en el RFC 2080. Funciona de forma similar a RIPv2 pero adaptada al espacio de direccionamiento IPv6." },
+    s: { q: "¿Cuál es el RFC que define el protocolo RIPng para IPv6?", opts: ["RFC 2080", "RFC 1058", "RFC 2453", "RFC 4822"], ans: "RFC 2080", exp: "El RFC 2080 especifica RIPng. RIPv1 se define en RFC 1058 y RIPv2 en RFC 2453 (estándar de Internet STD56)." }
+  },
+  {
+    m: { q: "¿A qué familia de algoritmos de enrutamiento dinámico pertenece el protocolo RIP?", opts: ["Vector Distancia", "Estado de enlace", "Vector de ruta", "Dijkstra"], ans: "Vector Distancia", exp: "RIP implementa el algoritmo de Bellman-Ford (vector distancia): cada router comparte su tabla de rutas completa con sus vecinos directos, sin conocer la topología global." },
+    s: { q: "¿Cuál es una desventaja del algoritmo vector distancia usado por RIP frente a protocolos de estado de enlace como OSPF?", opts: ["Convergencia lenta", "Mayor uso de CPU", "Soporte de área única", "Métrica compuesta"], ans: "Convergencia lenta", exp: "En redes con cambios frecuentes, RIP puede tardar varios minutos en converger debido a los conteos lentos y los temporizadores de 30 s. OSPF converge mucho más rápido al conocer la topología completa." }
+  },
+  {
+    m: { q: "¿Cuál es la secuencia correcta de comandos para habilitar RIPv2 en un router Cisco IOS?", opts: ["router rip → version 2 → network", "ip rip version 2 → network", "router ripv2 → network", "routing-protocol rip → version 2"], ans: "router rip → version 2 → network", exp: "En Cisco IOS: router rip activa el proceso RIP; version 2 selecciona la versión classless; network [dirección] anuncia las redes directamente conectadas." },
+    s: { q: "¿Qué comando se usa en RIPv2 para deshabilitar la auto-sumarización de rutas classful?", opts: ["no auto-summary", "no summarization", "ip summary-off", "no classful"], ans: "no auto-summary", exp: "Por defecto RIPv2 sumariza rutas a su frontera classful. El comando no auto-summary es fundamental cuando se usan subredes discontinuas o VLSM para evitar rutas incorrectas." }
+  },
+  {
+    m: { q: "¿Cuánto tiempo espera el Flush Timer antes de eliminar definitivamente una ruta inválida de la tabla de enrutamiento?", opts: ["240 segundos", "180 segundos", "120 segundos", "60 segundos"], ans: "240 segundos", exp: "El Flush Timer (240 s) controla el tiempo entre que una ruta es marcada como inalcanzable (métrica 16) y su eliminación total de la tabla, dando margen de reconvergencia." },
+    s: { q: "¿Qué temporizador de RIP establece cuánto tiempo puede permanecer una ruta en la tabla sin ser actualizada antes de considerarse caducada?", opts: ["Invalid Timer", "Flush Timer", "Update Timer", "Hold-down Timer"], ans: "Invalid Timer", exp: "El Invalid Timer (180 s) define el período de caducidad de una ruta. Si no llega actualización en ese lapso, la ruta se marca inalcanzable. El Flush Timer, en cambio, controla la eliminación física de la entrada." }
+  },
+  {
+    m: { q: "¿Qué tipo de mensaje RIP envía un router recién iniciado para solicitar información a sus vecinos?", opts: ["Petición (Request)", "Respuesta (Response)", "Hello", "Update"], ans: "Petición (Request)", exp: "El mensaje de Petición (tipo 1) lo genera un router nuevo para pedir inmediatamente las tablas de enrutamiento a sus vecinos sin esperar al siguiente Update Timer." },
+    s: { q: "¿Con qué periodicidad se envían los mensajes de Respuesta ordinarios en RIP para mantener activas las rutas?", opts: ["Cada 30 segundos", "Cada 180 segundos", "Cada 60 segundos", "Cada 10 segundos"], ans: "Cada 30 segundos", exp: "Los mensajes de Respuesta ordinarios se envían cada 30 s con la tabla de enrutamiento completa. Sirven para confirmar que el enlace y las rutas siguen activos." }
+  },
+  {
+    m: { q: "¿Cuál es la principal desventaja de la métrica de RIP para determinar la mejor ruta?", opts: ["Solo considera el número de saltos", "No soporta IPv4", "Requiere alta CPU", "Usa solo una interfaz"], ans: "Solo considera el número de saltos", exp: "RIP ignora ancho de banda, retardo, congestión y fiabilidad. Esto puede resultar en la selección de rutas subóptimas: por ejemplo, preferir 2 saltos de 56 Kbps sobre 3 saltos de 1 Gbps." },
+    s: { q: "¿Cuántas entradas de ruta (RTEs) puede contener como máximo un solo paquete RIP?", opts: ["25 RTEs", "15 RTEs", "50 RTEs", "10 RTEs"], ans: "25 RTEs", exp: "El formato del paquete RIP limita a 25 entradas de ruta por paquete. En redes con muchas rutas se envían múltiples paquetes RIP por actualización." }
+  },
+  {
+    m: { q: "¿Qué comando opcional en RIPv2 evita que una interfaz envíe actualizaciones RIP hacia hosts finales?", opts: ["passive-interface", "no-send-updates", "interface shutdown-rip", "ip rip passive"], ans: "passive-interface", exp: "passive-interface [interfaz] suprime el envío de actualizaciones RIP por esa interfaz (típicamente hacia LANs de usuarios), reduciendo tráfico innecesario sin dejar de anunciar esa red." },
+    s: { q: "¿Qué comando permite que RIPv2 propague una ruta por defecto (default route) aprendida desde el exterior hacia todos los routers del dominio RIP?", opts: ["default-information originate", "ip default-route rip", "network 0.0.0.0", "redistribute static"], ans: "default-information originate", exp: "El comando default-information originate (bajo router rip) hace que el router distribuya la ruta 0.0.0.0/0 estática hacia sus vecinos RIP, permitiendo que el resto de la red tenga ruta de salida a Internet." }
+  }
+];
+
+const buildQ = (isRetry) => {
+  let list = isRetry ? rng(RAW) : RAW;
+  return list.map(({ m, s }) => ({
+    m: shSec(m), s: shSec(s),
+    stg: "m", ms: null, ss: null,
+  }));
+};
+
+const Circuit = () => (
+  <svg style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", opacity: 0.07, pointerEvents: "none", zIndex: 0 }} xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="cp" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+        <line x1="0" y1="20" x2="80" y2="20" stroke="#00e5ff" strokeWidth="0.5" />
+        <line x1="0" y1="60" x2="80" y2="60" stroke="#00e5ff" strokeWidth="0.5" />
+        <line x1="20" y1="0" x2="20" y2="80" stroke="#00e5ff" strokeWidth="0.5" />
+        <line x1="60" y1="0" x2="60" y2="80" stroke="#00e5ff" strokeWidth="0.5" />
+        <circle cx="20" cy="20" r="2.5" fill="#00e5ff" />
+        <circle cx="60" cy="20" r="2.5" fill="#00e5ff" />
+        <circle cx="20" cy="60" r="2.5" fill="#00e5ff" />
+        <circle cx="60" cy="60" r="2.5" fill="#ff00dd" />
+        <rect x="28" y="14" width="16" height="12" rx="2" fill="none" stroke="#00e5ff" strokeWidth="0.5" />
+        <line x1="20" y1="20" x2="28" y2="20" stroke="#00e5ff" strokeWidth="0.5" />
+        <line x1="44" y1="20" x2="60" y2="20" stroke="#00e5ff" strokeWidth="0.5" />
+        <line x1="60" y1="60" x2="60" y2="44" stroke="#ff00dd" strokeWidth="0.5" />
+        <line x1="20" y1="60" x2="20" y2="44" stroke="#00e5ff" strokeWidth="0.5" />
+        <line x1="20" y1="44" x2="40" y2="44" stroke="#00e5ff" strokeWidth="0.5" />
+        <line x1="40" y1="44" x2="40" y2="60" stroke="#00e5ff" strokeWidth="0.5" />
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#cp)" />
+  </svg>
+);
+
+const ScoreRing = ({ score }) => {
+  const max = 20;
+  const r = 60;
+  const circ = 2 * Math.PI * r;
+  const dash = (score / max) * circ;
+  const clr = score >= 18 ? C.grn : score >= 15 ? C.cyan : score >= 11 ? C.yel : score >= 7 ? C.ora : C.red;
+  return (
+    <svg width="160" height="160" viewBox="0 0 160 160">
+      <circle cx="80" cy="80" r={r} fill="none" stroke="#111" strokeWidth="12" />
+      <circle cx="80" cy="80" r={r} fill="none" stroke={clr} strokeWidth="12"
+        strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
+        transform="rotate(-90 80 80)"
+        style={{ filter: `drop-shadow(0 0 8px ${clr})`, transition: "stroke-dasharray 1s ease" }} />
+      <text x="80" y="75" textAnchor="middle" fill={clr} fontSize="32" fontWeight="bold" fontFamily="Arial">{score}</text>
+      <text x="80" y="100" textAnchor="middle" fill="#80deea" fontSize="13" fontFamily="Arial">/ 20</text>
+    </svg>
+  );
+};
+
+const btn = (label, onClick, col = C.cyan, disabled = false) => (
+  <button onClick={onClick} disabled={disabled} style={{
+    background: "transparent", border: `1.5px solid ${col}`, color: col,
+    fontFamily: "Arial", fontSize: 14, fontWeight: "bold", padding: "10px 22px",
+    borderRadius: 6, cursor: disabled ? "not-allowed" : "pointer", letterSpacing: 1,
+    textShadow: `0 0 8px ${col}`, boxShadow: `0 0 10px ${col}44`,
+    opacity: disabled ? 0.4 : 1, transition: "all 0.2s",
+  }}>{label}</button>
+);
+
+const Tag = ({ label, color }) => (
+  <span style={{ background: color + "22", border: `1px solid ${color}`, color, borderRadius: 4, fontSize: 12, padding: "2px 10px", fontFamily: "Arial", letterSpacing: 0.5 }}>{label}</span>
+);
+
+export default function App() {
+  const [qs, setQs] = useState(null);
+  const [qi, setQi] = useState(0);
+  const [scores, setScores] = useState({ m: [], s: [] });
+  const [att, setAtt] = useState(1);
+  const [view, setView] = useState("start");
+  const [detail, setDetail] = useState(false);
+  const scanRef = useRef(null);
+
+  useEffect(() => {
+    const el = scanRef.current;
+    if (!el) return;
+    let t = 0;
+    const iv = setInterval(() => {
+      t = (t + 1) % 101;
+      el.style.top = t + "%";
+    }, 70);
+    return () => clearInterval(iv);
+  }, [view]);
+
+  const start = (retry = false) => {
+    setQs(buildQ(retry));
+    setQi(0);
+    setScores({ m: [], s: [] });
+    if (!retry) setAtt(1); else setAtt(2);
+    setView("exam");
+    setDetail(false);
+  };
+
+  const answer = (side, idx) => {
+    if (!qs) return;
+    const q = qs[qi];
+    const correct = idx === (side === "m" ? q.m.ansIdx : q.s.ansIdx);
+    const updated = [...qs];
+    if (side === "m") {
+      updated[qi] = { ...q, ms: idx, stg: "mf" };
+      setScores(sc => ({ ...sc, m: [...sc.m, correct ? 1 : 0] }));
+    } else {
+      updated[qi] = { ...q, ss: idx, stg: "sf" };
+      setScores(sc => ({ ...sc, s: [...sc.s, correct ? 1 : 0] }));
+    }
+    setQs(updated);
+  };
+
+  const next = () => {
+    if (qi < qs.length - 1) { setQi(qi + 1); }
+    else { setView("results"); }
+  };
+
+  if (view === "start") return (
+    <div style={{ background: C.bg, minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", fontFamily: "Arial" }}>
+      <Circuit />
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center", maxWidth: 600, padding: 32 }}>
+        <div style={{ fontSize: 11, letterSpacing: 4, color: C.mag, textTransform: "uppercase", marginBottom: 12 }}>Universidad Privada del Norte · Redes 2 · Semana 12</div>
+        <h1 style={{ color: C.cyan, fontSize: 36, margin: "0 0 8px", textShadow: `0 0 20px ${C.cyan}`, letterSpacing: 2 }}>EXAMEN INTERACTIVO</h1>
+        <div style={{ color: C.mag, fontSize: 20, marginBottom: 24, textShadow: `0 0 12px ${C.mag}`, letterSpacing: 3 }}>PROTOCOLO RIPv2</div>
+        <div style={{ background: "#0a0a0a", border: `1px solid ${C.border}`, borderRadius: 10, padding: "20px 28px", marginBottom: 28, textAlign: "left" }}>
+          {[["📋 Preguntas", "10 principales + 10 de profundización"], ["🎯 Puntuación", "Escala vigesimal 0 – 20"], ["⚡ Dinámica", "Cada pregunta genera una de profundización"], ["🔁 Oportunidad", "Un segundo examen con orden aleatorio"]].map(([a, b]) => (
+            <div key={a} style={{ display: "flex", gap: 12, marginBottom: 10, fontSize: 14 }}>
+              <span style={{ color: C.cyan, minWidth: 140 }}>{a}</span>
+              <span style={{ color: C.txt }}>{b}</span>
+            </div>
+          ))}
+        </div>
+        {btn("▶  INICIAR EXAMEN", () => start(false), C.cyan)}
+      </div>
+    </div>
+  );
+
+  if (view === "results") {
+    const totM = scores.m.reduce((a, b) => a + b, 0);
+    const totS = scores.s.reduce((a, b) => a + b, 0);
+    const total = totM + totS;
+    const levels = [
+      { min: 18, label: "EXCELENTE", color: C.grn, msg: "Dominio sólido. Listo para CCNA." },
+      { min: 15, label: "BUENO", color: C.cyan, msg: "Buen nivel. Reforzar temporizadores." },
+      { min: 11, label: "APROBADO", color: C.yel, msg: "Suficiente. Revisar versiones RIP." },
+      { min: 7, label: "EN PROCESO", color: C.ora, msg: "Repasar el material completo." },
+      { min: 0, label: "DESAPROBADO", color: C.red, msg: "Revisar fundamentos de RIPv2." },
+    ];
+    const lv = levels.find(l => total >= l.min);
+    return (
+      <div style={{ background: C.bg, minHeight: "100vh", position: "relative", fontFamily: "Arial" }}>
+        <Circuit />
+        <div style={{ position: "relative", zIndex: 1, maxWidth: 680, margin: "0 auto", padding: "32px 20px" }}>
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <div style={{ fontSize: 11, letterSpacing: 4, color: C.mag, marginBottom: 8 }}>RESULTADO FINAL · EXAMEN {att}</div>
+            <h2 style={{ color: C.cyan, fontSize: 26, margin: "0 0 20px", textShadow: `0 0 14px ${C.cyan}` }}>RIPv2 — Enrutamiento Dinámico</h2>
+            <ScoreRing score={total} />
+            <div style={{ marginTop: 12, fontSize: 22, color: lv.color, fontWeight: "bold", textShadow: `0 0 10px ${lv.color}` }}>{lv.label}</div>
+            <div style={{ color: C.sub, fontSize: 14, marginTop: 6 }}>{lv.msg}</div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
+            {[["Principales", totM, 10, C.cyan], ["Profundización", totS, 10, C.mag], ["Total", total, 20, lv.color]].map(([lb, v, mx, cl]) => (
+              <div key={lb} style={{ background: "#0a0a0a", border: `1px solid ${cl}44`, borderRadius: 8, padding: "14px 10px", textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: C.sub, letterSpacing: 1, marginBottom: 6 }}>{lb}</div>
+                <div style={{ fontSize: 28, color: cl, fontWeight: "bold", textShadow: `0 0 8px ${cl}` }}>{v}<span style={{ fontSize: 14, color: C.sub }}>/{mx}</span></div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ background: "#0a0a0a", border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 20px", marginBottom: 20 }}>
+            <div style={{ fontSize: 12, color: C.sub, marginBottom: 12, letterSpacing: 2 }}>ESCALA VIGESIMAL</div>
+            {[["18 – 20", "EXCELENTE", C.grn], ["15 – 17", "BUENO", C.cyan], ["11 – 14", "APROBADO", C.yel], ["7 – 10", "EN PROCESO", C.ora], ["0 – 6", "DESAPROBADO", C.red]].map(([rng, lb, cl]) => {
+              const [lo, hi] = rng.split(" – ").map(Number);
+              const active = total >= lo && total <= hi;
+              return (
+                <div key={lb} style={{ display: "flex", alignItems: "center", gap: 12, padding: "7px 10px", borderRadius: 6, marginBottom: 4, background: active ? cl + "18" : "transparent", border: active ? `1px solid ${cl}` : "1px solid transparent" }}>
+                  <span style={{ color: cl, fontSize: 13, minWidth: 60, fontWeight: active ? "bold" : "normal" }}>{rng}</span>
+                  <span style={{ color: active ? cl : C.sub, fontSize: 13, fontWeight: active ? "bold" : "normal", flex: 1 }}>{lb}</span>
+                  {active && <span style={{ color: cl, fontSize: 18 }}>◀ TÚ</span>}
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <button onClick={() => setDetail(!detail)} style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.sub, fontFamily: "Arial", fontSize: 13, padding: "8px 18px", borderRadius: 6, cursor: "pointer", width: "100%" }}>
+              {detail ? "▲ Ocultar detalle" : "▼ Ver detalle por pregunta"}
+            </button>
+            {detail && qs && (
+              <div style={{ marginTop: 12 }}>
+                {qs.map((q, i) => (
+                  <div key={i} style={{ background: "#0a0a0a", border: `1px solid ${C.border}`, borderRadius: 8, padding: "12px 16px", marginBottom: 8 }}>
+                    <div style={{ fontSize: 12, color: C.sub, marginBottom: 6 }}>Pregunta {i + 1}</div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 6 }}>
+                      <span style={{ color: scores.m[i] ? C.grn : C.red, fontSize: 18, minWidth: 22 }}>{scores.m[i] ? "✓" : "✗"}</span>
+                      <span style={{ color: C.txt, fontSize: 13 }}>{q.m.q}</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                      <span style={{ color: scores.s[i] ? C.grn : C.red, fontSize: 18, minWidth: 22 }}>{scores.s[i] ? "✓" : "✗"}</span>
+                      <span style={{ color: C.txt, fontSize: 13 }}>{q.s.q}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+            {btn("⟵ Volver al inicio", () => setView("start"), C.sub)}
+            {att === 1 && btn("↺  SEGUNDO EXAMEN", () => start(true), C.mag)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!qs) return null;
+  const q = qs[qi];
+  const isMain = q.stg === "m" || q.stg === "mf";
+  const sec = isMain ? q.m : q.s;
+  const chosen = isMain ? q.ms : q.ss;
+  const answered = chosen !== null;
+  const progress = (qi / qs.length) * 100;
+
+  return (
+    <div style={{ background: C.bg, minHeight: "100vh", position: "relative", fontFamily: "Arial" }}>
+      <Circuit />
+      <div ref={scanRef} style={{ position: "fixed", left: 0, width: "100%", height: 2, background: `linear-gradient(90deg, transparent, ${C.cyan}88, transparent)`, pointerEvents: "none", zIndex: 10, transition: "top 0.07s linear" }} />
+
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 700, margin: "0 auto", padding: "24px 20px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div style={{ fontSize: 11, color: C.sub, letterSpacing: 3 }}>REDES 2 · S12 · RIPv2 · EXAMEN {att}</div>
+          <div style={{ display: "flex", gap: 6 }}>
+            {qs.map((_, i) => (
+              <div key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: i < qi ? C.grn : i === qi ? C.cyan : "#222", boxShadow: i === qi ? `0 0 6px ${C.cyan}` : "none", transition: "all 0.3s" }} />
+            ))}
+          </div>
+        </div>
+
+        <div style={{ height: 3, background: "#111", borderRadius: 3, marginBottom: 20, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: progress + "%", background: `linear-gradient(90deg, ${C.cyan}, ${C.mag})`, borderRadius: 3, transition: "width 0.4s ease", boxShadow: `0 0 8px ${C.cyan}` }} />
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+          <Tag label={`PREGUNTA ${qi + 1} / ${qs.length}`} color={C.cyan} />
+          <Tag label={isMain ? "PRINCIPAL" : "⚡ PROFUNDIZACIÓN"} color={isMain ? C.cyan : C.mag} />
+        </div>
+
+        <div style={{ background: "#0a0a0a", border: `1px solid ${isMain ? C.cyan + "55" : C.mag + "55"}`, borderRadius: 12, padding: "24px 26px", marginBottom: 20, boxShadow: `0 0 20px ${isMain ? C.cyan : C.mag}18` }}>
+          <p style={{ color: C.txt, fontSize: 16, lineHeight: 1.7, margin: 0 }}>{sec.q}</p>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+          {sec.opts.map((opt, idx) => {
+            const isCorrect = idx === sec.ansIdx;
+            const isChosen = idx === chosen;
+            let borderCol = C.border;
+            let bgCol = "#0a0a0a";
+            let textCol = C.txt;
+            let glow = "";
+            if (answered) {
+              if (isCorrect) { borderCol = C.grn; bgCol = C.grn + "18"; textCol = C.grn; glow = `0 0 12px ${C.grn}44`; }
+              else if (isChosen) { borderCol = C.red; bgCol = C.red + "18"; textCol = C.red; }
+            }
+            return (
+              <button key={idx} onClick={() => !answered && answer(isMain ? "m" : "s", idx)}
+                disabled={answered}
+                style={{ background: bgCol, border: `1.5px solid ${borderCol}`, borderRadius: 8, padding: "14px 16px", color: textCol, fontFamily: "Arial", fontSize: 14, cursor: answered ? "default" : "pointer", textAlign: "left", lineHeight: 1.5, boxShadow: glow, transition: "all 0.25s" }}>
+                <span style={{ color: isMain ? C.cyan : C.mag, fontWeight: "bold", marginRight: 8 }}>{String.fromCharCode(65 + idx)}.</span>
+                {opt}
+              </button>
+            );
+          })}
+        </div>
+
+        {answered && (
+          <div style={{ background: "#0a0a0a", border: `1px solid ${chosen === sec.ansIdx ? C.grn + "66" : C.red + "66"}`, borderRadius: 10, padding: "16px 20px", marginBottom: 20 }}>
+            <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>
+              <span style={{ fontSize: 22, color: chosen === sec.ansIdx ? C.grn : C.red }}>{chosen === sec.ansIdx ? "✓" : "✗"}</span>
+              <span style={{ color: chosen === sec.ansIdx ? C.grn : C.red, fontWeight: "bold", fontSize: 14, textShadow: `0 0 6px ${chosen === sec.ansIdx ? C.grn : C.red}` }}>
+                {chosen === sec.ansIdx ? "CORRECTO" : `INCORRECTO — Respuesta: ${sec.ans}`}
+              </span>
+            </div>
+            <p style={{ color: C.sub, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{sec.exp}</p>
+          </div>
+        )}
+
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ color: C.sub, fontSize: 13 }}>
+            Correctas: <span style={{ color: C.grn }}>{scores.m.reduce((a, b) => a + b, 0) + scores.s.reduce((a, b) => a + b, 0)}</span> / {scores.m.length + scores.s.length}
+          </span>
+          {answered && q.stg === "mf" && btn("⚡ Pregunta de Profundización →", () => {
+            const upd = [...qs]; upd[qi] = { ...qs[qi], stg: "s" }; setQs(upd);
+          }, C.mag)}
+          {answered && q.stg === "sf" && btn(qi < qs.length - 1 ? "Siguiente →" : "Ver Resultados →", next, C.cyan)}
+        </div>
+      </div>
+    </div>
+  );
+}
 
