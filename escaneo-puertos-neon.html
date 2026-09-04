@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Simulación AR — Reconocimiento de puertos</title>
+<style>
+  :root{
+    --bg:#070a12;
+    --bg2:#0b1020;
+    --cyan:#00f5ff;
+    --magenta:#ff2ec4;
+    --green:#3dffb0;
+    --red:#ff3b5c;
+    --amber:#ffcf5c;
+    --grid:rgba(0,245,255,.06);
+    --panel:rgba(10,16,32,.72);
+    --text:#d8ecff;
+    --muted:#6f89ad;
+    font-family: 'Consolas', 'SF Mono', 'Courier New', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(0,245,255,.08), transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(255,46,196,.08), transparent 45%),
+      var(--bg);
+    color:var(--text);
+    overflow-x:hidden;
+  }
+  .stage{
+    position:relative;
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+  }
+  header{
+    text-align:center;
+    margin-bottom:8px;
+  }
+  h1{
+    font-size:22px;
+    letter-spacing:.06em;
+    margin:0 0 6px;
+    color:var(--cyan);
+    text-shadow:0 0 6px rgba(0,245,255,.65), 0 0 22px rgba(0,245,255,.25);
+  }
+  .subtitle{
+    color:var(--muted);
+    font-size:12.5px;
+    max-width:640px;
+    margin:0 auto;
+    line-height:1.5;
+  }
+  .badge-row{
+    display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap;
+  }
+  .badge{
+    font-size:11px; padding:5px 10px; border-radius:3px;
+    border:1px solid rgba(0,245,255,.35);
+    color:var(--muted); background:rgba(0,245,255,.04);
+  }
+
+  /* ---- SVG topology ---- */
+  .topo-wrap{
+    position:relative;
+    margin-top:28px;
+    border:1px solid rgba(0,245,255,.18);
+    border-radius:8px;
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,
+      var(--bg2);
+    box-shadow: inset 0 0 60px rgba(0,245,255,.05);
+  }
+  svg{ display:block; width:100%; height:auto; }
+
+  .bus{ stroke:url(#busGrad); stroke-width:5; filter:drop-shadow(0 0 6px rgba(0,245,255,.55)); }
+  .drop{ stroke:#1b2b45; stroke-width:3; }
+  .drop-glow{ stroke:var(--cyan); stroke-width:3; opacity:.55; filter:drop-shadow(0 0 5px var(--cyan)); }
+
+  .node-box{
+    fill:rgba(8,14,28,.9);
+    stroke:rgba(0,245,255,.35);
+    stroke-width:1.2;
+    rx:10;
+  }
+  .node-box.active{ stroke:var(--cyan); filter:drop-shadow(0 0 10px rgba(0,245,255,.7)); }
+  .node-box.attacker{ stroke:var(--magenta); }
+  .node-box.attacker.active{ filter:drop-shadow(0 0 12px rgba(255,46,196,.8)); }
+
+  .node-label{ fill:var(--text); font-size:13px; font-weight:600; letter-spacing:.02em; }
+  .node-ip{ fill:var(--cyan); font-size:11px; }
+  .node-ip.magenta{ fill:var(--magenta); }
+  .node-role{ fill:var(--muted); font-size:10px; }
+
+  .glyph{ filter:drop-shadow(0 0 6px currentColor); }
+
+  /* packet */
+  .packet{
+    r:5;
+    fill:var(--amber);
+    filter:drop-shadow(0 0 8px var(--amber));
+  }
+  .packet-trail{
+    fill:none;
+    stroke:var(--amber);
+    stroke-width:2;
+    stroke-dasharray:3 6;
+    opacity:0;
+  }
+
+  .hint{ fill:var(--muted); font-size:10.5px; }
+
+  /* clickable target hitbox */
+  .hit{ fill:transparent; cursor:pointer; }
+  .hit:hover ~ .node-box{ stroke:var(--cyan); }
+
+  /* ---- controls ---- */
+  .controls{
+    display:flex; justify-content:center; gap:12px; margin-top:22px; flex-wrap:wrap;
+  }
+  button{
+    font-family:inherit;
+    font-size:12.5px;
+    letter-spacing:.03em;
+    color:var(--bg);
+    background:linear-gradient(120deg,var(--cyan),#7dfcff);
+    border:none;
+    padding:11px 20px;
+    border-radius:4px;
+    cursor:pointer;
+    font-weight:700;
+    box-shadow:0 0 16px rgba(0,245,255,.45);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  button:hover{ transform:translateY(-1px); box-shadow:0 0 22px rgba(0,245,255,.7); }
+  button:active{ transform:translateY(0); }
+  button.secondary{
+    background:transparent;
+    color:var(--muted);
+    border:1px solid rgba(255,255,255,.15);
+    box-shadow:none;
+  }
+  button.secondary:hover{ color:var(--text); border-color:rgba(255,255,255,.35); box-shadow:none; }
+  button:disabled{ opacity:.4; cursor:not-allowed; transform:none; box-shadow:none; }
+
+  /* ---- terminal / results ---- */
+  .console{
+    margin-top:22px;
+    background:rgba(4,8,16,.9);
+    border:1px solid rgba(0,245,255,.22);
+    border-radius:8px;
+    padding:16px 18px;
+    min-height:150px;
+    font-size:12.5px;
+    line-height:1.65;
+    box-shadow: inset 0 0 40px rgba(0,0,0,.5);
+  }
+  .console-head{
+    display:flex; align-items:center; gap:8px; margin-bottom:10px;
+    color:var(--muted); font-size:11px;
+  }
+  .dot{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+  .dot.r{background:#ff5f57;} .dot.y{background:#ffbd2e;} .dot.g{background:#28c840;}
+  .console-line{ white-space:pre-wrap; opacity:0; transform:translateY(3px); animation:rise .35s forwards; }
+  @keyframes rise{ to{opacity:1; transform:translateY(0);} }
+  .prompt{ color:var(--magenta); }
+  .ok{ color:var(--green); text-shadow:0 0 5px rgba(61,255,176,.5); }
+  .closed{ color:var(--red); }
+  .filtered{ color:var(--amber); }
+  .cursor{ display:inline-block; width:7px; height:13px; background:var(--cyan); vertical-align:middle; animation:blink 1s steps(1) infinite; }
+  @keyframes blink{ 50%{opacity:0;} }
+
+  footer{
+    margin-top:20px; text-align:center; color:var(--muted); font-size:10.5px; line-height:1.6;
+  }
+  footer b{ color:var(--amber); }
+
+  @media (prefers-reduced-motion: reduce){
+    .console-line{ animation:none; opacity:1; transform:none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <header>
+    <h1>▸ SIMULACIÓN AR — TÉCNICA DE RECONOCIMIENTO DE PUERTOS</h1>
+    <p class="subtitle">
+      Visualización educativa (no ejecuta tráfico real) del flujo de un escaneo tipo <em>nmap SYN scan</em>
+      desde Kali Linux hacia los hosts de la red 192.168.88.0/24. Haz clic en un objetivo o en "Iniciar escaneo completo".
+    </p>
+    <div class="badge-row">
+      <span class="badge">RED: 192.168.88.0/24</span>
+      <span class="badge">ORIGEN: KALI 192.168.88.195</span>
+      <span class="badge">MODO: SIMULACIÓN — SOLO FINES ACADÉMICOS</span>
+    </div>
+  </header>
+
+  <div class="topo-wrap">
+    <svg id="topo" viewBox="0 0 1140 430" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="busGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#00f5ff"/>
+          <stop offset="50%" stop-color="#7dfcff"/>
+          <stop offset="100%" stop-color="#ff2ec4"/>
+        </linearGradient>
+      </defs>
+
+      <!-- bus line -->
+      <line class="bus" x1="90" y1="230" x2="1050" y2="230"/>
+
+      <!-- drops -->
+      <line id="dropWin10" class="drop" x1="180" y1="230" x2="180" y2="150"/>
+      <line id="dropWin10g" class="drop-glow" x1="180" y1="230" x2="180" y2="150" opacity="0"/>
+
+      <line id="dropKali" class="drop" x1="570" y1="230" x2="570" y2="300"/>
+      <line id="dropKalig" class="drop-glow" x1="570" y1="230" x2="570" y2="300" opacity="0"/>
+
+      <line id="dropWinSrv" class="drop" x1="860" y1="230" x2="860" y2="150"/>
+      <line id="dropWinSrvg" class="drop-glow" x1="860" y1="230" x2="860" y2="150" opacity="0"/>
+
+      <line id="dropMeta" class="drop" x1="1000" y1="230" x2="1000" y2="150"/>
+      <line id="dropMetag" class="drop-glow" x1="1000" y1="230" x2="1000" y2="150" opacity="0"/>
+
+      <!-- WINDOWS 10 -->
+      <g id="node-win10" data-role="bystander">
+        <rect class="node-box" x="100" y="60" width="160" height="90" rx="10"/>
+        <g class="glyph" style="color:#8fd4ff" transform="translate(122,72)">
+          <rect x="0" y="0" width="34" height="24" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+          <rect x="10" y="26" width="14" height="4" fill="currentColor"/>
+          <rect x="4" y="32" width="26" height="3" rx="1.5" fill="currentColor"/>
+        </g>
+        <text class="node-label" x="180" y="118" text-anchor="middle">WINDOWS 10</text>
+        <text class="node-ip" x="180" y="134" text-anchor="middle">192.168.88.x/24</text>
+        <text class="node-role" x="180" y="147" text-anchor="middle">host de la red (no objetivo)</text>
+      </g>
+
+      <!-- KALI LINUX (attacker) -->
+      <g id="node-kali" data-role="attacker">
+        <rect class="node-box attacker" x="490" y="300" width="160" height="90" rx="10"/>
+        <g class="glyph" style="color:#ff2ec4" transform="translate(514,312)">
+          <rect x="0" y="0" width="32" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M2 20 L30 20 L34 28 L-2 28 Z" fill="currentColor" opacity=".8"/>
+        </g>
+        <text class="node-label" x="570" y="360" text-anchor="middle" fill="#ff9be6">KALI LINUX</text>
+        <text class="node-ip magenta" x="570" y="376" text-anchor="middle">192.168.88.195/24</text>
+        <text class="node-role" x="570" y="389" text-anchor="middle">atacante / origen del escaneo</text>
+      </g>
+
+      <!-- WINDOWS SERVER (target) -->
+      <g id="node-winsrv" data-role="target">
+        <rect id="box-winsrv" class="node-box" x="780" y="60" width="160" height="90" rx="10"/>
+        <g class="glyph" style="color:#ffcf5c" transform="translate(800,70)">
+          <rect x="0" y="0" width="40" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+          <rect x="0" y="13" width="40" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+          <rect x="0" y="26" width="40" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+        </g>
+        <text class="node-label" x="860" y="118" text-anchor="middle">WINDOWS SERVER</text>
+        <text class="node-ip" x="860" y="134" text-anchor="middle">192.168.88.190/24</text>
+        <text class="node-role" x="860" y="147" text-anchor="middle">objetivo — clic para escanear</text>
+        <rect class="hit" x="780" y="60" width="160" height="90" data-target="winsrv"/>
+      </g>
+
+      <!-- METASPLOITABLE (target) -->
+      <g id="node-meta" data-role="target">
+        <rect id="box-meta" class="node-box" x="960" y="60" width="150" height="90" rx="10"/>
+        <g class="glyph" style="color:#3dffb0" transform="translate(985,70)">
+          <circle cx="17" cy="8" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M17 16 v14 M9 24 l16 0 M11 30 l4 -6 M23 30 l-4 -6" stroke="currentColor" stroke-width="2" fill="none"/>
+        </g>
+        <text class="node-label" x="1035" y="118" text-anchor="middle">METASPLOITABLE</text>
+        <text class="node-ip" x="1035" y="134" text-anchor="middle" style="fill:#3dffb0">192.168.88.191/24*</text>
+        <text class="node-role" x="1035" y="147" text-anchor="middle">objetivo — clic para escanear</text>
+        <rect class="hit" x="960" y="60" width="150" height="90" data-target="meta"/>
+      </g>
+
+      <!-- packet (hidden until animating) -->
+      <path id="packetTrail" class="packet-trail" d=""/>
+      <circle id="packet" class="packet" cx="570" cy="300" r="0" opacity="0"/>
+
+      <text class="hint" x="570" y="415" text-anchor="middle">* IP de Metasploitable no confirmada en el diagrama original — asumida para la simulación</text>
+    </svg>
+  </div>
+
+  <div class="controls">
+    <button id="btnAll">▸ Iniciar escaneo completo</button>
+    <button id="btnWinSrv" class="secondary">Escanear Windows Server</button>
+    <button id="btnMeta" class="secondary">Escanear Metasploitable</button>
+    <button id="btnReset" class="secondary">Reiniciar</button>
+  </div>
+
+  <div class="console" id="console">
+    <div class="console-head">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span>kali@kali:~$ nmap -sS (simulación)</span>
+    </div>
+    <div id="consoleBody"></div>
+  </div>
+
+  <footer>
+    Diagrama basado en tu topología subida (Windows 10, Windows Server 192.168.88.190, Kali Linux 192.168.88.195, red 192.168.88.0/24).
+    La IP de Metasploitable no aparecía en la imagen original, así que se asumió <b>192.168.88.191</b> solo para completar la simulación —
+    ajústala si tu laboratorio usa otra. Los resultados de puertos son <b>datos de ejemplo generados para fines didácticos</b>,
+    no un escaneo real ni una fuente verificable.
+  </footer>
+</div>
+
+<script>
+(function(){
+  const svg = document.getElementById('topo');
+  const packet = document.getElementById('packet');
+  const consoleBody = document.getElementById('consoleBody');
+  const btnAll = document.getElementById('btnAll');
+  const btnWinSrv = document.getElementById('btnWinSrv');
+  const btnMeta = document.getElementById('btnMeta');
+  const btnReset = document.getElementById('btnReset');
+
+  const KALI = {x:570, y:300};
+  const drops = {
+    kali:   {line:'dropKali',   glow:'dropKalig'},
+    winsrv: {line:'dropWinSrv', glow:'dropWinSrvg'},
+    meta:   {line:'dropMeta',   glow:'dropMetag'}
+  };
+  const targets = {
+    winsrv: {
+      name:'WINDOWS SERVER', ip:'192.168.88.190', x:860, y:230, box:'box-winsrv',
+      ports:[
+        {p:135,  svc:'msrpc',      state:'open'},
+        {p:139,  svc:'netbios-ssn',state:'open'},
+        {p:445,  svc:'microsoft-ds',state:'open'},
+        {p:3389, svc:'ms-wbt-server (RDP)', state:'open'},
+        {p:5985, svc:'wsman (WinRM)', state:'filtered'},
+        {p:8080, svc:'http-proxy',  state:'closed'}
+      ]
+    },
+    meta: {
+      name:'METASPLOITABLE', ip:'192.168.88.191', x:1035, y:230, box:'box-meta',
+      ports:[
+        {p:21,  svc:'ftp',       state:'open'},
+        {p:22,  svc:'ssh',       state:'open'},
+        {p:23,  svc:'telnet',    state:'open'},
+        {p:80,  svc:'http',      state:'open'},
+        {p:445, svc:'netbios-ssn', state:'open'},
+        {p:3306,svc:'mysql',     state:'open'},
+        {p:6667,svc:'irc',       state:'filtered'}
+      ]
+    }
+  };
+
+  let busy = false;
+
+  function log(html, cls){
+    const line = document.createElement('div');
+    line.className = 'console-line' + (cls ? ' '+cls : '');
+    line.innerHTML = html;
+    consoleBody.appendChild(line);
+    document.getElementById('console').scrollTop = 999999;
+  }
+
+  function clearConsole(){
+    consoleBody.innerHTML = '';
+  }
+
+  function setNodeActive(id, on){
+    const el = document.querySelector('#'+id+' .node-box');
+    if(el) el.classList.toggle('active', on);
+  }
+
+  function glowDrop(key, on){
+    const d = drops[key];
+    document.getElementById(d.glow).setAttribute('opacity', on ? '1' : '0');
+  }
+
+  function firePacket(toKey, targetX, targetY, duration){
+    return new Promise(resolve=>{
+      packet.setAttribute('cx', KALI.x);
+      packet.setAttribute('cy', KALI.y);
+      packet.setAttribute('r', 5);
+      packet.setAttribute('opacity', 1);
+      glowDrop('kali', true);
+
+      // path: up from kali to bus (y=230), across bus, down to target
+      const path = [
+        {x:KALI.x, y:230},
+        {x:targetX, y:230},
+        {x:targetX, y:targetY}
+      ];
+      const start = performance.now();
+      function seg(i){
+        if(i >= path.length){
+          packet.setAttribute('opacity', 0);
+          glowDrop('kali', false);
+          resolve();
+          return;
+        }
+        const from = i===0 ? KALI : path[i-1];
+        const to = path[i];
+        const segStart = performance.now();
+        const segDur = duration / path.length;
+        if(i===1) glowDrop(toKey, true);
+        function frame(t){
+          const el = Math.min(1, (t - segStart)/segDur);
+          const x = from.x + (to.x-from.x)*el;
+          const y = from.y + (to.y-from.y)*el;
+          packet.setAttribute('cx', x);
+          packet.setAttribute('cy', y);
+          if(el < 1){
+            requestAnimationFrame(frame);
+          } else {
+            seg(i+1);
+          }
+        }
+        requestAnimationFrame(frame);
+      }
+      seg(0);
+    });
+  }
+
+  function stateSpan(state, p, svc){
+    if(state==='open') return `<span class="ok">${String(p).padEnd(6)} OPEN     </span> ${svc}`;
+    if(state==='closed') return `<span class="closed">${String(p).padEnd(6)} CLOSED   </span> ${svc}`;
+    return `<span class="filtered">${String(p).padEnd(6)} FILTERED </span> ${svc}`;
+  }
+
+  async function scanTarget(key, {silentIntro=false} = {}){
+    const t = targets[key];
+    setNodeActive('node-kali', true);
+    setNodeActive('node-'+key, true);
+
+    if(!silentIntro){
+      log(`<span class="prompt">kali@kali</span>:~$ nmap -sS -T4 ${t.ip}  <span class="cursor"></span>`);
+    } else {
+      log(`<span class="prompt">kali@kali</span>:~$ nmap -sS -T4 ${t.ip}`);
+    }
+
+    await firePacket(key, t.x, t.y, 900);
+    log(`Enviando paquetes SYN hacia ${t.name} (${t.ip})...`);
+    await sleep(300);
+
+    // return packets (SYN-ACK simulation) — flash target
+    const box = document.getElementById(t.box);
+    box.style.transition = 'filter .15s ease';
+    for(let i=0;i<2;i++){
+      box.style.filter = 'drop-shadow(0 0 14px currentColor)';
+      await sleep(120);
+      box.style.filter = '';
+      await sleep(90);
+    }
+
+    log(`Host activo: <span class="ok">${t.ip}</span> — recopilando estado de puertos...`);
+    await sleep(250);
+
+    for(const port of t.ports){
+      log(stateSpan(port.state, port.p, port.svc));
+      await sleep(140);
+    }
+
+    const openCount = t.ports.filter(x=>x.state==='open').length;
+    log(`<br>Escaneo de <b>${t.name}</b> completo — ${openCount} puertos abiertos de ${t.ports.length} analizados.<br>`);
+
+    glowDrop(key, false);
+    glowDrop('kali', false);
+    setNodeActive('node-kali', false);
+    setNodeActive('node-'+key, false);
+  }
+
+  function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+  function setButtonsDisabled(v){
+    [btnAll, btnWinSrv, btnMeta].forEach(b=>b.disabled=v);
+  }
+
+  async function runAll(){
+    if(busy) return;
+    busy = true; setButtonsDisabled(true);
+    clearConsole();
+    log(`Iniciando reconocimiento desde <span class="prompt">Kali Linux (192.168.88.195)</span> sobre la red 192.168.88.0/24...<br>`);
+    await sleep(400);
+    await scanTarget('winsrv');
+    await sleep(200);
+    await scanTarget('meta');
+    log(`<br>Reconocimiento finalizado. Simulación con fines académicos — sin tráfico real emitido.`);
+    busy = false; setButtonsDisabled(false);
+  }
+
+  async function runOne(key){
+    if(busy) return;
+    busy = true; setButtonsDisabled(true);
+    clearConsole();
+    await scanTarget(key);
+    busy = false; setButtonsDisabled(false);
+  }
+
+  btnAll.addEventListener('click', runAll);
+  btnWinSrv.addEventListener('click', ()=>runOne('winsrv'));
+  btnMeta.addEventListener('click', ()=>runOne('meta'));
+  btnReset.addEventListener('click', ()=>{
+    clearConsole();
+    packet.setAttribute('opacity', 0);
+    glowDrop('kali', false); glowDrop('winsrv', false); glowDrop('meta', false);
+    setNodeActive('node-kali', false); setNodeActive('node-winsrv', false); setNodeActive('node-meta', false);
+    log('Consola reiniciada. Selecciona un objetivo o inicia el escaneo completo.');
+  });
+
+  // clickable hitboxes on the SVG targets
+  svg.querySelectorAll('.hit').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const key = el.getAttribute('data-target');
+      runOne(key);
+    });
+  });
+
+  log('Consola lista. Selecciona un objetivo en el diagrama o presiona "Iniciar escaneo completo".');
+})();
+</script>
+</body>
+</html>
